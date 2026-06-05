@@ -9,6 +9,7 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
 
 # Logs
 *.log
@@ -27,7 +28,14 @@ coverage/
 # Prisma / SQLite local data
 *.db
 *.db-journal
+dev.db
+prisma/dev.db
+prisma/dev.db-journal
 
 # Codex workspace temp files
 work/
 outputs/
+
+.vercel
+
+/src/generated/prisma

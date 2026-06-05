@@ -1,132 +1,100 @@
 # ARY GRS 001 ROADMAP
 
-## 1. 任务背景
+## 任务背景
 
-目标是实现一个可运行的 ARY GRS 001 PoC，用来证明：
+目标是把 `PRD.md` 中的 ARY 产品方案做成一个可运行演示，并且从“前端假状态 PoC”升级到“真实账号与真实数据库”的全栈版本。
 
-1. Race 数据主权属于 Organizer。
-2. ARY 不需要持久化完整 Race 数据。
-3. ARY 仍然可以创建、披露、组织、展示赛事。
-4. ARY 展示的内容来自 Organizer 主动披露的公开数据。
+## 当前实现方向
 
-## 2. 最终采用的实现方向
+最终实现采用：
 
-### 2.1 为什么没有继续做后端版
+- Next.js 16 App Router
+- Prisma 7
+- SQLite
+- Server Actions + API Routes
 
-仓库中的 [PRD.md](C:/Users/xy/Documents/Codex/2026-06-05/files-mentioned-by-the-user-prd-2/PRD.md) 和 [PoC.md](C:/Users/xy/Documents/Codex/2026-06-05/files-mentioned-by-the-user-prd-2/PoC.md) 明确把本次验证约束成：
+原因：
 
-- 数据存储使用浏览器 `localStorage`
-- Organizer 私有评测由 Runner 完成
-- 不要求生产级安全
-- 重点是验证数据边界与流程闭环
+- 能快速落地真实注册登录和共享数据
+- 仍然能严格控制 ARY 的数据边界
+- 后续若需要改成 Postgres，只需要切 Prisma datasource 和部署方式
 
-因此本次实现从最初的“Next.js + SQLite”方案切换为“React + TypeScript + Vite + localStorage”的纯前端 PoC。
+## 数据边界决策
 
-### 2.2 当前技术栈
+ARY 持久化：
 
-- React 19
-- TypeScript
-- Vite
-- 浏览器 `localStorage`
-
-## 3. 已实现能力
-
-### 3.1 角色流
-
-- Organizer 登录 / 注册
-- Rider 登录 / 注册
-- Audience 无需登录浏览公开内容
-
-### 3.2 赛事组织
-
-- Organizer 创建赛事
-- 时间线校验
-- 比赛状态自动计算
-- Rider 报名参赛
-- 队伍人数上限校验
-- 提交频率限制校验
-
-### 3.3 提交流程
-
-- Rider 提交代码和 Riding Record
-- 提交进入待评测队列
-- Runner 拉取任务
-- Runner 回传评分结果
-- ARY 更新最高分归档与公开榜单投影
-- 回传后临时提交物从队列中删除
-
-### 3.4 沟通与披露
-
-- Rider 向 Organizer 发送反馈
-- Organizer 回复并标记 `resolved`
-- Organizer 修改题目 / 训练数据说明并广播通知
-- Organizer 发布赛后总评和队伍评论
-- Audience 查看公开榜单、Harness 榜单与赛后亮点
-
-### 3.5 导出与清理
-
-- 下载最高分归档 JSON
-- 下载公开分数 JSON
-- Organizer 一键清除比赛
-- 本地重置为种子数据
-
-## 4. 当前数据边界
-
-### 4.1 ARY 在浏览器侧保存
-
-- 赛事公开元数据
-- 队伍信息
+- 用户、赛事、队伍
+- 反馈、通知
 - 提交状态
-- 反馈与通知
-- 公开榜单
-- 最高分归档
-- 赛后亮点与 Harness 榜单
+- 公开榜单投影
+- 最佳归档与赛后展示
 
-### 4.2 ARY 不保存
+ARY 不持久化：
 
-- Organizer 私有测试代码
-- Organizer 内网 Runner 实现细节
-- 真实远程评测环境
+- Organizer 私有评测代码
+- Organizer 私有 Runner 逻辑
+- 私有完整评测过程
 
-### 4.3 临时数据策略
+折中实现：
 
-- Rider 提交先进入前端内存 / localStorage 队列
-- Runner 回传结果后，对应提交的临时 artifact 置空
-- 最佳成绩归档单独保留，用于赛后公开展示与下载
+- Rider 提交进入 ARY 数据库中的临时字段
+- Runner 评分后，提交正文被清空
+- 仅保留最佳归档用于赛后公开展示
 
-说明：
-- 这一步是对 PRD 中“评测后删除临时提交物”和“赛后仍可展示最佳成果”的折中实现。
-- 保留的是公开可展示的最高分归档，而不是完整私有评测过程。
+## 当前能力
 
-## 5. 已知限制
+- 真实注册 / 登录
+- Organizer 创建赛事
+- Rider 报名参赛
+- Rider 提交代码与 Riding Record
+- Rider 与 Organizer 的反馈线程
+- Runner 拉取任务与回传评分
+- Organizer 同步公开榜单
+- Organizer 发布赛后展示
+- Audience 无登录浏览公开页面
 
-- Runner API 是页面交互模拟，不是真实 HTTP 服务
-- 认证是演示级明文账号，不是生产级安全实现
-- `localStorage` 天然不适合多设备协同，这里只用于 PoC 证明
-- 没有真实文件上传，只用文本内容模拟代码包和 Riding Record
-- 没有真正接入 Agent 提供商 API，只保留评分模型与字段结构
+## 临时部署策略
 
-## 6. 迭代记录
+为了让临时域名也能真实写库：
+
+- 构建阶段生成并填充 `prisma/dev.db`
+- 运行时在生产环境把该数据库复制到 `/tmp/ary-runtime/runtime.db`
+- 预览实例上的写入是真实 SQLite 写入，但不保证长期持久
+
+## 已知限制
+
+- 临时域名上的 SQLite 数据会随实例重建丢失
+- 还没有接入 Postgres 等持久数据库
+- 还没有接入真实外部 Agent API
+- 目前 Runner 鉴权仍是简单 bearer token
+
+## 迭代记录
 
 ### Iteration 0
 
-- 阅读需求并输出首版实现计划
+- 阅读 PRD
+- 产出实现计划与路线
 
 ### Iteration 1
 
-- 将当前工作区接入组织仓库 `SysuGroup9/ARY-for-ARY`
-- 保留远端已有 `PRD.md` 和 `PoC.md` 历史
-- 新增 `.gitignore`
+- 接入 GitHub 组织仓库 `SysuGroup9/ARY-for-ARY`
+- 完成前端 localStorage PoC
+- 部署首个临时预览
 
 ### Iteration 2
 
-- 发现仓库中的 `PRD.md` / `PoC.md` 将本次实现明确约束为纯前端 localStorage PoC
-- 放弃先前的 SQLite 方向
-- 改用 React + TypeScript + Vite 落地
+- 用户指出注册登录是假的，只是 localStorage
+- 决定整体重构为 Next.js + Prisma + SQLite
 
 ### Iteration 3
 
-- 实现领域模型、种子数据、比赛状态计算、榜单逻辑
-- 实现 Organizer / Rider / Runner / Audience 页面
-- 实现反馈、通知、赛后展示、导出与清理能力
-- 完成 `lint` 与 `build` 验证
+- 新建 Prisma schema 与鉴权基础能力
+- 重写服务层：users / races / teams / submissions / feedback
+- 新建首页、Server Actions、Runner API
+- 加入 seed 数据与临时部署 SQLite 方案
+- 完成 `tsc`、`lint`、`build` 验证
+
+## 错误复盘
+
+- 早期从旧 PoC 迁移时有编码损坏的中文文本混入新实现。
+- 改进措施：不再从旧损坏文件复制中文字面量，所有中文文案重新手写并在最终构建前做人工检查。

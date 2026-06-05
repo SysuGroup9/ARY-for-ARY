@@ -1,0 +1,285 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  ORGANIZER
+  RIDER
+}
+
+enum SubmissionStatus {
+  QUEUED
+  PULLED
+  SCORED
+}
+
+enum FeedbackStatus {
+  PENDING
+  RESOLVED
+}
+
+enum NotificationTarget {
+  ALL
+  TEAM
+}
+
+enum AgentType {
+  CLAUDE
+  COPILOT
+  DEEPSEEK
+  ZHIPU
+  OPENAI
+  CUSTOM
+}
+
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+  displayName  String
+  role         UserRole
+  createdAt    DateTime  @default(now())
+
+  organizedRaces Race[]  @relation("OrganizerRaces")
+  teamMemberships TeamMember[]
+  teamCaptains   Team[]  @relation("TeamCaptain")
+  feedbackMessages FeedbackMessage[]
+}
+
+model Race {
+  id                         String   @id @default(cuid())
+  organizerId                String
+  title                      String
+  summary                    String
+  taskPackageLabel           String
+  taskDescription            String
+  trainingDataSummary        String
+  hasTrainingData            Boolean  @default(false)
+  evaluationNotes            String
+  keywordsJson               String
+  tokenLimit                 Int
+  signupStart                DateTime
+  signupEnd                  DateTime
+  raceStart                  DateTime
+  raceEnd                    DateTime
+  enableFreeze               Boolean  @default(false)
+  freezeMinutesBeforeEnd     Int      @default(0)
+  updateGranularityMinutes   Int      @default(30)
+  maxTeamSize                Int      @default(5)
+  submissionIntervalHours    Int      @default(24)
+  cloudStudioUrl             String
+  displayShowTrainingData    Boolean  @default(false)
+  displayShowOrganizerComment Boolean @default(false)
+  displayShowTopHighlights   Boolean  @default(false)
+  displayHighlightCount      Int      @default(3)
+  displayShowRiderCode       Boolean  @default(false)
+  weightTaskPassRate         Float
+  weightCodeReview           Float
+  weightReasoning            Float
+  weightKeywords             Float
+  weightTotalTask            Float
+  weightTotalToken           Float
+  weightTotalDialogue        Float
+  organizerComment           String   @default("")
+  lastLeaderboardSyncAt      DateTime?
+  lastShowcaseSyncAt         DateTime?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  organizer      User               @relation("OrganizerRaces", fields: [organizerId], references: [id], onDelete: Cascade)
+  teams          Team[]
+  submissions    Submission[]
+  teamArchives   TeamArchive[]
+  feedbackThreads FeedbackThread[]
+  notifications  Notification[]
+  leaderboardEntries LeaderboardEntry[]
+  harnessEntries  HarnessEntry[]
+  highlights      RidingHighlight[]
+  teamComments    TeamComment[]
+}
+
+model Team {
+  id         String   @id @default(cuid())
+  raceId      String
+  captainId   String
+  name        String
+  createdAt   DateTime @default(now())
+
+  race        Race      @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  captain     User      @relation("TeamCaptain", fields: [captainId], references: [id], onDelete: Cascade)
+  members     TeamMember[]
+  submissions Submission[]
+  archives    TeamArchive[]
+  feedbackThreads FeedbackThread[]
+  leaderboardEntries LeaderboardEntry[]
+  harnessEntries HarnessEntry[]
+  highlights  RidingHighlight[]
+  comments    TeamComment[]
+
+  @@unique([raceId, captainId])
+}
+
+model TeamMember {
+  id          String   @id @default(cuid())
+  teamId       String
+  userId       String?
+  displayName  String
+  createdAt    DateTime @default(now())
+
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model Submission {
+  id              String   @id @default(cuid())
+  raceId           String
+  teamId           String
+  status           SubmissionStatus @default(QUEUED)
+  codeLabel        String
+  codeContent      String?
+  recordLabel      String
+  ridingRecord     String?
+  tokenUsed        Int
+  agentType        AgentType
+  passRate         Float?
+  codeReviewScore  Float?
+  reasoningScore   Float?
+  keywordScore     Float?
+  tokenScore       Float?
+  taskScore        Float?
+  dialogueScore    Float?
+  totalScore       Float?
+  antiCheatPenalty Float?
+  runnerComment    String?
+  runnerStatus     String?
+  createdAt        DateTime @default(now())
+  pulledAt         DateTime?
+  scoredAt         DateTime?
+
+  race             Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  team             Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model TeamArchive {
+  id              String   @id @default(cuid())
+  raceId           String
+  teamId           String
+  submissionId     String
+  codeLabel        String
+  codeContent      String
+  recordLabel      String
+  ridingRecord     String
+  tokenUsed        Int
+  agentType        AgentType
+  taskScore        Float
+  dialogueScore    Float
+  tokenScore       Float
+  reasoningScore   Float
+  keywordScore     Float
+  totalScore       Float
+  antiCheatPenalty Float
+  createdAt        DateTime @default(now())
+
+  race             Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  team             Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([raceId, teamId])
+}
+
+model FeedbackThread {
+  id         String   @id @default(cuid())
+  raceId      String
+  teamId      String
+  status      FeedbackStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  race        Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  team        Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  messages    FeedbackMessage[]
+}
+
+model FeedbackMessage {
+  id         String   @id @default(cuid())
+  threadId    String
+  authorId    String
+  content     String
+  createdAt   DateTime @default(now())
+
+  thread      FeedbackThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author      User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  raceId      String
+  title       String
+  content     String
+  target      NotificationTarget
+  teamId      String?
+  createdAt   DateTime @default(now())
+
+  race        Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
+}
+
+model LeaderboardEntry {
+  id            String   @id @default(cuid())
+  raceId         String
+  teamId         String
+  submissionId   String
+  totalScore     Float
+  taskScore      Float
+  tokenScore     Float
+  dialogueScore  Float
+  agentType      AgentType
+  createdAt      DateTime @default(now())
+
+  race           Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  team           Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model HarnessEntry {
+  id             String   @id @default(cuid())
+  raceId          String
+  teamId          String
+  harnessScore    Float
+  reasoningScore  Float
+  keywordScore    Float
+  createdAt       DateTime @default(now())
+
+  race            Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  team            Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model RidingHighlight {
+  id          String   @id @default(cuid())
+  raceId       String
+  teamId       String
+  score        Float
+  agentType    AgentType
+  excerpt      String
+  codeSnippet  String
+  createdAt    DateTime @default(now())
+
+  race         Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  team         Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model TeamComment {
+  id          String   @id @default(cuid())
+  raceId       String
+  teamId       String
+  content      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  race         Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  team         Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([raceId, teamId])
+}
