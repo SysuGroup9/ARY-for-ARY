@@ -26,9 +26,21 @@ ARY GRS 001 的全栈演示实现。当前版本使用 `Next.js + Prisma + SQLit
 ## 本地启动
 
 ```bash
+# 1. 安装依赖
 npm install
+
+# 2.  数据库配置（复制示例文件或手动创建）
+cp .env.example .env
+# 或
+echo DATABASE_URL="file:./dev.db" > .env
+
+# 3. 初始化数据库
 npx prisma migrate dev --name init
+
+# 4. 种子数据
 npm run db:seed
+
+# 5. 启动项目
 npm run dev
 ```
 
