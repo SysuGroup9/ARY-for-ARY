@@ -1,0 +1,33 @@
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# Local env
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Build artifacts
+dist/
+coverage/
+
+# Prisma / SQLite local data
+*.db
+*.db-journal
+
+# Codex workspace temp files
+work/
+outputs/
