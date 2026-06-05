@@ -1,0 +1,13 @@
+interface StatPillProps {
+  label: string;
+  value: string | number;
+}
+
+export function StatPill({ label, value }: StatPillProps) {
+  return (
+    <div className="stat-pill">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
