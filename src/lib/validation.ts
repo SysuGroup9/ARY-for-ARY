@@ -13,9 +13,19 @@ const agentEnum = z.enum([
 export const registerSchema = z.object({
   username: z.string().trim().min(3, "用户名至少 3 个字符").max(32),
   password: z.string().min(6, "密码至少 6 个字符").max(128),
-  displayName: z.string().trim().min(2, "显示名至少 2 个字符").max(64),
+  displayName: z.string().trim().max(64).optional(),
   role: roleEnum,
-});
+}).transform((data) => ({
+  ...data,
+  displayName: data.displayName?.trim() || data.username,
+})).pipe(
+  z.object({
+    username: z.string().trim().min(3, "用户名至少 3 个字符").max(32),
+    password: z.string().min(6, "密码至少 6 个字符").max(128),
+    displayName: z.string().min(2, "显示名至少 2 个字符").max(64),
+    role: roleEnum,
+  }),
+);
 
 export const loginSchema = z.object({
   username: z.string().trim().min(3, "用户名至少 3 个字符").max(32),
