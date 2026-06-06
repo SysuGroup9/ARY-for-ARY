@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_RUNNER_SECRET } from "@/lib/constants";
-import { scoreRunnerTask } from "@/lib/services/submissions";
+import { completeRunnerTask } from "@/lib/services/runner";
 
 function isAuthorized(request: Request): boolean {
   const token = request.headers.get("authorization")?.replace("Bearer ", "");
@@ -13,15 +13,21 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const formData = new FormData();
-  formData.set("submissionId", String(body.submissionId ?? ""));
-  formData.set("passRate", String(body.passRate ?? ""));
-  formData.set("codeReviewScore", String(body.codeReviewScore ?? ""));
-  formData.set("reasoningScore", String(body.reasoningScore ?? ""));
-  formData.set("runnerComment", String(body.runnerComment ?? ""));
-  formData.set("status", String(body.status ?? ""));
-
-  await scoreRunnerTask(formData);
+  await completeRunnerTask({
+    taskId: String(body.taskId ?? ""),
+    submissionId: String(body.submissionId ?? ""),
+    status: String(body.status ?? "") as "failed" | "succeeded",
+    score: Number(body.score ?? 0),
+    runnerComment: String(body.runnerComment ?? ""),
+    resultHash:
+      typeof body.resultHash === "string" && body.resultHash.length > 0
+        ? body.resultHash
+        : undefined,
+    finishedAt:
+      typeof body.finishedAt === "string" && body.finishedAt.length > 0
+        ? body.finishedAt
+        : undefined,
+  });
 
   return NextResponse.json({
     ok: true,

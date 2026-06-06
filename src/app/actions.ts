@@ -12,10 +12,12 @@ import {
 } from "@/lib/services/races";
 import {
   createSubmission,
-  publishLeaderboard,
-  publishShowcase,
-  scoreRunnerTask,
 } from "@/lib/services/submissions";
+import {
+  completeRunnerTask,
+  enqueueHarnessEvalTasks,
+  enqueueProgressEvalTasks,
+} from "@/lib/services/runner";
 import { registerTeam, updateTeamComment } from "@/lib/services/teams";
 import { loginUser, registerUser } from "@/lib/services/users";
 
@@ -115,17 +117,25 @@ export async function replyFeedbackAction(formData: FormData) {
 
 export async function publishLeaderboardAction(formData: FormData) {
   await requireRole("ORGANIZER");
-  await publishLeaderboard(String(formData.get("raceId") ?? ""));
+  await enqueueProgressEvalTasks(String(formData.get("raceId") ?? ""));
   revalidatePath("/");
 }
 
 export async function publishShowcaseAction(formData: FormData) {
   await requireRole("ORGANIZER");
-  await publishShowcase(String(formData.get("raceId") ?? ""));
+  await enqueueHarnessEvalTasks(String(formData.get("raceId") ?? ""));
   revalidatePath("/");
 }
 
 export async function scoreRunnerTaskAction(formData: FormData) {
-  await scoreRunnerTask(formData);
+  await completeRunnerTask({
+    taskId: String(formData.get("taskId") ?? ""),
+    submissionId: String(formData.get("submissionId") ?? ""),
+    status: String(formData.get("status") ?? "") as "failed" | "succeeded",
+    score: Number(formData.get("score") ?? 0),
+    runnerComment: String(formData.get("runnerComment") ?? ""),
+    resultHash: String(formData.get("resultHash") ?? "") || undefined,
+    finishedAt: String(formData.get("finishedAt") ?? "") || undefined,
+  });
   revalidatePath("/");
 }

@@ -80,6 +80,11 @@ export async function listRaces() {
           createdAt: "desc",
         },
       },
+      runnerTasks: {
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",

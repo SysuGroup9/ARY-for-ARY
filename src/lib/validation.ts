@@ -91,10 +91,19 @@ export const createSubmissionSchema = z.object({
   raceId: z.string().min(1),
   codeLabel: z.string().trim().min(1).max(120),
   codeContent: z.string().trim().min(1, "代码内容不能为空"),
-  recordLabel: z.string().trim().min(1).max(120),
-  ridingRecord: z.string().trim().min(1, "Riding Record 不能为空"),
+  recordLabel: z.string().trim().max(120).optional(),
+  ridingRecord: z.string().trim().optional(),
   tokenUsed: z.coerce.number().int().min(0),
   agentType: agentEnum,
+}).transform((data) => {
+  const ridingRecord = data.ridingRecord?.trim() || null;
+  const recordLabel = ridingRecord ? data.recordLabel?.trim() || null : null;
+
+  return {
+    ...data,
+    recordLabel,
+    ridingRecord,
+  };
 });
 
 export const feedbackSchema = z.object({
@@ -112,11 +121,12 @@ export const runnerPullSchema = z.object({
   raceId: z.string().min(1),
 });
 
-export const runnerScoreSchema = z.object({
+export const runnerResultSchema = z.object({
+  taskId: z.string().min(1),
   submissionId: z.string().min(1),
-  passRate: z.coerce.number().min(0).max(100),
-  codeReviewScore: z.coerce.number().min(0).max(100),
-  reasoningScore: z.coerce.number().min(0).max(100),
+  status: z.enum(["succeeded", "failed"]),
+  score: z.coerce.number().min(0),
   runnerComment: z.string().trim().max(2000).default(""),
-  status: z.enum(["success", "failed"]),
+  resultHash: z.string().trim().max(255).optional(),
+  finishedAt: z.string().datetime().optional(),
 });

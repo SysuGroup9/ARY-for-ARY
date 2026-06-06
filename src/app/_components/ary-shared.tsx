@@ -301,9 +301,9 @@ export function PublicRaceSections({ race }: { race: RaceListItem }) {
                   <tr key={entry.id}>
                     <td>{entry.team.name}</td>
                     <td>{entry.totalScore}</td>
-                    <td>{entry.taskScore}</td>
-                    <td>{entry.tokenScore}</td>
-                    <td>{entry.dialogueScore}</td>
+                    <td>{entry.taskScore ?? "-"}</td>
+                    <td>{entry.tokenScore ?? "-"}</td>
+                    <td>{entry.dialogueScore ?? "-"}</td>
                     <td>{getAgentLabel(entry.agentType)}</td>
                   </tr>
                 ))}
@@ -362,8 +362,8 @@ export function PublicRaceSections({ race }: { race: RaceListItem }) {
                       <tr key={entry.id}>
                         <td>{entry.team.name}</td>
                         <td>{entry.harnessScore}</td>
-                        <td>{entry.reasoningScore}</td>
-                        <td>{entry.keywordScore}</td>
+                        <td>{entry.reasoningScore ?? "-"}</td>
+                        <td>{entry.keywordScore ?? "-"}</td>
                       </tr>
                     ))}
                   </tbody>

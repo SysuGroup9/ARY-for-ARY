@@ -27,7 +27,10 @@ import {
   groupRacesByPhase,
   listRaces,
 } from "@/lib/services/races";
-import { getAgentLabel } from "@/lib/services/submissions";
+import {
+  formatRunnerTaskStatusLabel,
+  formatRunnerTaskTypeLabel,
+} from "@/lib/runner-task-helpers";
 import { getTeamForCaptain } from "@/lib/services/teams";
 import { getRoleCapabilities } from "@/lib/viewer-access";
 import { redirect } from "next/navigation";
@@ -164,7 +167,6 @@ export default async function HomePage() {
                           <input
                             defaultValue="riding-record.txt"
                             name="recordLabel"
-                            required
                           />
                         </label>
                         <label>
@@ -203,7 +205,6 @@ export default async function HomePage() {
                           <textarea
                             defaultValue="先澄清输入边界，再验证复杂度，最后用正反例检查排序稳定性。"
                             name="ridingRecord"
-                            required
                             rows={6}
                           />
                         </label>
@@ -282,12 +283,12 @@ export default async function HomePage() {
                         <div className="button-row">
                           <form action={publishLeaderboardAction}>
                             <input name="raceId" type="hidden" value={race.id} />
-                            <button type="submit">同步公开榜单</button>
+                            <button type="submit">发起进度评测</button>
                           </form>
                           <form action={publishShowcaseAction}>
                             <input name="raceId" type="hidden" value={race.id} />
                             <button className="button-secondary" type="submit">
-                              生成赛后展示
+                              发起 Harness 评测
                             </button>
                           </form>
                         </div>
@@ -410,33 +411,33 @@ export default async function HomePage() {
                 ) : null}
 
                 <Panel title="提交流程状态" eyebrow="Runner Queue">
-                  {race.submissions.length === 0 ? (
-                    <p className="muted">当前还没有提交。</p>
+                  {race.runnerTasks.length === 0 ? (
+                    <p className="muted">当前还没有 runner 任务。</p>
                   ) : (
                     <table className="table">
                       <thead>
                         <tr>
                           <th>队伍</th>
+                          <th>任务类型</th>
                           <th>状态</th>
-                          <th>Agent</th>
-                          <th>Token</th>
+                          <th>提交 ID</th>
                           <th>总分</th>
                           <th>时间</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {race.submissions.map((submission) => (
-                          <tr key={submission.id}>
+                        {race.runnerTasks.map((task) => (
+                          <tr key={task.id}>
                             <td>
                               {race.teams.find(
-                                (team) => team.id === submission.teamId,
-                              )?.name ?? submission.teamId}
+                                (team) => team.id === task.teamId,
+                              )?.name ?? task.teamId}
                             </td>
-                            <td>{submission.status}</td>
-                            <td>{getAgentLabel(submission.agentType)}</td>
-                            <td>{submission.tokenUsed}</td>
-                            <td>{submission.totalScore ?? "-"}</td>
-                            <td>{formatDateTime(submission.createdAt)}</td>
+                            <td>{formatRunnerTaskTypeLabel(task.taskType)}</td>
+                            <td>{formatRunnerTaskStatusLabel(task.status)}</td>
+                            <td>{task.submissionId}</td>
+                            <td>{task.score ?? "-"}</td>
+                            <td>{formatDateTime(task.createdAt)}</td>
                           </tr>
                         ))}
                       </tbody>

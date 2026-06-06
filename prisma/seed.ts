@@ -3,6 +3,8 @@ import { hashPassword } from "../src/lib/auth";
 import { prisma } from "../src/lib/prisma";
 
 async function main() {
+  await prisma.runnerTask.deleteMany();
+  await prisma.submissionArtifact.deleteMany();
   await prisma.teamComment.deleteMany();
   await prisma.ridingHighlight.deleteMany();
   await prisma.harnessEntry.deleteMany();
@@ -109,27 +111,20 @@ async function main() {
       status: "SCORED",
       codeLabel: "solution.ts",
       codeContent: null,
-      recordLabel: "riding-record.txt",
+      recordLabel: null,
       ridingRecord: null,
       tokenUsed: 1320,
       agentType: AgentType.OPENAI,
-      passRate: 92,
-      codeReviewScore: 88,
-      reasoningScore: 90,
-      keywordScore: 80,
-      tokenScore: 67,
-      taskScore: 90,
-      dialogueScore: 87,
       totalScore: 83.5,
       antiCheatPenalty: 0,
       runnerComment: "边界处理完整，复杂度解释清晰。",
-      runnerStatus: "success",
+      runnerStatus: "succeeded",
       pulledAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       scoredAt: new Date(now.getTime() - 90 * 60 * 1000),
     },
   });
 
-  await prisma.teamArchive.create({
+  const artifact = await prisma.submissionArtifact.create({
     data: {
       raceId: race.id,
       teamId: team.id,
@@ -142,11 +137,69 @@ async function main() {
         "先澄清输入边界，再验证复杂度，最后用正反例检查排序稳定性。",
       tokenUsed: 1320,
       agentType: AgentType.OPENAI,
-      taskScore: 90,
-      dialogueScore: 87,
-      tokenScore: 67,
-      reasoningScore: 90,
-      keywordScore: 80,
+    },
+  });
+
+  await prisma.runnerTask.createMany({
+    data: [
+      {
+        raceId: race.id,
+        teamId: team.id,
+        submissionId: submission.id,
+        artifactId: artifact.id,
+        taskType: "SUBMISSION_TEST",
+        status: "SUCCEEDED",
+        score: 83.5,
+        runnerComment: "基础测试通过，进入公开进度评测。",
+        resultHash: "sha256:submission-test-demo",
+        claimedAt: new Date(now.getTime() - 3 * 60 * 60 * 1000),
+        finishedAt: new Date(now.getTime() - 150 * 60 * 1000),
+      },
+      {
+        raceId: race.id,
+        teamId: team.id,
+        submissionId: submission.id,
+        artifactId: artifact.id,
+        taskType: "PROGRESS_EVAL",
+        status: "SUCCEEDED",
+        score: 83.5,
+        runnerComment: "当前公开进度稳定，可进入榜单。",
+        resultHash: "sha256:progress-eval-demo",
+        claimedAt: new Date(now.getTime() - 140 * 60 * 1000),
+        finishedAt: new Date(now.getTime() - 90 * 60 * 1000),
+      },
+      {
+        raceId: race.id,
+        teamId: team.id,
+        submissionId: submission.id,
+        artifactId: artifact.id,
+        taskType: "HARNESS_EVAL",
+        status: "SUCCEEDED",
+        score: 86,
+        runnerComment: "对话过程清晰，具备较好的驾驭能力。",
+        resultHash: "sha256:harness-eval-demo",
+        claimedAt: new Date(now.getTime() - 80 * 60 * 1000),
+        finishedAt: new Date(now.getTime() - 30 * 60 * 1000),
+      },
+    ],
+  });
+
+  await prisma.teamArchive.create({
+    data: {
+      raceId: race.id,
+      teamId: team.id,
+      submissionId: submission.id,
+      codeLabel: "solution.ts",
+      codeContent: artifact.codeContent,
+      recordLabel: "riding-record.txt",
+      ridingRecord: artifact.ridingRecord,
+      tokenUsed: 1320,
+      agentType: AgentType.OPENAI,
+      taskScore: null,
+      dialogueScore: null,
+      tokenScore: null,
+      reasoningScore: null,
+      keywordScore: null,
       totalScore: 83.5,
       antiCheatPenalty: 0,
     },
@@ -158,9 +211,9 @@ async function main() {
       teamId: team.id,
       submissionId: submission.id,
       totalScore: 83.5,
-      taskScore: 90,
-      tokenScore: 67,
-      dialogueScore: 87,
+      taskScore: null,
+      tokenScore: null,
+      dialogueScore: null,
       agentType: AgentType.OPENAI,
     },
   });
@@ -170,8 +223,8 @@ async function main() {
       raceId: race.id,
       teamId: team.id,
       harnessScore: 86,
-      reasoningScore: 90,
-      keywordScore: 80,
+      reasoningScore: null,
+      keywordScore: null,
     },
   });
 

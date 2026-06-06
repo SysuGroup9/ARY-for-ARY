@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_RUNNER_SECRET } from "@/lib/constants";
-import { pullRunnerTask } from "@/lib/services/submissions";
+import { pullRunnerTask } from "@/lib/services/runner";
 
 function isAuthorized(request: Request): boolean {
   const token = request.headers.get("authorization")?.replace("Bearer ", "");

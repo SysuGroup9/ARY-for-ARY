@@ -16,6 +16,21 @@ enum SubmissionStatus {
   QUEUED
   PULLED
   SCORED
+  FAILED
+}
+
+enum RunnerTaskType {
+  SUBMISSION_TEST
+  PROGRESS_EVAL
+  HARNESS_EVAL
+}
+
+enum RunnerTaskStatus {
+  QUEUED
+  CLAIMED
+  SUCCEEDED
+  FAILED
+  STALE
 }
 
 enum FeedbackStatus {
@@ -101,6 +116,8 @@ model Race {
   harnessEntries  HarnessEntry[]
   highlights      RidingHighlight[]
   teamComments    TeamComment[]
+  runnerTasks     RunnerTask[]
+  artifacts       SubmissionArtifact[]
 }
 
 model Team {
@@ -120,6 +137,8 @@ model Team {
   harnessEntries HarnessEntry[]
   highlights  RidingHighlight[]
   comments    TeamComment[]
+  runnerTasks RunnerTask[]
+  artifacts   SubmissionArtifact[]
 
   @@unique([raceId, captainId])
 }
@@ -142,7 +161,7 @@ model Submission {
   status           SubmissionStatus @default(QUEUED)
   codeLabel        String
   codeContent      String?
-  recordLabel      String
+  recordLabel      String?
   ridingRecord     String?
   tokenUsed        Int
   agentType        AgentType
@@ -163,6 +182,52 @@ model Submission {
 
   race             Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
   team             Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  artifact         SubmissionArtifact?
+  runnerTasks      RunnerTask[]
+}
+
+model SubmissionArtifact {
+  id           String    @id @default(cuid())
+  raceId       String
+  teamId       String
+  submissionId String    @unique
+  codeLabel    String
+  codeContent  String
+  recordLabel  String?
+  ridingRecord String?
+  tokenUsed    Int
+  agentType    AgentType
+  createdAt    DateTime  @default(now())
+
+  race         Race      @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  team         Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  runnerTasks  RunnerTask[]
+}
+
+model RunnerTask {
+  id            String           @id @default(cuid())
+  raceId        String
+  teamId        String
+  submissionId  String
+  artifactId    String
+  taskType      RunnerTaskType
+  status        RunnerTaskStatus @default(QUEUED)
+  score         Float?
+  runnerComment String?
+  resultHash    String?
+  claimedAt     DateTime?
+  finishedAt    DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  race          Race             @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  team          Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  submission    Submission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  artifact      SubmissionArtifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+
+  @@index([raceId, status, createdAt])
+  @@index([teamId, taskType, createdAt])
 }
 
 model TeamArchive {
@@ -172,15 +237,15 @@ model TeamArchive {
   submissionId     String
   codeLabel        String
   codeContent      String
-  recordLabel      String
-  ridingRecord     String
+  recordLabel      String?
+  ridingRecord     String?
   tokenUsed        Int
   agentType        AgentType
-  taskScore        Float
-  dialogueScore    Float
-  tokenScore       Float
-  reasoningScore   Float
-  keywordScore     Float
+  taskScore        Float?
+  dialogueScore    Float?
+  tokenScore       Float?
+  reasoningScore   Float?
+  keywordScore     Float?
   totalScore       Float
   antiCheatPenalty Float
   createdAt        DateTime @default(now())
@@ -233,14 +298,16 @@ model LeaderboardEntry {
   teamId         String
   submissionId   String
   totalScore     Float
-  taskScore      Float
-  tokenScore     Float
-  dialogueScore  Float
+  taskScore      Float?
+  tokenScore     Float?
+  dialogueScore  Float?
   agentType      AgentType
   createdAt      DateTime @default(now())
 
   race           Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
   team           Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([raceId, teamId])
 }
 
 model HarnessEntry {
@@ -248,12 +315,14 @@ model HarnessEntry {
   raceId          String
   teamId          String
   harnessScore    Float
-  reasoningScore  Float
-  keywordScore    Float
+  reasoningScore  Float?
+  keywordScore    Float?
   createdAt       DateTime @default(now())
 
   race            Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
   team            Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([raceId, teamId])
 }
 
 model RidingHighlight {
