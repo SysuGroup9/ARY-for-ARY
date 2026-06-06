@@ -22,6 +22,7 @@ import {
   RunnerApiPanel,
   aryStyles,
 } from "@/app/_components/ary-shared";
+import { RiderCodeVisibilityCheckbox } from "@/app/_components/rider-code-visibility-checkbox";
 import { loadDatabaseUser } from "@/lib/auth";
 import { formatDateTime, formatRelativeRole } from "@/lib/format";
 import {
@@ -72,8 +73,7 @@ export default async function HomePage() {
           <Panel title="账户中心" eyebrow="Auth">
             <div className="stack">
               <div className="identity-card">
-                <strong>{sessionUser.displayName}</strong>
-                <span>{sessionUser.username}</span>
+                <strong>{sessionUser.username}</strong>
                 <span>{formatRelativeRole(sessionUser.role)}</span>
               </div>
               <form action={logoutAction}>
@@ -244,7 +244,7 @@ export default async function HomePage() {
                             </div>
                             {thread.messages.map((message) => (
                               <div className="message" key={message.id}>
-                                <strong>{message.author.displayName}</strong>
+                                <strong>{message.author.username}</strong>
                                 <p>{message.content}</p>
                               </div>
                             ))}
@@ -343,24 +343,9 @@ export default async function HomePage() {
                               展示 Top Highlights
                             </label>
                             <label className="checkbox">
-                              <input
+                              <RiderCodeVisibilityCheckbox
                                 defaultChecked={race.displayShowRiderCode}
                                 name="displayShowRiderCode"
-                                type="checkbox"
-                                onChange={(e) => {
-                                  if (
-                                    race.displayShowRiderCode &&
-                                    !e.currentTarget.checked
-                                  ) {
-                                    if (
-                                      !confirm(
-                                        "取消勾选将永久清除已公开的 Rider 代码，确定吗？",
-                                      )
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }
-                                }}
                               />
                               公开 Rider 代码
                             </label>
@@ -400,7 +385,7 @@ export default async function HomePage() {
                                 </div>
                                 {thread.messages.map((message) => (
                                   <div className="message" key={message.id}>
-                                    <strong>{message.author.displayName}</strong>
+                                    <strong>{message.author.username}</strong>
                                     <p>{message.content}</p>
                                   </div>
                                 ))}

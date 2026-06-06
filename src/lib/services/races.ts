@@ -1,3 +1,4 @@
+import { buildRankedLeaderboardEntries } from "@/lib/leaderboard";
 import { prisma } from "@/lib/prisma";
 import { getRacePhase } from "@/lib/race-phase";
 import { normalizeWeights, parseKeywords } from "@/lib/services/scoring";
@@ -93,6 +94,7 @@ export async function listRaces() {
 
   return races.map((race) => ({
     ...race,
+    leaderboardEntries: buildRankedLeaderboardEntries(race.leaderboardEntries),
     phase: getRacePhase(race),
     keywords: parseKeywords(race.keywordsJson),
   }));

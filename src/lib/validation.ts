@@ -13,19 +13,8 @@ const agentEnum = z.enum([
 export const registerSchema = z.object({
   username: z.string().trim().min(3, "用户名至少 3 个字符").max(32),
   password: z.string().min(6, "密码至少 6 个字符").max(128),
-  displayName: z.string().trim().max(64).optional(),
   role: roleEnum,
-}).transform((data) => ({
-  ...data,
-  displayName: data.displayName?.trim() || data.username,
-})).pipe(
-  z.object({
-    username: z.string().trim().min(3, "用户名至少 3 个字符").max(32),
-    password: z.string().min(6, "密码至少 6 个字符").max(128),
-    displayName: z.string().min(2, "显示名至少 2 个字符").max(64),
-    role: roleEnum,
-  }),
-);
+});
 
 export const loginSchema = z.object({
   username: z.string().trim().min(3, "用户名至少 3 个字符").max(32),
@@ -89,7 +78,15 @@ export const registerTeamSchema = z.object({
 
 export const createSubmissionSchema = z.object({
   raceId: z.string().min(1),
-  codeLabel: z.string().trim().min(1).max(120),
+  codeLabel: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120)
+    .refine(
+      (value) => /\.(?:[cm]?[jt]s)$/i.test(value),
+      "Only JavaScript / TypeScript submission files are supported in this PoC",
+    ),
   codeContent: z.string().trim().min(1, "代码内容不能为空"),
   recordLabel: z.string().trim().max(120).optional(),
   ridingRecord: z.string().trim().optional(),

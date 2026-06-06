@@ -12,7 +12,6 @@ const encoder = new TextEncoder();
 export interface SessionUser {
   id: string;
   username: string;
-  displayName: string;
   role: UserRole;
 }
 
@@ -20,7 +19,6 @@ interface SessionPayload {
   sub: string;
   role: UserRole;
   username: string;
-  displayName: string;
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -38,7 +36,6 @@ export async function createSession(user: SessionUser): Promise<void> {
   const token = await new SignJWT({
     role: user.role,
     username: user.username,
-    displayName: user.displayName,
   } satisfies Omit<SessionPayload, "sub">)
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
@@ -75,7 +72,6 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       id: payload.sub,
       role: payload.role,
       username: payload.username,
-      displayName: payload.displayName,
     };
   } catch {
     return null;
@@ -117,7 +113,6 @@ export async function loadDatabaseUser(): Promise<SessionUser | null> {
   return {
     id: user.id,
     username: user.username,
-    displayName: user.displayName,
     role: user.role,
   };
 }

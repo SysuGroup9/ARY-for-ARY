@@ -1,17 +1,14 @@
 # ARY for ARY
 
-ARY GRS 001 的全栈演示实现。当前版本使用 `Next.js + Prisma + SQLite`，提供真实注册登录、赛事创建、报名、提交、反馈、Runner 拉取任务与回传评分。
+这是一个基于 `Next.js + Prisma + SQLite` 的 ARY GRS 001 全栈 PoC。
 
-## 当前实现
+当前仓库已经实现：
 
-- Organizer / Rider 真实账号体系，使用 cookie session
-- Organizer 创建赛事并配置赛后披露边界
-- Rider 报名、提交代码和 Riding Record
-- Organizer 维护题面、回复反馈、同步榜单、发布赛后展示
-- Runner API:
-  - `GET /api/runner/tasks/pull?raceId=<id>`
-  - `POST /api/runner/tasks/result`
-- Audience 无需登录可查看公开赛事、榜单和赛后展示
+- Organizer / Rider 真实账号与 Cookie Session
+- 赛事创建、组队报名、代码提交、反馈、通知
+- Runner 任务拉取与结果回传 API
+- 位于 `organizer_demo/runner_demo` 的 Organizer 私有排序评测 Runner
+- 公开榜单与 Audience 视图
 
 ## 技术栈
 
@@ -25,69 +22,235 @@ ARY GRS 001 的全栈演示实现。当前版本使用 `Next.js + Prisma + SQLit
 
 ## 本地启动
 
-```bash
-# 1. 安装依赖
+```powershell
 npm install
-
-# 2.  数据库配置（复制示例文件或手动创建）
-cp .env.example .env
-# 或
-echo DATABASE_URL="file:./dev.db" > .env
-
-# 3. 初始化数据库
+Copy-Item .env.example .env
 npx prisma migrate dev --name init
-
-# 4. 生成 TypeScript 客户端代码
 npx prisma generate
-
-# 5. 种子数据
 npm run db:seed
-
-# 6. 启动项目
 npm run dev
 ```
 
-## 验证
+## 种子演示数据
 
-```bash
-npx tsc --noEmit
+执行 `npm run db:seed` 后，仓库会生成：
+
+- Organizer 账号：`organizer_demo` / `organizer123`
+- Rider 账号：`rider_demo` / `rider123`
+- 活跃赛事 ID：`race_sort_demo`
+- Rider 默认队伍：`排序演示队`
+
+默认种子赛事已经处于进行中状态，Rider 登录后可以直接提交。
+
+## Organizer 演示 Runner
+
+Organizer 私有排序 Runner 位于 [organizer_demo/runner_demo](/D:/Desktop/ARY-for-ARY/organizer_demo/runner_demo)。
+
+启动方式：
+
+```powershell
+cd organizer_demo/runner_demo
+Copy-Item .env.example .env
+npm install
+npm run start
+```
+
+默认环境变量：
+
+- `ARY_BASE_URL=http://localhost:3000`
+- `ARY_RUNNER_TOKEN=ary-runner-dev-secret`
+- `ARY_RACE_ID=race_sort_demo`
+- `POLL_INTERVAL_MS=2000`
+- `TASK_TIMEOUT_MS=5000`
+
+## 完整演示流程
+
+下面这套流程可以完整演示：
+
+- Rider 提交 `solution.ts`
+- ARY 创建 Runner 任务
+- Organizer 私有 Runner 拉取并评分
+- Organizer 手动发起进度评测
+- 公开榜单显示分数和排名
+
+### 1. 首次准备
+
+在仓库根目录执行：
+
+```powershell
+npm install
+Copy-Item .env.example .env
+npx prisma migrate dev --name init
+npx prisma generate
+npm run db:seed
+```
+
+如果你之前已经初始化过数据库，只想把演示数据重置回默认状态，执行：
+
+```powershell
+npm run db:seed
+```
+
+### 2. 终端 A：启动 ARY Web 应用
+
+在仓库根目录执行：
+
+```powershell
+npm run dev
+```
+
+启动后访问：
+
+- 主界面：[http://localhost:3000](http://localhost:3000)
+- Audience 视图：[http://localhost:3000/audience](http://localhost:3000/audience)
+
+### 3. 终端 B：启动 Organizer 私有 Runner
+
+在 `organizer_demo/runner_demo` 目录执行：
+
+```powershell
+cd organizer_demo/runner_demo
+Copy-Item .env.example .env
+npm install
+npm run start
+```
+
+正常情况下你会看到类似日志：
+
+```text
+[runner_demo] polling race race_sort_demo every 2000ms on http://localhost:3000
+No queued tasks for race race_sort_demo.
+```
+
+这表示私有 Runner 已经开始轮询 ARY。
+
+### 4. Rider 提交代码
+
+1. 打开 [http://localhost:3000](http://localhost:3000)
+2. 使用 Rider 账号登录
+   - 用户名：`rider_demo`
+   - 密码：`rider123`
+3. 找到默认活跃赛事“排序 Runner 演示赛”
+4. 由于种子数据已经创建了默认队伍“排序演示队”，登录后可以直接提交，不需要重新报名
+5. 在提交表单中保留 `solution.ts`，填入一个可执行的 JavaScript / TypeScript 解法，例如：
+
+```ts
+export function solve(input: number[]): number[] {
+  return [...input].sort((a, b) => a - b);
+}
+```
+
+6. 点击“进入待评测队列”
+
+### 5. 观察 SUBMISSION_TEST 自动评分
+
+提交之后：
+
+1. ARY 会自动创建一条 `SUBMISSION_TEST` Runner 任务
+2. 终端 B 中的私有 Runner 会自动拉取任务并执行隐藏排序用例
+3. 成功后终端 B 会出现类似日志：
+
+```text
+Processed submission_test task <task-id>.
+```
+
+此时含义是：
+
+- 提交已经被私有 Runner 处理
+- 分数已经回传给 ARY
+- 但公开榜单还不会自动刷新，因为这个 PoC 保留“手动发榜”
+
+### 6. Organizer 手动发起进度评测
+
+1. 在浏览器中退出 Rider，重新登录 Organizer
+   - 用户名：`organizer_demo`
+   - 密码：`organizer123`
+2. 进入同一场赛事“排序 Runner 演示赛”
+3. 点击现有按钮“发起进度评测”
+
+点击后：
+
+- ARY 会创建一条 `PROGRESS_EVAL` 任务
+- 终端 B 中的私有 Runner 会再次自动拉取并评分
+- 成功后你会看到类似日志：
+
+```text
+Processed progress_eval task <task-id>.
+```
+
+### 7. 查看公开榜单
+
+现在打开以下任一页面：
+
+- [http://localhost:3000](http://localhost:3000)
+- [http://localhost:3000/audience](http://localhost:3000/audience)
+
+你应该能看到：
+
+- 榜单列中有“排名”
+- 队伍“排序演示队”
+- 总分
+- 当前排名
+
+在默认演示数据和上面的示例代码下，通常会看到该队伍以 `100` 分显示在第 `1` 名。
+
+### 8. 一次完整演示的最短命令清单
+
+如果你只想快速复现整套流程，可以直接按下面顺序执行。
+
+终端 A：
+
+```powershell
+cd D:\Desktop\ARY-for-ARY
+npm install
+Copy-Item .env.example .env
+npx prisma migrate dev --name init
+npx prisma generate
+npm run db:seed
+npm run dev
+```
+
+终端 B：
+
+```powershell
+cd D:\Desktop\ARY-for-ARY\organizer_demo\runner_demo
+Copy-Item .env.example .env
+npm install
+npm run start
+```
+
+浏览器操作：
+
+1. 用 `rider_demo / rider123` 登录并提交 `solution.ts`
+2. 等终端 B 出现 `Processed submission_test task ...`
+3. 用 `organizer_demo / organizer123` 登录并点击“发起进度评测”
+4. 等终端 B 出现 `Processed progress_eval task ...`
+5. 打开 `/audience` 查看公开榜单
+
+这个 PoC 刻意保留“手动发榜”语义：评分自动完成，但公开榜单刷新仍由 Organizer 手动触发。
+
+## 验证命令
+
+```powershell
+node --import tsx --test src/lib/*.test.ts
+node --import tsx --test organizer_demo/runner_demo/src/*.test.ts
 npm run lint
 npm run build
 ```
 
-## 演示账号
-
-项目启动后，请先注册账号。推荐使用以下用户名注册：
-
-| 角色 | 推荐用户名 | 推荐密码 |
-|------|-----------|----------|
-| Organizer | organizer_demo | organizer123 |
-| Rider | rider_demo | rider123 |
-
-注册并登录后即可开始使用。
-
-## 临时部署说明
-
-- 预览环境仍然使用 SQLite。
-- 生产运行时会把构建期种子数据库复制到可写的 `/tmp` 数据库。
-- 因此临时域名上的注册、报名、提交是“真实写数据库”的，但数据不保证长期持久。
-
 ## 数据边界
 
-ARY 保存：
+ARY 持久化保存：
 
-- 赛事公开信息
+- 赛事公开元数据
 - 队伍、反馈、通知
 - 提交状态与公开榜单投影
-- 最佳归档与赛后展示内容
+- 公开赛后展示投影
 
-ARY 不保存：
+ARY 不保存 Organizer 私有测试集，也不保存 Organizer 私有 Runner 逻辑。
 
-- Organizer 私有评测代码
-- Organizer 内网 Runner 实现
-- 完整私有评测环境
+## 相关文档
 
-## 参考文档
-
-- [PRD.md](C:/Users/xy/Documents/Codex/2026-06-05/files-mentioned-by-the-user-prd-2/PRD.md)
-- [ROADMAP.md](C:/Users/xy/Documents/Codex/2026-06-05/files-mentioned-by-the-user-prd-2/ROADMAP.md)
+- [PRD.md](/D:/Desktop/ARY-for-ARY/PRD.md)
+- [ROADMAP.md](/D:/Desktop/ARY-for-ARY/ROADMAP.md)
+- [runner_doc/organizer-demo-runner.md](/D:/Desktop/ARY-for-ARY/runner_doc/organizer-demo-runner.md)
