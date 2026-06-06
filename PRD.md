@@ -120,6 +120,10 @@ ARY 是一个**去中心化的智能体赛事平台**。它的核心理念是：
 - 查看公开排名
 - 查看赛后展示内容
 
+![图1：ARY GRS 001 用例图](riding_record/uml/图1-用例图.png)
+
+> Runner 是 Organizer 部署的外部评测程序，通过 API 与 ARY 交互，不作为人类 Actor。ARY 自动功能（收集提交、清空临时数据、更新榜单、发送通知）由系统事件驱动执行。
+
 ### 3.2 核心业务流程
 
 #### 3.2.1 Race 创建流程
@@ -180,13 +184,26 @@ Organizer 登录后填写：
 5. Organizer返回评价结果给ARY
 6. ARY在Harness能力榜单中更新并展示
 
+**图 3：核心业务时序图**
+
+![图3：核心业务时序图](riding_record/uml/图3-时序图.png)
+
+> **数据边界**：Submission 中代码/记录在 Runner 回传后立即清空；TeamArchive 保留每队最高分提交的完整副本供赛后使用；HarnessEntry 存储 Organizer 回传的驾驭能力评价结果。ARY 不持有 Organizer 私有评测代码与 Runner 实现。
+
 #### 3.2.5 比赛状态转换
+
+**图 2：Race 赛事状态机**
+
+![图2：Race 赛事状态机](riding_record/uml/图2-状态机.png)
+
+> **状态与代码映射**：报名中 = `registration` · 报名结束 = `preparation` · 比赛中 = `active` · 封榜中 = `frozen` · 比赛结束 = `finished`。封榜（Frozen）为可选阶段，由 Organizer 创建赛事时设置 `enableFreeze` 及封榜提前量 `freezeMinutesBeforeEnd` 控制。
 
 | 状态 | 条件 | Rider可操作 |
 |------|------|-------------|
 | 报名中 | 当前时间在报名开始~报名结束之间 | 可报名 |
 | 报名结束 | 当前时间在报名结束~比赛开始之间 | 不可报名，等待开始 |
 | 比赛中 | 当前时间在比赛开始~比赛结束之间 | 已报名的可提交 |
+| 封榜中 | 启用封榜，距比赛结束 ≤ freezeMinutes | 已报名的可提交，榜单隐藏 |
 | 比赛结束 | 当前时间晚于比赛结束 | 不可提交，查看最终排名 |
 
 ### 3.3 数据定义
