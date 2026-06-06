@@ -379,7 +379,9 @@ export function PublicRaceSections({ race }: { race: RaceListItem }) {
                     </span>
                   </div>
                   <p>{highlight.excerpt}</p>
-                  <pre>{highlight.codeSnippet}</pre>
+                  {race.displayShowRiderCode ? (
+                    <pre>{highlight.codeSnippet}</pre>
+                  ) : null}
                 </div>
               ))}
 

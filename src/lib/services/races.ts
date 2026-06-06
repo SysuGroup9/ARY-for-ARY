@@ -273,6 +273,78 @@ export async function clearRace(input: {
   });
 }
 
+export async function updateRaceDisplayOptions(input: {
+  organizerId: string;
+  raceId: string;
+  displayShowTrainingData: boolean;
+  displayShowOrganizerComment: boolean;
+  displayShowTopHighlights: boolean;
+  displayHighlightCount: number;
+  displayShowRiderCode: boolean;
+}) {
+  const race = await prisma.race.findUnique({
+    where: { id: input.raceId },
+  });
+
+  if (!race || race.organizerId !== input.organizerId) {
+    throw new Error("无权修改这场比赛");
+  }
+
+  const shouldClearTrainingData =
+    race.displayShowTrainingData && !input.displayShowTrainingData;
+  const shouldClearOrganizerComment =
+    race.displayShowOrganizerComment && !input.displayShowOrganizerComment;
+  const shouldClearHighlights =
+    race.displayShowTopHighlights && !input.displayShowTopHighlights;
+  const shouldClearRiderCode =
+    race.displayShowRiderCode && !input.displayShowRiderCode;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.race.update({
+      where: { id: input.raceId },
+      data: {
+        displayShowTrainingData: input.displayShowTrainingData,
+        displayShowOrganizerComment: input.displayShowOrganizerComment,
+        displayShowTopHighlights: input.displayShowTopHighlights,
+        displayHighlightCount: input.displayHighlightCount,
+        displayShowRiderCode: input.displayShowRiderCode,
+      },
+    });
+
+    if (shouldClearTrainingData) {
+      await tx.race.update({
+        where: { id: input.raceId },
+        data: { trainingDataSummary: "" },
+      });
+    }
+
+    if (shouldClearOrganizerComment) {
+      await tx.race.update({
+        where: { id: input.raceId },
+        data: { organizerComment: "" },
+      });
+    }
+
+    if (shouldClearHighlights) {
+      await tx.ridingHighlight.deleteMany({
+        where: { raceId: input.raceId },
+      });
+    }
+
+    if (shouldClearRiderCode) {
+      await tx.ridingHighlight.updateMany({
+        where: { raceId: input.raceId },
+        data: { codeSnippet: "Organizer 未公开 Rider 代码。" },
+      });
+
+      await tx.teamArchive.updateMany({
+        where: { raceId: input.raceId },
+        data: { codeContent: "" },
+      });
+    }
+  });
+}
+
 export function groupRacesByPhase<T extends { phase: string }>(races: T[]) {
   return {
     registration: races.filter((race) => race.phase === "registration"),

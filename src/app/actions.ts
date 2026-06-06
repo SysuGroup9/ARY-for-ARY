@@ -9,6 +9,7 @@ import {
   createRace,
   updateOrganizerComment,
   updateRaceContent,
+  updateRaceDisplayOptions,
 } from "@/lib/services/races";
 import {
   createSubmission,
@@ -122,6 +123,24 @@ export async function publishLeaderboardAction(formData: FormData) {
 export async function publishShowcaseAction(formData: FormData) {
   await requireRole("ORGANIZER");
   await publishShowcase(String(formData.get("raceId") ?? ""));
+  revalidatePath("/");
+}
+
+export async function updateDisplayOptionsAction(formData: FormData) {
+  const user = await requireRole("ORGANIZER");
+
+  await updateRaceDisplayOptions({
+    organizerId: user.id,
+    raceId: String(formData.get("raceId") ?? ""),
+    displayShowTrainingData: formData.get("displayShowTrainingData") === "on",
+    displayShowOrganizerComment:
+      formData.get("displayShowOrganizerComment") === "on",
+    displayShowTopHighlights:
+      formData.get("displayShowTopHighlights") === "on",
+    displayHighlightCount: Number(formData.get("displayHighlightCount") ?? 3),
+    displayShowRiderCode: formData.get("displayShowRiderCode") === "on",
+  });
+
   revalidatePath("/");
 }
 
