@@ -2,14 +2,18 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createSubmissionSchema, registerSchema } from "./validation";
 
-test("register schema falls back displayName to username when field is omitted", () => {
+test("register schema only keeps username, password, and role", () => {
   const parsed = registerSchema.parse({
     username: "new_user",
     password: "password123",
     role: "RIDER",
   });
 
-  assert.equal(parsed.displayName, "new_user");
+  assert.deepEqual(parsed, {
+    username: "new_user",
+    password: "password123",
+    role: "RIDER",
+  });
 });
 
 test("submission schema allows empty riding record and clears record label", () => {
@@ -25,4 +29,20 @@ test("submission schema allows empty riding record and clears record label", () 
 
   assert.equal(parsed.recordLabel, null);
   assert.equal(parsed.ridingRecord, null);
+});
+
+test("submission schema rejects non JavaScript or TypeScript file labels", () => {
+  assert.throws(
+    () =>
+      createSubmissionSchema.parse({
+        raceId: "race_001",
+        codeLabel: "solution.py",
+        codeContent: "print('hello')",
+        recordLabel: "",
+        ridingRecord: "",
+        tokenUsed: 12,
+        agentType: "OPENAI",
+      }),
+    /JavaScript|TypeScript|JS|TS/,
+  );
 });

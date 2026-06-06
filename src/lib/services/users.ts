@@ -7,7 +7,6 @@ export async function registerUser(formData: FormData) {
   const parsed = registerSchema.parse({
     username: formData.get("username"),
     password: formData.get("password"),
-    displayName: formData.get("displayName"),
     role: formData.get("role"),
   });
 
@@ -24,7 +23,6 @@ export async function registerUser(formData: FormData) {
   const user = await prisma.user.create({
     data: {
       username: parsed.username,
-      displayName: parsed.displayName,
       passwordHash: await hashPassword(parsed.password),
       role: parsed.role,
     },
@@ -33,7 +31,6 @@ export async function registerUser(formData: FormData) {
   await createSession({
     id: user.id,
     username: user.username,
-    displayName: user.displayName,
     role: user.role,
   });
 
@@ -64,7 +61,6 @@ export async function loginUser(formData: FormData) {
   await createSession({
     id: user.id,
     username: user.username,
-    displayName: user.displayName,
     role: user.role,
   });
 

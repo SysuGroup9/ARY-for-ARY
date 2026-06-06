@@ -288,6 +288,7 @@ export function PublicRaceSections({ race }: { race: RaceListItem }) {
             <table className="table">
               <thead>
                 <tr>
+                  <th>排名</th>
                   <th>队伍</th>
                   <th>总分</th>
                   <th>任务</th>
@@ -299,6 +300,7 @@ export function PublicRaceSections({ race }: { race: RaceListItem }) {
               <tbody>
                 {race.leaderboardEntries.map((entry) => (
                   <tr key={entry.id}>
+                    <td>{entry.rank}</td>
                     <td>{entry.team.name}</td>
                     <td>{entry.totalScore}</td>
                     <td>{entry.taskScore ?? "-"}</td>
