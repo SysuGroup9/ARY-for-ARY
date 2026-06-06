@@ -8,6 +8,7 @@ import {
   replyFeedbackAction,
   sendFeedbackAction,
   submitEntryAction,
+  updateDisplayOptionsAction,
   updateOrganizerCommentAction,
   updateRaceAction,
   updateTeamCommentAction,
@@ -306,6 +307,75 @@ export default async function HomePage() {
                             />
                           </label>
                           <button type="submit">保存总评</button>
+                        </form>
+                        <form
+                          action={updateDisplayOptionsAction}
+                          className="form-grid"
+                        >
+                          <input name="raceId" type="hidden" value={race.id} />
+                          <div className="check-grid">
+                            <label className="checkbox">
+                              <input
+                                defaultChecked={race.displayShowTrainingData}
+                                name="displayShowTrainingData"
+                                type="checkbox"
+                              />
+                              公开训练数据
+                            </label>
+                            <label className="checkbox">
+                              <input
+                                defaultChecked={
+                                  race.displayShowOrganizerComment
+                                }
+                                name="displayShowOrganizerComment"
+                                type="checkbox"
+                              />
+                              公开 Organizer 评论
+                            </label>
+                            <label className="checkbox">
+                              <input
+                                defaultChecked={
+                                  race.displayShowTopHighlights
+                                }
+                                name="displayShowTopHighlights"
+                                type="checkbox"
+                              />
+                              展示 Top Highlights
+                            </label>
+                            <label className="checkbox">
+                              <input
+                                defaultChecked={race.displayShowRiderCode}
+                                name="displayShowRiderCode"
+                                type="checkbox"
+                                onChange={(e) => {
+                                  if (
+                                    race.displayShowRiderCode &&
+                                    !e.currentTarget.checked
+                                  ) {
+                                    if (
+                                      !confirm(
+                                        "取消勾选将永久清除已公开的 Rider 代码，确定吗？",
+                                      )
+                                    ) {
+                                      e.preventDefault();
+                                    }
+                                  }
+                                }}
+                              />
+                              公开 Rider 代码
+                            </label>
+                          </div>
+                          <label>
+                            Highlight 数量
+                            <input
+                              defaultValue={race.displayHighlightCount}
+                              min={0}
+                              max={20}
+                              name="displayHighlightCount"
+                              type="number"
+                            />
+                          </label>
+                          <button type="submit">保存展示选项</button>
                         </form>
                         <form action={clearRaceAction}>
                           <input name="raceId" type="hidden" value={race.id} />
