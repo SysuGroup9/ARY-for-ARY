@@ -37,10 +37,13 @@ echo DATABASE_URL="file:./dev.db" > .env
 # 3. 初始化数据库
 npx prisma migrate dev --name init
 
-# 4. 种子数据
+# 4. 生成 TypeScript 客户端代码
+npx prisma generate
+
+# 5. 种子数据
 npm run db:seed
 
-# 5. 启动项目
+# 6. 启动项目
 npm run dev
 ```
 
