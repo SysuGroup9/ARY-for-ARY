@@ -26,9 +26,24 @@ ARY GRS 001 的全栈演示实现。当前版本使用 `Next.js + Prisma + SQLit
 ## 本地启动
 
 ```bash
+# 1. 安装依赖
 npm install
+
+# 2.  数据库配置（复制示例文件或手动创建）
+cp .env.example .env
+# 或
+echo DATABASE_URL="file:./dev.db" > .env
+
+# 3. 初始化数据库
 npx prisma migrate dev --name init
+
+# 4. 生成 TypeScript 客户端代码
+npx prisma generate
+
+# 5. 种子数据
 npm run db:seed
+
+# 6. 启动项目
 npm run dev
 ```
 
@@ -42,12 +57,14 @@ npm run build
 
 ## 演示账号
 
-- Organizer
-  - username: `organizer_demo`
-  - password: `organizer123`
-- Rider
-  - username: `rider_demo`
-  - password: `rider123`
+项目启动后，请先注册账号。推荐使用以下用户名注册：
+
+| 角色 | 推荐用户名 | 推荐密码 |
+|------|-----------|----------|
+| Organizer | organizer_demo | organizer123 |
+| Rider | rider_demo | rider123 |
+
+注册并登录后即可开始使用。
 
 ## 临时部署说明
 
@@ -73,5 +90,4 @@ ARY 不保存：
 ## 参考文档
 
 - [PRD.md](C:/Users/xy/Documents/Codex/2026-06-05/files-mentioned-by-the-user-prd-2/PRD.md)
-- [PoC.md](C:/Users/xy/Documents/Codex/2026-06-05/files-mentioned-by-the-user-prd-2/PoC.md)
 - [ROADMAP.md](C:/Users/xy/Documents/Codex/2026-06-05/files-mentioned-by-the-user-prd-2/ROADMAP.md)
