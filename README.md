@@ -57,12 +57,14 @@ npm run build
 
 ## 演示账号
 
-- Organizer
-  - username: `organizer_demo`
-  - password: `organizer123`
-- Rider
-  - username: `rider_demo`
-  - password: `rider123`
+项目启动后，请先注册账号。推荐使用以下用户名注册：
+
+| 角色 | 推荐用户名 | 推荐密码 |
+|------|-----------|----------|
+| Organizer | organizer_demo | organizer123 |
+| Rider | rider_demo | rider123 |
+
+注册并登录后即可开始使用。
 
 ## 临时部署说明
 
