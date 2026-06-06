@@ -22,12 +22,28 @@
 
 ## 本地启动
 
-```powershell
+```bash
+# 1. 安装依赖
 npm install
+
+# 2. 创建环境变量文件（任选一种）
+# Windows (CMD)
+copy .env.example .env
+# 或 Windows (PowerShell)
 Copy-Item .env.example .env
+# 或 Mac/Linux/Git Bash
+cp .env.example .env
+
+# 3. 初始化数据库
 npx prisma migrate dev --name init
+
+# 4. 生成 Prisma Client
 npx prisma generate
+
+# 5. 种子数据
 npm run db:seed
+
+# 6. 启动项目
 npm run dev
 ```
 
@@ -48,9 +64,9 @@ Organizer 私有排序 Runner 位于 [organizer_demo/runner_demo](/D:/Desktop/AR
 
 启动方式：
 
-```powershell
+```bash
 cd organizer_demo/runner_demo
-Copy-Item .env.example .env
+cp .env.example .env   # 或用 copy / Copy-Item
 npm install
 npm run start
 ```
@@ -77,9 +93,9 @@ npm run start
 
 在仓库根目录执行：
 
-```powershell
+```bash
 npm install
-Copy-Item .env.example .env
+cp .env.example .env   # 或用 copy / Copy-Item
 npx prisma migrate dev --name init
 npx prisma generate
 npm run db:seed
@@ -87,7 +103,7 @@ npm run db:seed
 
 如果你之前已经初始化过数据库，只想把演示数据重置回默认状态，执行：
 
-```powershell
+```bash
 npm run db:seed
 ```
 
@@ -95,7 +111,7 @@ npm run db:seed
 
 在仓库根目录执行：
 
-```powershell
+```bash
 npm run dev
 ```
 
@@ -108,9 +124,9 @@ npm run dev
 
 在 `organizer_demo/runner_demo` 目录执行：
 
-```powershell
+```bash
 cd organizer_demo/runner_demo
-Copy-Item .env.example .env
+cp .env.example .env   # 或用 copy / Copy-Item
 npm install
 npm run start
 ```
@@ -200,10 +216,10 @@ Processed progress_eval task <task-id>.
 
 终端 A：
 
-```powershell
+```bash
 cd D:\Desktop\ARY-for-ARY
 npm install
-Copy-Item .env.example .env
+cp .env.example .env
 npx prisma migrate dev --name init
 npx prisma generate
 npm run db:seed
@@ -212,9 +228,9 @@ npm run dev
 
 终端 B：
 
-```powershell
+```bash
 cd D:\Desktop\ARY-for-ARY\organizer_demo\runner_demo
-Copy-Item .env.example .env
+cp .env.example .env
 npm install
 npm run start
 ```
@@ -231,7 +247,7 @@ npm run start
 
 ## 验证命令
 
-```powershell
+```bash
 node --import tsx --test src/lib/*.test.ts
 node --import tsx --test organizer_demo/runner_demo/src/*.test.ts
 npm run lint
