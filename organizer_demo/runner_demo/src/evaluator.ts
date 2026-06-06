@@ -171,7 +171,7 @@ function runCaseInChild(input: {
 export async function evaluateRunnerTask(
   input: RunnerEvaluationInput,
 ): Promise<RunnerEvaluationResult> {
-  if (input.taskType === "HARNESS_EVAL") {
+  if (input.taskType === "harness_eval") {
     return fail("unsupported in organizer_demo PoC");
   }
 

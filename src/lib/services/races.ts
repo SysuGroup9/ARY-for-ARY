@@ -138,6 +138,8 @@ export async function createRace(organizerId: string, formData: FormData) {
     weightTotalTask: formData.get("weightTotalTask"),
     weightTotalToken: formData.get("weightTotalToken"),
     weightTotalDialogue: formData.get("weightTotalDialogue"),
+    harnessWeightReasoning: formData.get("harnessWeightReasoning"),
+    harnessWeightKeyword: formData.get("harnessWeightKeyword"),
   });
 
   const weights = normalizeWeights({
@@ -186,6 +188,8 @@ export async function createRace(organizerId: string, formData: FormData) {
       weightTotalTask: weights.totalTask,
       weightTotalToken: weights.totalToken,
       weightTotalDialogue: weights.totalDialogue,
+      harnessWeightReasoning: parsed.harnessWeightReasoning,
+      harnessWeightKeyword: parsed.harnessWeightKeyword,
     },
   });
 }

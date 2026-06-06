@@ -84,7 +84,7 @@ test("worker iteration idles when no task is available", async () => {
 test("worker iteration evaluates and submits supported tasks", async () => {
   let submittedPayload: unknown;
   const logs = createLogger();
-  const task = createTask("SUBMISSION_TEST");
+  const task = createTask("submission_test");
 
   const client: AryRunnerClient = {
     async pullTask() {
@@ -98,7 +98,7 @@ test("worker iteration evaluates and submits supported tasks", async () => {
   const state = await runWorkerIteration({
     client,
     evaluateTask: async (input) => {
-      assert.equal(input.taskType, "SUBMISSION_TEST");
+      assert.equal(input.taskType, "submission_test");
       return {
         runnerComment: "Passed 8/8 hidden sorting cases",
         score: 100,
@@ -127,7 +127,7 @@ test("worker iteration fails unsupported harness tasks without calling the evalu
 
   const client: AryRunnerClient = {
     async pullTask() {
-      return createTask("HARNESS_EVAL");
+      return createTask("harness_eval");
     },
     async submitResult(payload) {
       submittedPayload = payload;
@@ -182,7 +182,7 @@ test("worker iteration logs pull failures and keeps the loop alive", async () =>
 
 test("worker iteration logs submit failures and keeps the loop alive", async () => {
   const logs = createLogger();
-  const task = createTask("PROGRESS_EVAL");
+  const task = createTask("progress_eval");
 
   const client: AryRunnerClient = {
     async pullTask() {

@@ -36,7 +36,7 @@ export async function runWorkerIteration(input: {
     }
 
     const result =
-      task.taskType === "HARNESS_EVAL"
+      task.taskType === "harness_eval"
         ? buildUnsupportedHarnessResult(task.taskId, task.submissionId)
         : {
             ...(await input.evaluateTask({

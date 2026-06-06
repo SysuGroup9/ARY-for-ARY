@@ -1,7 +1,7 @@
 export type RunnerTaskType =
-  | "SUBMISSION_TEST"
-  | "PROGRESS_EVAL"
-  | "HARNESS_EVAL";
+  | "submission_test"
+  | "progress_eval"
+  | "harness_eval";
 
 export type RunnerResultStatus = "succeeded" | "failed";
 
@@ -53,6 +53,8 @@ export interface RunnerEvaluationResult {
 
 export interface RunnerResultPayload extends RunnerEvaluationResult {
   finishedAt?: string;
+  keywordScore?: number;
+  reasoningScore?: number;
   resultHash?: string;
   submissionId: string;
   taskId: string;

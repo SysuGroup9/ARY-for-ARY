@@ -99,6 +99,8 @@ model Race {
   weightTotalTask            Float
   weightTotalToken           Float
   weightTotalDialogue        Float
+  harnessWeightReasoning     Float    @default(0.6)
+  harnessWeightKeyword       Float    @default(0.4)
   organizerComment           String   @default("")
   lastLeaderboardSyncAt      DateTime?
   lastShowcaseSyncAt         DateTime?

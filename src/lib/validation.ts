@@ -53,6 +53,8 @@ const raceBaseSchema = z.object({
   weightTotalTask: z.coerce.number().positive(),
   weightTotalToken: z.coerce.number().positive(),
   weightTotalDialogue: z.coerce.number().positive(),
+  harnessWeightReasoning: z.coerce.number().positive(),
+  harnessWeightKeyword: z.coerce.number().positive(),
 });
 
 export const createRaceSchema = raceBaseSchema.superRefine((data, ctx) => {
@@ -122,7 +124,9 @@ export const runnerResultSchema = z.object({
   taskId: z.string().min(1),
   submissionId: z.string().min(1),
   status: z.enum(["succeeded", "failed"]),
-  score: z.coerce.number().min(0),
+  score: z.coerce.number().min(0).default(0),
+  reasoningScore: z.coerce.number().min(0).max(100).optional(),
+  keywordScore: z.coerce.number().min(0).max(100).optional(),
   runnerComment: z.string().trim().max(2000).default(""),
   resultHash: z.string().trim().max(255).optional(),
   finishedAt: z.string().datetime().optional(),

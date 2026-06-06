@@ -6,7 +6,7 @@ test("scores a named solve export with full marks for submission test", async ()
   const result = await evaluateRunnerTask({
     codeContent:
       "export function solve(input: number[]) { return [...input].sort((a, b) => a - b); }",
-    taskType: "SUBMISSION_TEST",
+    taskType: "submission_test",
     timeoutMs: 1_000,
   });
 
@@ -19,7 +19,7 @@ test("supports default export fallback for progress evaluation", async () => {
   const result = await evaluateRunnerTask({
     codeContent:
       "export default function solve(input: number[]) { return [...input].sort((a, b) => a - b); }",
-    taskType: "PROGRESS_EVAL",
+    taskType: "progress_eval",
     timeoutMs: 1_000,
   });
 
@@ -30,7 +30,7 @@ test("supports default export fallback for progress evaluation", async () => {
 test("returns partial score and first failure details for incorrect solutions", async () => {
   const result = await evaluateRunnerTask({
     codeContent: "export function solve(input: number[]) { return input; }",
-    taskType: "SUBMISSION_TEST",
+    taskType: "submission_test",
     timeoutMs: 1_000,
   });
 
@@ -44,7 +44,7 @@ test("fails when solve export is missing", async () => {
   const result = await evaluateRunnerTask({
     codeContent:
       "export function notSolve(input: number[]) { return [...input].sort((a, b) => a - b); }",
-    taskType: "SUBMISSION_TEST",
+    taskType: "submission_test",
     timeoutMs: 1_000,
   });
 
@@ -56,7 +56,7 @@ test("fails when solve export is missing", async () => {
 test("fails on syntax errors", async () => {
   const result = await evaluateRunnerTask({
     codeContent: "export function solve( {",
-    taskType: "SUBMISSION_TEST",
+    taskType: "submission_test",
     timeoutMs: 1_000,
   });
 
@@ -68,7 +68,7 @@ test("fails on syntax errors", async () => {
 test("fails on runtime errors", async () => {
   const result = await evaluateRunnerTask({
     codeContent: "export function solve() { throw new Error('boom'); }",
-    taskType: "SUBMISSION_TEST",
+    taskType: "submission_test",
     timeoutMs: 1_000,
   });
 
@@ -80,7 +80,7 @@ test("fails on runtime errors", async () => {
 test("fails on timeout", async () => {
   const result = await evaluateRunnerTask({
     codeContent: "export function solve() { while (true) {} }",
-    taskType: "SUBMISSION_TEST",
+    taskType: "submission_test",
     timeoutMs: 50,
   });
 
@@ -92,7 +92,7 @@ test("fails on timeout", async () => {
 test("fails when solve does not return an array", async () => {
   const result = await evaluateRunnerTask({
     codeContent: "export function solve() { return 42 as unknown as number[]; }",
-    taskType: "SUBMISSION_TEST",
+    taskType: "submission_test",
     timeoutMs: 1_000,
   });
 
@@ -105,7 +105,7 @@ test("rejects unsupported harness tasks in the organizer demo runner", async () 
   const result = await evaluateRunnerTask({
     codeContent:
       "export function solve(input: number[]) { return [...input].sort((a, b) => a - b); }",
-    taskType: "HARNESS_EVAL",
+    taskType: "harness_eval",
     timeoutMs: 1_000,
   });
 

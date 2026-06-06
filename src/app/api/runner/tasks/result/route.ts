@@ -18,6 +18,8 @@ export async function POST(request: Request) {
     submissionId: String(body.submissionId ?? ""),
     status: String(body.status ?? "") as "failed" | "succeeded",
     score: Number(body.score ?? 0),
+    reasoningScore: typeof body.reasoningScore === "number" ? body.reasoningScore : undefined,
+    keywordScore: typeof body.keywordScore === "number" ? body.keywordScore : undefined,
     runnerComment: String(body.runnerComment ?? ""),
     resultHash:
       typeof body.resultHash === "string" && body.resultHash.length > 0

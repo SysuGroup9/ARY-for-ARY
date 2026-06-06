@@ -1,4 +1,4 @@
-# ARY GRS 001 产品需求文档5.0版
+# ARY GRS 001 产品需求文档6.0版
 
 ## 1. 引言
 
@@ -19,11 +19,13 @@
 本文档分为以下部分：
 
 - 第2章：软件系统概述，说明 ARY 的定位与 GRS 001 要解决的问题
-- 第3章：功能性需求描述，定义角色、功能模块与业务流程
-- 第4章：非功能性需求，定义安全、性能等要求
-- 第5章：界面需求，定义页面与交互要求
-- 第6章：接口定义，定义 Runner 接口
-- 第7章：验收标准
+- 第3章：数据结构设计，定义系统核心数据模型与枚举
+- 第4章：功能性需求描述，定义角色、功能模块与业务流程
+- 第5章：非功能性需求，定义安全、性能等要求
+- 第6章：界面需求，定义页面与交互要求
+- 第7章：接口定义，定义 Runner 接口
+- 第8章：验收标准
+- 第9章：下一步计划，记录当前版本的已知限制与改进方向
 
 ### 1.4 术语定义
 
@@ -93,11 +95,49 @@ ARY 是一个**去中心化的智能体赛事平台**。它的核心理念是：
 - 评测由Organizer私有 Runner 完成，ARY 不参与评分
 - Organizer测试代码不离开Organizer内网
 
-## 3. 功能性需求描述
+## 3. 数据结构设计
 
-### 3.1 功能模块
+### 3.1 枚举类型
 
-#### 3.1.1 Organizer 端
+| 枚举 | 可选值 | 说明 |
+| ---- | ------ | ---- |
+| `UserRole` | `ORGANIZER` / `RIDER` | 用户角色 |
+| `SubmissionStatus` | `QUEUED` → `PULLED` → `SCORED` / `FAILED` | 提交状态流转 |
+| `RunnerTaskType` | `SUBMISSION_TEST` / `PROGRESS_EVAL` / `HARNESS_EVAL` | Runner 任务类型 |
+| `RunnerTaskStatus` | `QUEUED` → `CLAIMED` → `SUCCEEDED` / `FAILED` / `STALE` | Runner 任务状态 |
+| `FeedbackStatus` | `PENDING` / `RESOLVED` | 反馈线程状态 |
+| `NotificationTarget` | `ALL` / `TEAM` | 通知接收范围 |
+| `AgentType` | `CLAUDE` / `COPILOT` / `DEEPSEEK` / `ZHIPU` / `OPENAI` / `CUSTOM` | Rider 使用的 AI Agent 类型 |
+
+### 3.2 核心模型概览
+
+**用户**：`User` — id · username · passwordHash · role
+
+**赛事**：`Race` — 题目包标识与描述、报名/比赛时间窗口、封榜配置、评分权重（含 Harness 子分权重 `harnessWeightReasoning`/`harnessWeightKeyword`）、赛后展示开关、Token 限制、提交冷却、Cloud Studio 链接
+
+**参赛**
+- `Team` / `TeamMember`：队伍关联赛事与队长；成员仅需 displayName（userId 可选）
+- `Submission`：状态 `QUEUED → PULLED → SCORED/FAILED`；`codeContent` / `ridingRecord` 在 SCORED 后清空
+- `SubmissionArtifact`：提交内容的不可变快照，供后续多轮 Runner 任务（PROGRESS_EVAL、HARNESS_EVAL）重复使用
+
+**Runner 任务**：`RunnerTask` — taskType · status · score · reasoningScore · keywordScore · runnerComment · resultHash；新提交入队时同队伍同类型活跃任务自动置为 `STALE`
+
+**结果与榜单**
+- `TeamArchive`：PROGRESS_EVAL 成功后 upsert，保存代码快照与总分，供赛后 HARNESS_EVAL 使用
+- `LeaderboardEntry`：比赛中进度排名，每队一条，PROGRESS_EVAL 后更新
+- `HarnessEntry`：赛后驾驭能力分，HARNESS_EVAL 后更新；`harnessScore` 由 Runner 返回的 `reasoningScore`/`keywordScore` 加权计算
+- `RidingHighlight`：前 N 名 Riding 亮点，每次 HARNESS_EVAL 完成后整体重建
+
+**交互与通知**
+- `FeedbackThread` / `FeedbackMessage`：每队一条线程，仅 Organizer 和对应队伍可见
+- `Notification`：全体或指定队伍广播，Organizer 修改题目时自动创建
+- `TeamComment`：Organizer 对每支队伍的赛后单独评论
+
+## 4. 功能性需求描述
+
+### 4.1 功能模块
+
+#### 4.1.1 Organizer 端
 
 - 注册/登录
 - 创建赛事（基础信息、时间设置、评价标准、赛后展示选项、其他设置）
@@ -107,7 +147,7 @@ ARY 是一个**去中心化的智能体赛事平台**。它的核心理念是：
 - 赛后评论（可对所有队伍评论）
 - 一键清除比赛
 
-#### 3.1.2 Rider 端
+#### 4.1.2 Rider 端
 
 - 注册/登录
 - 浏览赛事列表（按状态分类）
@@ -118,7 +158,7 @@ ARY 是一个**去中心化的智能体赛事平台**。它的核心理念是：
 - 向 Organizer 反馈问题
 - 接收 Organizer 题目修改通知
 
-#### 3.1.3 Audience 端
+#### 4.1.3 Audience 端
 
 - 浏览赛事（无需登录）
 - 查看公开排名
@@ -128,9 +168,9 @@ ARY 是一个**去中心化的智能体赛事平台**。它的核心理念是：
 
 > Runner 是 Organizer 部署的外部评测程序，通过 API 与 ARY 交互，不作为人类 Actor。ARY 自动功能（收集提交、清空临时数据、更新榜单、发送通知）由系统事件驱动执行。
 
-### 3.2 核心业务流程
+### 4.2 核心业务流程
 
-#### 3.2.1 Race 创建流程
+#### 4.2.1 Race 创建流程
 
 Organizer 登录后填写：
 
@@ -168,7 +208,7 @@ Organizer 登录后填写：
 - 提交频率限制（默认24小时一次）
 - 一键清除比赛
 
-#### 3.2.2 Rider请求测试流程
+#### 4.2.2 Rider请求测试流程
 
 1. Rider点击测试
 2. 发送代码给 ARY
@@ -178,14 +218,14 @@ Organizer 登录后填写：
 6. Organizer 返回结果给 ARY
 7. ARY 返回结果给Rider
 
-#### 3.2.3 ARY规定颗粒度时间自动读取进度流程
+#### 4.2.3 ARY规定颗粒度时间自动读取进度流程
 
 1. ARY 每隔固定颗粒度给 Organizer 发送读取进度请求
 2. Organizer收到请求后，读取一次 Runner 拉取的 Rider 的代码，并计算进度
 3. Organizer返回进度结果给ARY
 4. ARY在榜单中更新，展示进度
 
-#### 3.2.4 赛后评价Rider驾驭能力流程
+#### 4.2.4 赛后评价Rider驾驭能力流程
 
 1. ARY在比赛结束后，自动读取Rider的Riding记录和代码
 2. ARY记录Rider信息
@@ -200,7 +240,7 @@ Organizer 登录后填写：
 
 > **数据边界**：Submission 中代码/记录在 Runner 回传后立即清空；TeamArchive 保留每队最高分提交的完整副本供赛后使用；HarnessEntry 存储 Organizer 回传的驾驭能力评价结果。ARY 不持有 Organizer 私有评测代码与 Runner 实现。
 
-#### 3.2.5 比赛状态转换
+#### 4.2.5 比赛状态转换
 
 **图 3：Race 赛事状态机**
 
@@ -216,9 +256,9 @@ Organizer 登录后填写：
 | 封榜中   | 启用封榜，距比赛结束 ≤ freezeMinutes | 已报名的可提交，榜单隐藏 |
 | 比赛结束 | 当前时间晚于比赛结束                  | 不可提交，查看最终排名   |
 
-### 3.3 数据定义
+### 4.3 数据定义
 
-#### 3.3.1 Organizer 侧数据（不存储在 ARY）
+#### 4.3.1 Organizer 侧数据（不存储在 ARY）
 
 - Runner环境
 - 测试代码
@@ -226,7 +266,7 @@ Organizer 登录后填写：
 - 进度评价程序
 - Harness能力评价程序
 
-#### 3.3.2 ARY 侧存储数据
+#### 4.3.2 ARY 侧存储数据
 
 - Race题目和可能有的训练数据
 - 进度榜单
@@ -234,12 +274,12 @@ Organizer 登录后填写：
 - 反馈记录
 - 通知记录
 
-#### 3.3.3 Rider临时数据
+#### 4.3.3 Rider临时数据
 
 - 提交的代码（评测完成后从队列中删除）
 - Riding 记录（赛后评价完Harness能力后删除）
 
-### 3.4 赛后展示逻辑
+### 4.4 赛后展示逻辑
 
 **直接公开（无需勾选）：**
 
@@ -253,7 +293,7 @@ Organizer 登录后填写：
 - 前N名 Riding 亮点（Organizer设置 N 值，默认3）
 - Rider代码
 
-### 3.5 Rider反馈功能
+### 4.5 Rider反馈功能
 
 Rider在比赛期间可通过 ARY 向Organizer发送私信，反馈以下问题：
 
@@ -272,7 +312,7 @@ Rider在比赛期间可通过 ARY 向Organizer发送私信，反馈以下问题�
 - pending：待处理
 - resolved：已处理
 
-### 3.6 Organizer修改题目/训练数据
+### 4.6 Organizer修改题目/训练数据
 
 Organizer收到Rider反馈后，可在比赛期间修改：
 
@@ -283,101 +323,187 @@ Organizer收到Rider反馈后，可在比赛期间修改：
 
 **通知机制**：Organizer修改后，ARY 自动向所有Rider发送通知。
 
-## 4. 非功能性需求
+## 5. 非功能性需求
 
-### 4.1 安全性
+### 5.1 安全性
 
 | ID   | 约束                                   | 实现方式                                |
 | ---- | -------------------------------------- | --------------------------------------- |
 | S-01 | Organizer测试代码不暴露给Rider         | 存储在Organizer自己数据库中，不传给 ARY |
 | S-02 | Organizer未勾选的展示选项赛后自动清除  | ARY 根据勾选决定展示内容                |
-| S-03 | Organizer可一键清除比赛                | 提供“清除比赛”按钮                    |
+| S-03 | Organizer可一键清除比赛                | 提供"清除比赛"按钮                    |
 | S-04 | Organizer可通过ARY拉取Rider数据        | Organizer通过Runner固定颗粒度自动拉取   |
 | S-05 | Rider反馈内容仅Organizer和对应队伍可见 | 反馈消息不公开                          |
 | S-06 | Organizer测试代码不离开Organizer内网   | Runner在Organizer内运行                 |
 
-### 4.2 去中心化与去持久化
+### 5.2 去中心化与去持久化
 
 - Race 数据主权属于 Organizer
 - ARY 不持久化完整 Race 数据
 - Rider代码临时存储，被Organizer存储完成后删除
 - Organizer可一键清除比赛所有数据
 
-## 5. 界面需求
+## 6. 界面需求
 
-### 5.1 赛事列表页
+### 6.1 赛事列表页
 
 - 按状态分类展示（报名中、报名结束、比赛中、比赛结束）
 - 观众无需登录即可浏览
 
-### 5.2 赛事详情页
+### 6.2 赛事详情页
 
 - 展示比赛名称、时间、规则、公开描述
 - 进度排名榜单
 - 报名按钮（登录后可见）
 - 提交入口（报名成功且比赛中可见）
 
-### 5.3 赛后展示页
+### 6.3 赛后展示页
 
 - 完整排名
 - 前 N 名 Riding 亮点（按Organizer设置）
 - Organizer评论
 - Organizer公开的题目和训练数据
 
-## 6. 接口定义（仅供参考）
+## 7. 接口定义
 
-### 6.1 Runner 拉取任务
+### 7.1 认证
+
+所有 Runner API 均通过 HTTP Header 进行 Bearer Token 认证：
+
+```
+Authorization: Bearer {RUNNER_TOKEN}
+```
+
+Token 通过服务端环境变量 `RUNNER_TOKEN` 配置，默认值为 `ary-runner-dev-secret`（仅供本地开发，生产环境必须替换）。认证失败返回 `401 Unauthorized`。
+
+### 7.2 Runner 拉取任务
 
 **请求：**
-GET /api/runner/tasks/pull
-Headers: Authorization: Bearer {runner_token}
 
-**响应：**
+```
+GET /api/runner/tasks/pull?raceId={raceId}
+Authorization: Bearer {runner_token}
+```
+
+**响应（有任务时）：**
 
 ```json
 {
-    "tasks": [
-        {
-            "taskId": "task_001",
-            "submissionId": "sub_001",
-            "teamId": "team_001",
-            "teamName": "排序小分队",
-            "codeZipUrl": "https://ary.com/temp/code.zip",
-            "ridingRecordUrl": "https://ary.com/temp/riding.txt",
-            "taskDesc": "实现快速排序",
-            "keywords": ["需求分析", "时间复杂度"]
-        }
-    ]
+  "task": {
+    "taskId": "clxxxxxxxxxxxxxx",
+    "taskType": "submission_test",
+    "raceId": "clxxxxxxxxxxxxxx",
+    "teamId": "clxxxxxxxxxxxxxx",
+    "teamName": "排序小分队",
+    "submissionId": "clxxxxxxxxxxxxxx",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "metadata": {
+      "attemptNo": 1,
+      "fileName": "solution.ts",
+      "fileSize": 1024,
+      "status": "queued",
+      "uploadedAt": "2026-01-01T00:00:00.000Z"
+    },
+    "taskPackageLabel": "sort-task-v1",
+    "taskDescription": "实现快速排序算法...",
+    "keywords": ["需求分析", "时间复杂度"],
+    "codeLabel": "solution.ts",
+    "codeContent": "// Rider 提交的代码内容",
+    "recordLabel": null,
+    "ridingRecord": null,
+    "tokenUsed": 5000,
+    "agentType": "CLAUDE"
+  }
 }
 ```
 
-### 6.2 Runner 回传结果
+**响应（无任务时）：**
+
+```json
+{ "task": null }
+```
+
+**字段说明：**
+
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| `taskId` | String | 任务唯一标识，回传结果时使用 |
+| `taskType` | String | `submission_test` / `progress_eval` / `harness_eval` |
+| `raceId` / `teamId` / `submissionId` | String | 关联标识 |
+| `teamName` | String | 队伍名称 |
+| `createdAt` | ISO 8601 | 任务入队时间 |
+| `metadata.attemptNo` | Int | 固定为 1（当前版本） |
+| `metadata.fileName` | String | 代码文件名 |
+| `metadata.fileSize` | Int | 代码字节数 |
+| `taskPackageLabel` | String | 题目包标识 |
+| `taskDescription` | String | 题目描述 |
+| `keywords` | String[] | 评分关键词列表 |
+| `codeLabel` | String | 代码文件名 |
+| `codeContent` | String | 代码内容（明文字符串） |
+| `recordLabel` | String \| null | Riding Record 文件名，仅 `harness_eval` 任务非 null |
+| `ridingRecord` | String \| null | Riding Record 内容，仅 `harness_eval` 任务非 null |
+| `tokenUsed` | Int | Rider 使用的 Token 数量 |
+| `agentType` | String | Rider 使用的 AI Agent 类型 |
+
+> 拉取成功后，ARY 将该任务状态置为 `CLAIMED`；对于 `submission_test` 任务，关联 Submission 状态同步置为 `PULLED`。
+
+### 7.3 Runner 回传结果
 
 **请求：**
+
+```
 POST /api/runner/tasks/result
-Headers: Authorization: Bearer {runner_token}
+Authorization: Bearer {runner_token}
 Content-Type: application/json
+```
 
 **请求体：**
 
 ```json
 {
-    "taskId": "task_001",
-    "submissionId": "sub_001",
-    "score": 88.6,
-    "status": "success"
+  "taskId": "clxxxxxxxxxxxxxx",
+  "submissionId": "clxxxxxxxxxxxxxx",
+  "status": "succeeded",
+  "score": 88.6,
+  "runnerComment": "8/8 test cases passed.",
+  "resultHash": "sha256:abc123...",
+  "finishedAt": "2026-01-01T00:10:00.000Z"
 }
 ```
 
-### 6.3 临时文件清理
+**字段说明：**
 
-- Runner 拉取任务后，ARY 标记任务为“已拉取”
-- 结果回传后，ARY 删除临时存储的代码压缩包和 Riding 记录文件
-- 临时文件默认 24 小时后自动过期删除
+| 字段 | 是否必填 | 说明 |
+| ---- | -------- | ---- |
+| `taskId` | 必填 | 拉取任务时获得的任务 ID |
+| `submissionId` | 必填 | 拉取任务时获得的提交 ID |
+| `status` | 必填 | `"succeeded"` 或 `"failed"` |
+| `score` | 必填 | 评测分数（Float，建议范围 0–100） |
+| `runnerComment` | 可选 | Runner 给出的评语或错误信息 |
+| `resultHash` | 可选 | 评测结果哈希，供防作弊校验使用 |
+| `finishedAt` | 可选 | 评测完成时间（ISO 8601），缺省时由 ARY 记录接收时间 |
 
-## 7. 验收标准
+**响应（成功）：**
 
-### 7.1 核心功能验收
+```json
+{ "ok": true }
+```
+
+### 7.4 数据生命周期
+
+Runner 回传结果后，ARY 按任务类型执行以下数据操作：
+
+| 任务类型 | 成功时 ARY 执行的操作 |
+| -------- | --------------------- |
+| `submission_test` | Submission 的 `codeContent` / `ridingRecord` 清空（设为 null）；`totalScore` 写入；状态置为 `SCORED` |
+| `progress_eval` | upsert `TeamArchive`（存档代码快照和分数）；upsert `LeaderboardEntry`（更新榜单分数） |
+| `harness_eval` | upsert `HarnessEntry`（Harness 分数）；重建 `RidingHighlight`（前 N 名驾驭亮点） |
+
+> `SubmissionArtifact` 是代码和 Riding Record 的不可变快照，在 `submission_test` 成功后依然保留，供后续 `progress_eval` / `harness_eval` 使用，不会被清空。
+
+## 8. 验收标准
+
+### 8.1 核心功能验收
 
 - [ ] Race 公开数据可以留在 ARY 侧
 - [ ] ARY 不需要持久化保存私密 Race 数据
@@ -385,7 +511,7 @@ Content-Type: application/json
 - [ ] 赛中 ARY 可以展示进度榜单
 - [ ] 赛后展示内容来自 Organizer 主动披露的公开数据
 
-### 7.2 功能验收
+### 8.2 功能验收
 
 - [ ] Organizer 可创建赛事（含基础信息、时间设置、评价标准、赛后展示选项、其他设置）
 - [ ] 时间设置包含报名开始/结束时间和比赛开始/结束时间
@@ -406,7 +532,7 @@ Content-Type: application/json
 - [ ] Organizer 可一键清除比赛
 - [ ] Audience 可浏览公开信息（无需登录）
 
-### 7.3 安全验收
+### 8.3 安全验收
 
 - [ ] Organizer测试代码不暴露给Rider和ARY
 - [ ] Organizer测试代码不离开Organizer内网
@@ -415,9 +541,9 @@ Content-Type: application/json
 - [ ] Rider反馈内容仅Organizer和对应队伍可见
 - [ ] Rider提交代码和记录在 Runner 回传结果后自动删除
 
-## 8. 下一步计划
+## 9. 下一步计划
 
-### 8.1 当前方案的限制
+### 9.1 当前方案的限制
 
 本版本（GRS 001）聚焦于验证核心命题：**在数据主权归 Organizer 的前提下，ARY 能否完成赛事的创建、披露、组织与展示**。以下功能在本版本中暂未实现或仅初步涉及：
 
@@ -427,8 +553,10 @@ Content-Type: application/json
 | Reviewer/Contributor 角色  | 未实现                     | 缺乏代码审核流程和角色权限区分                       |
 | Agent 给出参赛队伍建议     | 未实现                     | 赛后评价依赖人工，未接入 Agent 自动分析              |
 | 比赛期间更正题目后排名处理 | 未实现                     | 更正后是否清空排名、是否加时等规则未定义             |
+| 异常状态下的 UI 反馈       | 未实现                     | Runner 超时、评测失败、网络中断等异常发生后，Rider 侧缺乏清晰的错误状态展示与重试引导 |
+| 题目上传方式               | 仅命名无实际上传           | 创建赛事时题目包仅填写文件名字符串，无实际文件上传按钮；Rider 无法从 ARY 下载题目文件 |
 
-### 8.2 组队功能的改进方向
+### 9.2 组队功能的改进方向
 
 当前版本在报名阶段预留了组队接口（填写组员信息，不超过人数上限），但完整的组队功能尚未实现。下一版本的重点改进方向：
 
@@ -438,7 +566,7 @@ Content-Type: application/json
 4. **队伍规模限制**：Organizer 创建赛事时可设置队伍人数上限（当前已支持）
 5. **队伍成员管理**：成员可主动退出、队长可移除成员
 
-### 8.3 Reviewer/Contributor 角色的改进方向
+### 9.3 Reviewer/Contributor 角色的改进方向
 
 1. **角色定义**：小组内设置 Reviewer（审核者）和 Contributor（贡献者）角色
 2. **提交审核流程**：Contributor 提交代码后需经 Reviewer 审核通过才计入成绩

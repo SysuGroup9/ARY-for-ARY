@@ -114,10 +114,6 @@ export function buildScoreResult(input: {
   };
 }
 
-export function buildHarnessScore(reasoningScore: number, keywordScore: number): number {
-  return roundScore(reasoningScore * 0.6 + keywordScore * 0.4);
-}
-
 export function extractHighlight(record: string): string {
   const lines = record
     .split(/\r?\n/)

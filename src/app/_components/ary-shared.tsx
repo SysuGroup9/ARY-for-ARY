@@ -649,6 +649,26 @@ export function CreateRaceForm({ action }: { action: FormAction }) {
             type="number"
           />
         </label>
+        <label>
+          Harness reasoning 权重
+          <input
+            defaultValue={0.6}
+            min={0.1}
+            name="harnessWeightReasoning"
+            step="0.1"
+            type="number"
+          />
+        </label>
+        <label>
+          Harness keyword 权重
+          <input
+            defaultValue={0.4}
+            min={0.1}
+            name="harnessWeightKeyword"
+            step="0.1"
+            type="number"
+          />
+        </label>
       </div>
 
       <button type="submit">创建赛事</button>

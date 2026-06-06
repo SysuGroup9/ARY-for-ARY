@@ -385,12 +385,23 @@ async function projectHarnessEvalSuccess(
   tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
   task: Awaited<ReturnType<typeof prisma.runnerTask.findUnique>> & {
     artifact: LatestArtifactRecord;
-    race: { id: string; displayHighlightCount: number; displayShowRiderCode: boolean };
+    race: { id: string; displayHighlightCount: number; displayShowRiderCode: boolean; harnessWeightReasoning: number; harnessWeightKeyword: number };
     submission: { id: string; agentType: AgentType };
     team: { id: string };
   },
   input: RunnerResultInput,
 ) {
+  const { reasoningScore, keywordScore } = input;
+  const harnessScore =
+    reasoningScore != null && keywordScore != null
+      ? computeHarnessScore(
+          reasoningScore,
+          keywordScore,
+          task.race.harnessWeightReasoning,
+          task.race.harnessWeightKeyword,
+        )
+      : input.score;
+
   await tx.harnessEntry.upsert({
     where: {
       raceId_teamId: {
@@ -399,15 +410,15 @@ async function projectHarnessEvalSuccess(
       },
     },
     update: {
-      harnessScore: input.score,
-      keywordScore: null,
-      reasoningScore: null,
+      harnessScore,
+      reasoningScore: reasoningScore ?? null,
+      keywordScore: keywordScore ?? null,
     },
     create: {
-      harnessScore: input.score,
-      keywordScore: null,
+      harnessScore,
+      reasoningScore: reasoningScore ?? null,
+      keywordScore: keywordScore ?? null,
       raceId: task.raceId,
-      reasoningScore: null,
       teamId: task.teamId,
     },
   });
@@ -528,4 +539,16 @@ function extractCodeSnippetSafe(code: string): string {
     .split(/\r?\n/)
     .slice(0, 8)
     .join("\n");
+}
+
+function computeHarnessScore(
+  reasoningScore: number,
+  keywordScore: number,
+  weightReasoning: number,
+  weightKeyword: number,
+): number {
+  const safeR = weightReasoning > 0 ? weightReasoning : 1;
+  const safeK = weightKeyword > 0 ? weightKeyword : 1;
+  const total = safeR + safeK;
+  return Math.round((reasoningScore * (safeR / total) + keywordScore * (safeK / total)) * 10) / 10;
 }
