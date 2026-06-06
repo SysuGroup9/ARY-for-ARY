@@ -90,5 +90,4 @@ ARY 不保存：
 ## 参考文档
 
 - [PRD.md](C:/Users/xy/Documents/Codex/2026-06-05/files-mentioned-by-the-user-prd-2/PRD.md)
-- [PoC.md](C:/Users/xy/Documents/Codex/2026-06-05/files-mentioned-by-the-user-prd-2/PoC.md)
 - [ROADMAP.md](C:/Users/xy/Documents/Codex/2026-06-05/files-mentioned-by-the-user-prd-2/ROADMAP.md)
