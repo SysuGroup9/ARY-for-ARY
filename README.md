@@ -20,6 +20,11 @@
 - bcryptjs
 - jose
 
+## 演示视频
+
+- [GRS_001 完整演示](https://www.bilibili.com/video/BV1qdEs62Egz/)
+- [主要功能介绍](https://www.bilibili.com/video/BV1LZEs6LEtV/)
+
 ## 本地启动
 
 ```bash
