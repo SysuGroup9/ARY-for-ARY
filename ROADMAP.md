@@ -52,6 +52,8 @@ ARY 不持久化：
 - Organizer 同步公开榜单
 - Organizer 发布赛后展示
 - Audience 无登录浏览公开页面
+- Jumbotron Race Live View 展示公开赛事赛道态势
+- Track Profile Calibrator 复用 runtime 做设计时预览
 
 ## 临时部署策略
 
@@ -93,6 +95,14 @@ ARY 不持久化：
 - 新建首页、Server Actions、Runner API
 - 加入 seed 数据与临时部署 SQLite 方案
 - 完成 `tsc`、`lint`、`build` 验证
+
+### Iteration 4
+
+- 新增 `src/lib/jumbotron` 契约、Zod profile schema、track runtime 与 DCR adapter
+- 新增 `/jumbotron` Race Live View，支持 TOP3、KPI、赛道 SVG 渲染、message bubble、ticker 与 debug geometry
+- 新增 `/jumbotron/calibrator`，支持导入底图 / profile、编辑 centerline、lane offset、checkpoint、scrubber 多马预览和导出 JSON
+- 新增两条示例 track profile 与视觉底图资产
+- 新增 Jumbotron runtime / adapter 单元测试与 `docs/jumbotron-mvp.md`
 
 ## 错误复盘
 

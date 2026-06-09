@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="City Hairpin track background">
+  <defs>
+    <linearGradient id="ground" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#17202b"/>
+      <stop offset="0.45" stop-color="#223833"/>
+      <stop offset="1" stop-color="#5b3b2d"/>
+    </linearGradient>
+    <linearGradient id="road" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#546267"/>
+      <stop offset="0.48" stop-color="#a0a68c"/>
+      <stop offset="1" stop-color="#755f43"/>
+    </linearGradient>
+    <filter id="cityShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#000000" flood-opacity="0.36"/>
+    </filter>
+  </defs>
+  <rect width="1280" height="720" fill="url(#ground)"/>
+  <g opacity="0.38" fill="#d8d0a3">
+    <rect x="64" y="66" width="98" height="172" rx="10"/>
+    <rect x="190" y="38" width="76" height="214" rx="8"/>
+    <rect x="1012" y="84" width="92" height="168" rx="10"/>
+    <rect x="1128" y="54" width="74" height="204" rx="8"/>
+  </g>
+  <path d="M102 594 C204 510 336 560 418 496 C522 414 340 354 442 246 C528 154 736 178 824 272 C924 378 724 444 792 524 C864 610 1020 586 1130 514" fill="none" stroke="#e0c57c" stroke-width="128" stroke-linecap="round" stroke-linejoin="round" filter="url(#cityShadow)"/>
+  <path d="M102 594 C204 510 336 560 418 496 C522 414 340 354 442 246 C528 154 736 178 824 272 C924 378 724 444 792 524 C864 610 1020 586 1130 514" fill="none" stroke="url(#road)" stroke-width="104" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M102 594 C204 510 336 560 418 496 C522 414 340 354 442 246 C528 154 736 178 824 272 C924 378 724 444 792 524 C864 610 1020 586 1130 514" fill="none" stroke="#171b1b" stroke-width="4" stroke-dasharray="26 18" stroke-linecap="round" opacity="0.5"/>
+  <path d="M90 608 L132 570" stroke="#f3eee0" stroke-width="8" stroke-linecap="round"/>
+  <path d="M1112 536 L1148 492" stroke="#f3eee0" stroke-width="8" stroke-linecap="round"/>
+  <g fill="#7ec0ad" opacity="0.34">
+    <circle cx="584" cy="112" r="24"/>
+    <circle cx="622" cy="92" r="12"/>
+    <circle cx="1066" cy="650" r="20"/>
+  </g>
+</svg>

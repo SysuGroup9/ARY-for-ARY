@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "jumbotron.track-profile.v1",
+  "trackId": "city-hairpin",
+  "name": "City Hairpin",
+  "viewBox": {
+    "width": 1280,
+    "height": 720
+  },
+  "background": {
+    "href": "/jumbotron/tracks/city-hairpin/background.svg",
+    "opacity": 1,
+    "type": "image"
+  },
+  "centerline": {
+    "type": "polyline",
+    "closed": false,
+    "points": [
+      { "x": 106, "y": 590 },
+      { "x": 220, "y": 522 },
+      { "x": 384, "y": 520 },
+      { "x": 468, "y": 424 },
+      { "x": 390, "y": 310 },
+      { "x": 502, "y": 214 },
+      { "x": 726, "y": 230 },
+      { "x": 830, "y": 348 },
+      { "x": 746, "y": 480 },
+      { "x": 890, "y": 594 },
+      { "x": 1126, "y": 512 }
+    ],
+    "smoothing": 0.2
+  },
+  "direction": "counterclockwise",
+  "startFinish": {
+    "label": "START",
+    "s": 0
+  },
+  "lanes": [
+    { "laneId": "inside", "label": "Inside", "offset": -30 },
+    { "laneId": "middle", "label": "Middle", "offset": 0 },
+    { "laneId": "outside", "label": "Outside", "offset": 30 }
+  ],
+  "checkpoints": [
+    { "checkpointId": "entry", "label": "Entry", "s": 0.12 },
+    { "checkpointId": "hairpin", "label": "Hairpin", "s": 0.42 },
+    { "checkpointId": "recovery", "label": "Recovery", "s": 0.7 },
+    { "checkpointId": "finish", "label": "Finish", "s": 1 }
+  ],
+  "messageZones": [
+    { "zoneId": "early-push", "sStart": 0.05, "sEnd": 0.3, "dx": 22, "dy": -74, "priority": 2 },
+    { "zoneId": "hairpin-zone", "sStart": 0.36, "sEnd": 0.58, "dx": -220, "dy": -54, "priority": 4 },
+    { "zoneId": "finish-push", "sStart": 0.72, "sEnd": 0.94, "dx": 28, "dy": -78, "priority": 2 }
+  ],
+  "noBubbleZones": [
+    { "zoneId": "kpi-safe-zone", "sStart": 0.6, "sEnd": 0.68 }
+  ]
+}

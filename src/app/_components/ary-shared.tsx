@@ -159,6 +159,9 @@ export function AudienceEntryPanel() {
         <Link className="button button-secondary audience-link" href="/audience">
           以 Audience 进入
         </Link>
+        <Link className="button button-secondary audience-link" href="/jumbotron">
+          打开 Jumbotron 大屏
+        </Link>
       </div>
     </Panel>
   );

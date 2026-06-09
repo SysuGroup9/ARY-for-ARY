@@ -9,6 +9,7 @@
 - Runner 任务拉取与结果回传 API
 - 位于 `organizer_demo/runner_demo` 的 Organizer 私有排序评测 Runner
 - 公开榜单与 Audience 视图
+- Jumbotron Race Live View 与 Track Profile Calibrator MVP
 
 ## 技术栈
 
@@ -124,6 +125,9 @@ npm run dev
 
 - 主界面：[http://localhost:3000](http://localhost:3000)
 - Audience 视图：[http://localhost:3000/audience](http://localhost:3000/audience)
+- Jumbotron 大屏：[http://localhost:3000/jumbotron](http://localhost:3000/jumbotron)
+- Jumbotron Debug：[http://localhost:3000/jumbotron?debug=1](http://localhost:3000/jumbotron?debug=1)
+- Track Calibrator：[http://localhost:3000/jumbotron/calibrator](http://localhost:3000/jumbotron/calibrator)
 
 ### 3. 终端 B：启动 Organizer 私有 Runner
 
@@ -253,11 +257,28 @@ npm run start
 ## 验证命令
 
 ```bash
+node --import tsx --test src/lib/jumbotron/*.test.ts
 node --import tsx --test src/lib/*.test.ts
 node --import tsx --test organizer_demo/runner_demo/src/*.test.ts
 npm run lint
 npm run build
 ```
+
+## Jumbotron 子系统
+
+Jumbotron MVP 由两部分组成：
+
+- `/jumbotron`：公开 Race Live View，展示 LIVE 状态、TOP3、KPI、赛道位置、Riding Message 气泡和底部风险 ticker。
+- `/jumbotron/calibrator`：设计时 Track Profile Calibrator，支持导入底图 / profile、编辑 centerline、配置 lane offset、添加 checkpoint、预览多马和导出 JSON。
+
+核心代码：
+
+- `src/lib/jumbotron/track-runtime.ts`：路径采样、lane offset、horse pose、stale 状态和 message bubble 候选。
+- `src/lib/jumbotron/adapter.ts`：把现有 DCR `RaceListItem` 映射为 Jumbotron snapshot。
+- `assets/tracks/*/track.profile.json`：示例语义赛道资产。
+- `public/jumbotron/tracks/*/background.svg`：视觉底图，只用于展示，不作为定位事实来源。
+
+详细说明见 [docs/jumbotron-mvp.md](/D:/Desktop/ARY-for-ARY/docs/jumbotron-mvp.md)。
 
 ## 数据边界
 

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="DevCompass Oval track background">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#11221f"/>
+      <stop offset="0.5" stop-color="#233125"/>
+      <stop offset="1" stop-color="#4a3324"/>
+    </linearGradient>
+    <linearGradient id="track" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#8a5a33"/>
+      <stop offset="0.55" stop-color="#c88b4a"/>
+      <stop offset="1" stop-color="#754326"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.34"/>
+    </filter>
+  </defs>
+  <rect width="1280" height="720" fill="url(#sky)"/>
+  <path d="M0 560 C160 490 250 470 392 512 C548 558 674 546 824 492 C990 432 1128 438 1280 500 L1280 720 L0 720 Z" fill="#314f35" opacity="0.86"/>
+  <path d="M190 436 C250 236 456 146 772 136 C1010 128 1120 260 1124 424 C1128 594 930 664 710 674 C480 684 220 626 184 490 C178 468 178 452 190 436 Z" fill="none" stroke="#f3c77d" stroke-width="142" stroke-linecap="round" stroke-linejoin="round" filter="url(#softShadow)"/>
+  <path d="M190 436 C250 236 456 146 772 136 C1010 128 1120 260 1124 424 C1128 594 930 664 710 674 C480 684 220 626 184 490 C178 468 178 452 190 436 Z" fill="none" stroke="url(#track)" stroke-width="114" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M190 436 C250 236 456 146 772 136 C1010 128 1120 260 1124 424 C1128 594 930 664 710 674 C480 684 220 626 184 490 C178 468 178 452 190 436 Z" fill="none" stroke="#2c2118" stroke-width="4" stroke-linecap="round" stroke-dasharray="28 18" opacity="0.48"/>
+  <path d="M184 420 L238 525" stroke="#f7f0dc" stroke-width="8" stroke-linecap="round"/>
+  <path d="M182 420 L236 525" stroke="#1c1714" stroke-width="4" stroke-dasharray="10 8" stroke-linecap="round"/>
+  <g opacity="0.42" fill="#f7d594">
+    <rect x="910" y="92" width="210" height="54" rx="10"/>
+    <rect x="940" y="32" width="84" height="42" rx="8"/>
+    <rect x="1044" y="42" width="112" height="34" rx="8"/>
+  </g>
+  <g opacity="0.34" fill="#f7f0dc">
+    <circle cx="166" cy="156" r="22"/>
+    <circle cx="120" cy="206" r="12"/>
+    <circle cx="1132" cy="628" r="16"/>
+  </g>
+</svg>
