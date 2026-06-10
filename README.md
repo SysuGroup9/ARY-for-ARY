@@ -63,6 +63,69 @@ npm run dev
 
 默认种子赛事已经处于进行中状态，Rider 登录后可以直接提交。
 
+
+## Jumbotron 大屏
+
+赛马跑马场形式的 Agent Racing 进度可视化大屏，可独立嵌入到赛事列表页，也可全屏访问。
+
+### 快速访问
+
+本地启动后即可看到Jumbotron演示赛（seed 数据）：
+
+```
+http://localhost:3000/jumbotron?raceId=race_jumbotron_demo
+```
+
+加 `?debug=1` 可进入调试模式，叠加显示中心线采样点、车道边界线、每匹马的 `s` 值标注。
+
+### Jumbotron 演示账号
+
+执行 `npm run db:seed` 后，seed 脚本同时创建以下 Jumbotron 演示账号：
+
+| 角色 | 用户名 | 密码 | 说明 |
+|------|--------|------|------|
+| Organizer | `organizer_demo` | `organizer123` | 同时管理排序演示赛和 Jumbotron 演示赛，登录后可见两场赛事的 Organizer 控制台 |
+| Rider 1 | `jt_rider_1` | `rider123` | AlphaBot 战队队长，进度 88 |
+| Rider 2 | `jt_rider_2` | `rider123` | BetaRun 快攻队长，进度 74 |
+| Rider 3 | `jt_rider_3` | `rider123` | GammaAI 突破队长，进度 67 |
+| Rider 4 | `jt_rider_4` | `rider123` | DeltaCraft 稳进队长，进度 52 |
+| Rider 5 | `jt_rider_5` | `rider123` | EpsilonDev 新锐队长，进度 41 |
+| Rider 6 | `jt_rider_6` | `rider123` | ZetaForce 违规队长，进度 75（antiCheatPenalty=15） |
+| Rider 7 | `jt_rider_7` | `rider123` | EtaLab 跟跑队长，进度 22 |
+| Rider 8 | `jt_rider_8` | `rider123` | ThetaSync 起步队长，进度 8，无提交 |
+
+演示赛 ID 固定为 `race_jumbotron_demo`，比赛时间：2026-06-10 至 2026-06-20。
+
+### 向演示赛添加数据
+
+不需要重跑 seed，可通过以下方式动态追加：
+
+- **Prisma Studio**：`npx prisma studio`，直接在浏览器中新增 `LeaderboardEntry`（修改 `totalScore` 即可移动马匹位置）
+- **参赛者登录提交**：用任意 `jt_rider_*` 账号登录，找到 Jumbotron 演示赛，正常提交代码即可
+
+`LeaderboardEntry.totalScore`（0–100）= 进度分，直接决定马匹在赛道上的位置，修改后刷新页面（或等待 30 秒自动刷新）即可看到变化。
+
+### 数据维度说明
+
+Jumbotron 展示三个独立维度，数据来源严格不同：
+
+| 维度 | 触发方 | 任务类型 | 存储位置 | 用途 |
+|------|--------|----------|----------|------|
+| **进度** | ARY 调度 → Runner 自动拉取 | `PROGRESS_EVAL` | `LeaderboardEntry.totalScore` | 马匹在赛道上的位置 |
+| **质量** | 参赛者主动提交 | `SUBMISSION_TEST` | `Submission.totalScore`（最新 SCORED） | 马匹下方质量参考 |
+| **风险** | ARY 综合推导 | — | `antiCheatPenalty>0` → 高风险 | 风险光环颜色 |
+
+### 赛道资产
+
+Organizer 创赛时可在「赛道类型」下拉中选择：
+
+| `trackId` | 名称 | 特点 |
+|-----------|------|------|
+| `oval-standard`（默认） | 标准椭圆赛道 | 12 个控制点，经典椭圆形 |
+| `rect-standard` | 标准方形赛道 | 12 个控制点，直道 + 圆角弯道 |
+
+也可在「自定义控制点 JSON」填写 `[[x,y],...]` 覆盖所选预设的路径（1920×1080 坐标系，至少 4 个点）。
+
 ## Organizer 演示 Runner
 
 Organizer 私有排序 Runner 位于 [organizer_demo/runner_demo](/D:/Desktop/ARY-for-ARY/organizer_demo/runner_demo)。

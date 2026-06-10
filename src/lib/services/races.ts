@@ -140,6 +140,9 @@ export async function createRace(organizerId: string, formData: FormData) {
     weightTotalDialogue: formData.get("weightTotalDialogue"),
     harnessWeightReasoning: formData.get("harnessWeightReasoning"),
     harnessWeightKeyword: formData.get("harnessWeightKeyword"),
+    trackId: formData.get("trackId"),
+    trackCenterlineJson: formData.get("trackCenterlineJson"),
+    checkpointCount: formData.get("checkpointCount"),
   });
 
   const weights = normalizeWeights({
@@ -190,6 +193,9 @@ export async function createRace(organizerId: string, formData: FormData) {
       weightTotalDialogue: weights.totalDialogue,
       harnessWeightReasoning: parsed.harnessWeightReasoning,
       harnessWeightKeyword: parsed.harnessWeightKeyword,
+      trackId: parsed.trackId,
+      trackCenterlineJson: parsed.trackCenterlineJson ?? null,
+      checkpointCount: parsed.checkpointCount,
     },
   });
 }

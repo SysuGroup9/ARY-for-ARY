@@ -1,0 +1,533 @@
+/* ── Jumbotron full-screen container ── */
+.jumbotron {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  background: #0a0e1a;
+  color: #ffffff;
+  font-family: "Inter", "PingFang SC", system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.header {
+  flex: 0 0 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  background: #0d1424;
+  border-bottom: 1px solid #1e3a5f;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.02em;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.headerCenter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.liveBadge {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fca5a5;
+  background: rgba(239,68,68,0.15);
+  border: 1px solid rgba(239,68,68,0.4);
+  padding: 2px 8px;
+  border-radius: 6px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.pill {
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: #1e3a5f;
+  font-size: 12px;
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.elapsed {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+}
+
+.riders {
+  font-size: 14px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+/* ── KPI Strip ── */
+.kpiStrip {
+  flex: 0 0 56px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 12px;
+  background: #111827;
+  border-bottom: 1px solid #1e293b;
+}
+
+.kpiCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-right: 1px solid #1e293b;
+}
+
+.kpiCard:last-child {
+  border-right: none;
+}
+
+.kpiValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e2e8f0;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiLabel {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Main content ── */
+.mainContent {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Left Rail ── */
+.leftRail {
+  flex: 0 0 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 12px;
+  background: #0d1424;
+  border-right: 1px solid #1e3a5f;
+  overflow-y: auto;
+}
+
+.panel {
+  background: #111827;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.panelTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.empty {
+  font-size: 12px;
+  color: #475569;
+  margin: 0;
+}
+
+/* TOP3 */
+.top3Item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #1e293b;
+}
+
+.top3Item:last-child {
+  border-bottom: none;
+}
+
+.top3Medal {
+  font-size: 16px;
+  width: 20px;
+}
+
+.top3Dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.top3Name {
+  flex: 1;
+  font-size: 13px;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top3Score {
+  font-size: 12px;
+  font-weight: 600;
+  color: #38bdf8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Legend */
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid #1e293b;
+}
+
+.legendRow:last-child {
+  border-bottom: none;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendName {
+  flex: 1;
+  font-size: 12px;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.violationBadge {
+  font-size: 12px;
+  color: #ef4444;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── Track Stage ── */
+.trackStage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  min-width: 0;
+  background: #0f172a;
+}
+
+.trackSvg {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+}
+
+.emptyTrack {
+  color: #475569;
+  font-size: 15px;
+  text-align: center;
+  padding: 40px;
+  line-height: 1.8;
+}
+
+/* ── Bottom Ticker ── */
+.ticker {
+  flex: 0 0 48px;
+  display: flex;
+  align-items: center;
+  background: #111827;
+  border-top: 1px solid #1e3a5f;
+  overflow: hidden;
+}
+
+.tickerLabel {
+  flex-shrink: 0;
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #f97316;
+  border-right: 1px solid #1e3a5f;
+  white-space: nowrap;
+}
+
+.tickerScroll {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.tickerItems {
+  display: flex;
+  gap: 60px;
+  white-space: nowrap;
+  animation: scroll 35s linear infinite;
+  padding-left: 100%;
+}
+
+@keyframes scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-200%); }
+}
+
+.tickerItem {
+  display: inline-block;
+  font-size: 13px;
+  color: #cbd5e1;
+  padding: 0 8px;
+}
+
+.tickerItem[data-cat="violation"] {
+  color: #fca5a5;
+  font-weight: 600;
+}
+
+.tickerItem[data-cat="risk"] {
+  color: #fdba74;
+}
+
+.tickerItem[data-cat="ok"] {
+  color: #4ade80;
+}
+
+/* ── Riding Message Bubble ── */
+.bubble {
+  animation: bubblePop 4s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes bubblePop {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  72%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ── Mini-map panel ── */
+.miniMapWrap {
+  width: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+  line-height: 0;
+}
+
+/* ── Footer ── */
+.footer {
+  flex: 0 0 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  background: #0d1424;
+  border-top: 1px solid #1e293b;
+  font-size: 11px;
+  color: #475569;
+}
+
+/* ── Embedded mode (inside race pages) ── */
+.jumbotronEmbedded {
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0a0e1a;
+  border: 1px solid #1e3a5f;
+  color: #ffffff;
+  font-family: "Inter", "PingFang SC", system-ui, sans-serif;
+}
+
+.embeddedHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: #0d1424;
+  border-bottom: 1px solid #1e3a5f;
+}
+
+.embeddedBrand {
+  font-size: 14px;
+  font-weight: 700;
+  color: #38bdf8;
+  flex: 1;
+}
+
+.embeddedPhaseChip {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #1e3a5f;
+  font-size: 11px;
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.embeddedElapsed {
+  font-size: 13px;
+  font-weight: 600;
+  color: #cbd5e1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  background: #1e293b;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.embeddedTrackWrap {
+  width: 100%;
+  display: block;
+  line-height: 0;
+  background: #0f172a;
+}
+
+.embeddedStats {
+  display: flex;
+  background: #111827;
+  border-top: 1px solid #1e3a5f;
+  min-height: 64px;
+}
+
+.embeddedTop3 {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border-right: 1px solid #1e293b;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+
+.embeddedSectionLabel {
+  font-size: 9px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 2px;
+}
+
+.embeddedTop3List {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.embeddedTop3Item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #e2e8f0;
+}
+
+.embeddedDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.embeddedTeamName {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.embeddedScore {
+  font-size: 11px;
+  font-weight: 700;
+  color: #38bdf8;
+  font-variant-numeric: tabular-nums;
+}
+
+.embeddedEmpty {
+  font-size: 11px;
+  color: #475569;
+}
+
+.embeddedMiniMapCol {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-right: 1px solid #1e293b;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 130px;
+}
+
+.embeddedKpi {
+  flex: 1;
+  display: flex;
+}
+
+.embeddedKpiItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  border-right: 1px solid #1e293b;
+}
+
+.embeddedKpiItem:last-child {
+  border-right: none;
+}
+
+.embeddedKpiVal {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e2e8f0;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.embeddedKpiLbl {
+  font-size: 9px;
+  color: #64748b;
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

@@ -4,11 +4,11 @@ import { getDemoCredentials } from "@/lib/demo-credentials";
 import { formatDateTime } from "@/lib/format";
 import {
   getRacePhaseLabel,
-  shouldHidePublicLeaderboard,
   type RacePhase,
 } from "@/lib/race-phase";
 import { type RaceListItem } from "@/lib/services/races";
 import { getAgentLabel } from "@/lib/services/submissions";
+import { RaceJumbotron } from "./race-jumbotron";
 
 type FormAction = (formData: FormData) => void | Promise<void>;
 
@@ -243,8 +243,7 @@ export function PublicRaceSections({ race }: { race: RaceListItem }) {
         </div>
       </header>
 
-      <section className="grid">
-        <Panel title="公开规则" eyebrow="Public Projection">
+      <Panel title="公开规则" eyebrow="Public Projection">
           <dl className="detail-grid">
             <div>
               <dt>题目包</dt>
@@ -279,41 +278,8 @@ export function PublicRaceSections({ race }: { race: RaceListItem }) {
           </dl>
         </Panel>
 
-        <Panel title="公开榜单" eyebrow="Leaderboard">
-          {shouldHidePublicLeaderboard(race.phase) ? (
-            <p className="muted">当前处于封榜阶段，公开榜单暂时隐藏。</p>
-          ) : race.leaderboardEntries.length === 0 ? (
-            <p className="muted">尚未同步榜单。</p>
-          ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>排名</th>
-                  <th>队伍</th>
-                  <th>总分</th>
-                  <th>任务</th>
-                  <th>Token</th>
-                  <th>对话</th>
-                  <th>Agent</th>
-                </tr>
-              </thead>
-              <tbody>
-                {race.leaderboardEntries.map((entry) => (
-                  <tr key={entry.id}>
-                    <td>{entry.rank}</td>
-                    <td>{entry.team.name}</td>
-                    <td>{entry.totalScore}</td>
-                    <td>{entry.taskScore ?? "-"}</td>
-                    <td>{entry.tokenScore ?? "-"}</td>
-                    <td>{entry.dialogueScore ?? "-"}</td>
-                    <td>{getAgentLabel(entry.agentType)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Panel>
-      </section>
+      {/* Jumbotron 赛马跑道 — 替代传统公开榜单，所有人（含 Audience）可见 */}
+      <RaceJumbotron race={race} />
 
       <section className="grid">
         <Panel title="题目与赛后披露" eyebrow="Boundary">
@@ -670,6 +636,32 @@ export function CreateRaceForm({ action }: { action: FormAction }) {
           />
         </label>
       </div>
+
+      <label>
+        Jumbotron 赛道类型
+        <select name="trackId" defaultValue="oval-standard">
+          <option value="oval-standard">标准椭圆赛道（默认）</option>
+          <option value="rect-standard">标准方形赛道</option>
+        </select>
+      </label>
+      <label>
+        自定义赛道控制点 JSON（可选，填写后覆盖上方赛道类型）
+        <textarea
+          name="trackCenterlineJson"
+          rows={3}
+          placeholder={"高级选项：留空则使用上方选择的赛道类型。\n自定义格式（1920×1080 坐标系，至少 4 个点）：\n[[1600,540],[960,250],[320,540],[960,830]]"}
+        />
+      </label>
+      <label>
+        检查点数量 / 阶段数（1–10）
+        <input
+          defaultValue={3}
+          min={1}
+          max={10}
+          name="checkpointCount"
+          type="number"
+        />
+      </label>
 
       <button type="submit">创建赛事</button>
     </form>

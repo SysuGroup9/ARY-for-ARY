@@ -87,6 +87,9 @@ model Race {
   maxTeamSize                Int      @default(5)
   submissionIntervalHours    Int      @default(24)
   cloudStudioUrl             String
+  trackId                    String   @default("oval-standard")
+  trackCenterlineJson        String?
+  checkpointCount            Int      @default(3)
   displayShowTrainingData    Boolean  @default(false)
   displayShowOrganizerComment Boolean @default(false)
   displayShowTopHighlights   Boolean  @default(false)

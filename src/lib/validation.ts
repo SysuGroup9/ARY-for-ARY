@@ -55,6 +55,18 @@ const raceBaseSchema = z.object({
   weightTotalDialogue: z.coerce.number().positive(),
   harnessWeightReasoning: z.coerce.number().positive(),
   harnessWeightKeyword: z.coerce.number().positive(),
+  trackId: z.enum(["oval-standard", "rect-standard"]).default("oval-standard"),
+  trackCenterlineJson: z.string().trim().nullable().optional().refine(
+    (v) => {
+      if (!v) return true;
+      try {
+        const pts = JSON.parse(v);
+        return Array.isArray(pts) && pts.length >= 4;
+      } catch { return false; }
+    },
+    { message: "控制点格式错误：需为 JSON 数组（至少 4 个点），如 [[960,200],[1600,540],...]" }
+  ).transform((v) => v || null),
+  checkpointCount: z.coerce.number().int().min(1).max(10).default(3),
 });
 
 export const createRaceSchema = raceBaseSchema.superRefine((data, ctx) => {

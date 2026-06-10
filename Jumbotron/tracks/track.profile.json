@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "trackId": "oval-standard",
+  "name": "标准椭圆赛道",
+  "viewBox": { "width": 1920, "height": 1080 },
+  "centerline": {
+    "type": "polyline",
+    "closed": true,
+    "smoothing": "catmull-rom",
+    "points": [
+      [1600, 540],
+      [1514, 395],
+      [1280, 289],
+      [960,  250],
+      [640,  289],
+      [406,  395],
+      [320,  540],
+      [406,  685],
+      [640,  791],
+      [960,  830],
+      [1280, 791],
+      [1514, 685]
+    ]
+  },
+  "direction": "counterclockwise",
+  "startFinish": { "s": 0.0 },
+  "lanes": [
+    { "laneId": "lane-0", "offset": -66 },
+    { "laneId": "lane-1", "offset": -47 },
+    { "laneId": "lane-2", "offset": -28 },
+    { "laneId": "lane-3", "offset": -9  },
+    { "laneId": "lane-4", "offset":   9 },
+    { "laneId": "lane-5", "offset":  28 },
+    { "laneId": "lane-6", "offset":  47 },
+    { "laneId": "lane-7", "offset":  66 }
+  ],
+  "checkpoints": [
+    { "id": "cp-1", "s": 0.25, "label": "第一弯道" },
+    { "id": "cp-2", "s": 0.50, "label": "半程" },
+    { "id": "cp-3", "s": 0.75, "label": "第三弯道" }
+  ],
+  "messageZones": [
+    { "sStart": 0.1,  "sEnd": 0.4,  "side": "left"  },
+    { "sStart": 0.6,  "sEnd": 0.9,  "side": "right" }
+  ],
+  "noBubbleZones": [
+    { "sStart": 0.0,  "sEnd": 0.05 },
+    { "sStart": 0.95, "sEnd": 1.0  }
+  ]
+}
