@@ -1,29 +1,17 @@
-# ARY for ARY
+# ARY for ARY — GRS 002
 
-这是一个基于 `Next.js + Prisma + SQLite` 的 ARY GRS 001 全栈 PoC。
-
-当前仓库已经实现：
-
-- Organizer / Rider 真实账号与 Cookie Session
-- 赛事创建、组队报名、代码提交、反馈、通知
-- Runner 任务拉取与结果回传 API
-- 位于 `organizer_demo/runner_demo` 的 Organizer 私有排序评测 Runner
-- 公开榜单与 Audience 视图
+基于 `Next.js + Prisma + SQLite` 的 ARY Agent Racing 全栈 PoC，核心展示 **Jumbotron 赛马大屏可视化子系统**。
 
 ## 技术栈
 
-- Next.js 16 App Router
-- TypeScript
-- Prisma 7
-- SQLite
-- Zod
-- bcryptjs
-- jose
+| 层 | 技术 |
+|---|---|
+| 框架 | Next.js 15 App Router + TypeScript |
+| ORM | Prisma 7 + SQLite |
+| 校验 | Zod |
+| 认证 | bcryptjs + jose (Cookie Session) |
 
-## 演示视频
-
-- [GRS_001 完整演示](https://www.bilibili.com/video/BV1qdEs62Egz/)
-- [主要功能介绍](https://www.bilibili.com/video/BV1LZEs6LEtV/)
+---
 
 ## 本地启动
 
@@ -31,287 +19,222 @@
 # 1. 安装依赖
 npm install
 
-# 2. 创建环境变量文件（任选一种）
-# Windows (CMD)
-copy .env.example .env
-# 或 Windows (PowerShell)
-Copy-Item .env.example .env
-# 或 Mac/Linux/Git Bash
-cp .env.example .env
+# 2. 环境变量
+copy .env.example .env          # Windows CMD
+# 或 cp .env.example .env       # Git Bash / Mac / Linux
 
-# 3. 初始化数据库
-npx prisma migrate dev --name init
-
-# 4. 生成 Prisma Client
+# 3. 数据库迁移 + 生成客户端
+npx prisma migrate deploy
 npx prisma generate
 
-# 5. 种子数据
+# 4. 种子数据（每次执行都会全量重置）
 npm run db:seed
 
-# 6. 启动项目
+# 5. 启动
 npm run dev
 ```
 
-## 种子演示数据
+启动后访问 [http://localhost:3000](http://localhost:3000)
 
-执行 `npm run db:seed` 后，仓库会生成：
+---
 
-- Organizer 账号：`organizer_demo` / `organizer123`
-- Rider 账号：`rider_demo` / `rider123`
-- 活跃赛事 ID：`race_sort_demo`
-- Rider 默认队伍：`排序演示队`
+## GRS 002 评审演示指南
 
-默认种子赛事已经处于进行中状态，Rider 登录后可以直接提交。
+> 本节供评审直接使用，按顺序操作即可完整覆盖 GRS 002 所有评分点。
 
-
-## Jumbotron 大屏
-
-赛马跑马场形式的 Agent Racing 进度可视化大屏，可独立嵌入到赛事列表页，也可全屏访问。
-
-### 快速访问
-
-本地启动后即可看到Jumbotron演示赛（seed 数据）：
+### 第一步：启动并查看 Jumbotron 大屏
 
 ```
 http://localhost:3000/jumbotron?raceId=race_jumbotron_demo
 ```
 
-加 `?debug=1` 可进入调试模式，叠加显示中心线采样点、车道边界线、每匹马的 `s` 值标注。
+大屏展示 8 支队伍的实时赛马状态，涵盖：
 
-### Jumbotron 演示账号
+| 视觉元素 | 说明 |
+|---|---|
+| 赛道底图 | 真实赛场照片为背景，土黄色赛道环覆盖其上 |
+| 🐴 马匹位置 | 由 `LeaderboardEntry.totalScore`（进度分）驱动，非计时器 |
+| 排名徽章 | 马匹中心显示当前排名数字 |
+| ↑↓ 排名变化 | 与上次 30 s 刷新快照对比，绿色上升 / 红色下降 |
+| 风险光环 | 虚线彩圈（橙=中风险，红=高风险）|
+| 违规徽章 | 红色 `!` 角标，来自 `antiCheatPenalty > 0` |
+| 气泡消息 | 首次超越 25/50/75/100% 里程碑或排名变化时弹出 |
+| 检查点 | 琥珀黄虚线横栏，均匀分布在赛道上 |
+| 起/终点 | 黑白棋格线 |
+| 左侧面板 | 活跃骑手 TOP3、赛道小地图、KPI（Token/排名/提交数）|
+| 底部 ticker | 违规与高风险队伍滚动提示 |
 
-执行 `npm run db:seed` 后，seed 脚本同时创建以下 Jumbotron 演示账号：
+加 `?debug=1` 可激活调试叠加层（中心线、车道边界、每匹马 s 值、碰撞框）：
+
+```
+http://localhost:3000/jumbotron?raceId=race_jumbotron_demo&debug=1
+```
+
+### 第二步：演示 Calibrator 赛道校准工具
+
+```
+http://localhost:3000/jumbotron/calibrator
+```
+
+Calibrator 是独立可视化赛道编辑工具，用于生成自定义赛道轮廓（`TrackProfile`），与 Jumbotron 共用同一套 `TrackRuntime` 引擎。
+
+**主要操作：**
+
+1. **绘制控制点**：单击画布空白处添加点，拖拽移动，双击删除
+2. **加载预设**：点击"预设：椭圆"或"预设：方形"快速加载示例赛道
+3. **实时预览**：≥ 4 个控制点后自动渲染 Catmull-Rom 平滑曲线、车道边界、起/终线、检查点
+4. **马匹预览**：拖动"位置 S"滑块，查看任意弧长位置的马匹分布（验证 lane offset 正确性）
+5. **配置车道**：调整车道数和半宽，lane offset 公式 `offset = -halfWidth + (2×halfWidth)/(N+1) × (idx+1)`
+6. **设置方向**：顺时针 / 逆时针
+7. **设置起/终点**：S 值（0.0–1.0）控制起跑线位置
+8. **上传底图**：导入真实赛场图片对照描绘轨迹，透明度可调
+9. **验证 + 导出**：点击"验证"检查点数/弧长/ID；"下载 profile.json"导出完整 TrackProfile；"复制控制点"粘贴到创建比赛表单
+
+### 第三步：创建带自定义赛道的新比赛
+
+1. 用 `organizer_demo / organizer123` 登录
+2. 进入「创建新赛事」页面
+3. 在 **Jumbotron 赛道** 部分：
+   - 选择赛道类型（椭圆 / 方形）
+   - 选择赛道方向（顺时针 / 逆时针）
+   - 设置起/终点位置 S
+   - 或点击链接打开 Calibrator 生成自定义控制点，粘贴到「自定义控制点 JSON」字段
+
+### 第四步：观察数据驱动的马匹更新
+
+1. 用任意 `jt_rider_*` 账号提交代码 → 触发 `SUBMISSION_TEST`，质量分更新
+2. 用 `organizer_demo` 登录演示赛 → 点击"发起进度评测" → 触发 `PROGRESS_EVAL`，马匹位置更新
+3. 刷新 `/jumbotron?raceId=race_jumbotron_demo` → 30 s 内自动轮询更新（或手动刷新）
+
+---
+
+## 种子演示账号
+
+执行 `npm run db:seed` 后自动创建：
+
+### 通用账号
 
 | 角色 | 用户名 | 密码 | 说明 |
 |------|--------|------|------|
-| Organizer | `organizer_demo` | `organizer123` | 同时管理排序演示赛和 Jumbotron 演示赛，登录后可见两场赛事的 Organizer 控制台 |
-| Rider 1 | `jt_rider_1` | `rider123` | AlphaBot 战队队长，进度 88 |
-| Rider 2 | `jt_rider_2` | `rider123` | BetaRun 快攻队长，进度 74 |
-| Rider 3 | `jt_rider_3` | `rider123` | GammaAI 突破队长，进度 67 |
-| Rider 4 | `jt_rider_4` | `rider123` | DeltaCraft 稳进队长，进度 52 |
-| Rider 5 | `jt_rider_5` | `rider123` | EpsilonDev 新锐队长，进度 41 |
-| Rider 6 | `jt_rider_6` | `rider123` | ZetaForce 违规队长，进度 75（antiCheatPenalty=15） |
-| Rider 7 | `jt_rider_7` | `rider123` | EtaLab 跟跑队长，进度 22 |
-| Rider 8 | `jt_rider_8` | `rider123` | ThetaSync 起步队长，进度 8，无提交 |
+| Organizer | `organizer_demo` | `organizer123` | 管理两场赛事（排序演示 + Jumbotron 演示），登录可见完整 Organizer 控制台 |
+| Rider | `rider_demo` | `rider123` | 排序演示赛队长 |
 
-演示赛 ID 固定为 `race_jumbotron_demo`，比赛时间：2026-06-10 至 2026-06-20。
+### Jumbotron 演示账号（8 支队伍）
 
-### 向演示赛添加数据
+| 用户名 | 密码 | 队伍 | 进度 | 状态 |
+|--------|------|------|------|------|
+| `jt_rider_1` | `rider123` | AlphaBot 战队 | 88 | 领跑 |
+| `jt_rider_2` | `rider123` | BetaRun 快攻 | 74 | 正常 |
+| `jt_rider_3` | `rider123` | GammaAI 突破 | 67 | 正常 |
+| `jt_rider_4` | `rider123` | DeltaCraft 稳进 | 52 | 正常 |
+| `jt_rider_5` | `rider123` | EpsilonDev 新锐 | 41 | 正常 |
+| `jt_rider_6` | `rider123` | ZetaForce 违规 | 75 | ⚠ antiCheatPenalty=15，高风险 + 违规徽章 |
+| `jt_rider_7` | `rider123` | EtaLab 跟跑 | 22 | 落后 |
+| `jt_rider_8` | `rider123` | ThetaSync 起步 | 8 | 几乎无提交 |
 
-不需要重跑 seed，可通过以下方式动态追加：
+---
 
-- **Prisma Studio**：`npx prisma studio`，直接在浏览器中新增 `LeaderboardEntry`（修改 `totalScore` 即可移动马匹位置）
-- **参赛者登录提交**：用任意 `jt_rider_*` 账号登录，找到 Jumbotron 演示赛，正常提交代码即可
+## Jumbotron 子系统详解
 
-`LeaderboardEntry.totalScore`（0–100）= 进度分，直接决定马匹在赛道上的位置，修改后刷新页面（或等待 30 秒自动刷新）即可看到变化。
+### 路由
 
-### 数据维度说明
+| URL | 说明 |
+|-----|------|
+| `/jumbotron` | 选择比赛页面（列出所有赛事） |
+| `/jumbotron?raceId=<id>` | 全屏 Jumbotron 大屏 |
+| `/jumbotron?raceId=<id>&debug=1` | 调试模式（叠加技术信息） |
+| `/jumbotron/calibrator` | 赛道校准编辑工具（无需登录） |
 
-Jumbotron 展示三个独立维度，数据来源严格不同：
+### 数据三维度
 
-| 维度 | 触发方 | 任务类型 | 存储位置 | 用途 |
-|------|--------|----------|----------|------|
-| **进度** | ARY 调度 → Runner 自动拉取 | `PROGRESS_EVAL` | `LeaderboardEntry.totalScore` | 马匹在赛道上的位置 |
-| **质量** | 参赛者主动提交 | `SUBMISSION_TEST` | `Submission.totalScore`（最新 SCORED） | 马匹下方质量参考 |
-| **风险** | ARY 综合推导 | — | `antiCheatPenalty>0` → 高风险 | 风险光环颜色 |
+| 维度 | 触发方 | 任务类型 | 存储位置 |
+|------|--------|----------|----------|
+| **进度**（马匹位置） | ARY 调度 → Runner 自动 | `PROGRESS_EVAL` | `LeaderboardEntry.totalScore` |
+| **质量**（辅助参考） | 参赛者主动提交 | `SUBMISSION_TEST` | `Submission.totalScore`（最新 SCORED） |
+| **风险/违规** | ARY 推导 | — | `antiCheatPenalty > 0` |
 
-### 赛道资产
+> 进度和质量来源完全独立，不可混淆。排名变化基于进度分的 30 s 轮询对比。
 
-Organizer 创赛时可在「赛道类型」下拉中选择：
+### 赛道系统
 
-| `trackId` | 名称 | 特点 |
-|-----------|------|------|
-| `oval-standard`（默认） | 标准椭圆赛道 | 12 个控制点，经典椭圆形 |
-| `rect-standard` | 标准方形赛道 | 12 个控制点，直道 + 圆角弯道 |
+**内置预设赛道：**
 
-也可在「自定义控制点 JSON」填写 `[[x,y],...]` 覆盖所选预设的路径（1920×1080 坐标系，至少 4 个点）。
+| trackId | 名称 | 控制点 |
+|---------|------|--------|
+| `oval-standard`（默认）| 标准椭圆 | 12 个 |
+| `rect-standard` | 标准方形 | 12 个 |
 
-## Organizer 演示 Runner
+**自定义赛道（创建比赛表单）：**
 
-Organizer 私有排序 Runner 位于 [organizer_demo/runner_demo](/D:/Desktop/ARY-for-ARY/organizer_demo/runner_demo)。
+- **赛道类型**：下拉选择预设
+- **赛道方向**：顺时针 / 逆时针
+- **起/终点 S**：0.0–1.0，控制起跑线位置
+- **自定义控制点 JSON**：`[[x,y],...]` 格式，1920×1080 坐标系，≥ 4 个点
+- 可用 `/jumbotron/calibrator` 可视化生成后粘贴到此字段
 
-启动方式：
+**Calibrator 与 Jumbotron 的关系：**
+
+```
+Calibrator (编辑)
+  └─ TrackRuntime (共享引擎)
+        ├─ sampleAt(s) → pos / tangent / normal
+        ├─ computeHorsePose(entryId, s, laneOffset, zIndex)
+        └─ getPathD(offset, N) → SVG path string
+              └─ Jumbotron (渲染)
+```
+
+两者完全共用同一套 `Jumbotron/track-runtime.ts` 引擎，Calibrator 中看到的赛道和马匹布局即最终大屏效果。
+
+### 实时更新机制
+
+- 大屏每 30 秒执行 `router.refresh()` 拉取新服务端数据
+- 排名变化通过 `sessionStorage` 保存上次快照，刷新后对比检测 `↑↓`
+- 气泡消息：里程碑（25/50/75/100%）优先于排名变化；全局最多 3 条；`noBubbleZones` 过滤赛道缝合区；4 秒 CSS 淡出
+
+---
+
+## Organizer 演示 Runner（排序题）
+
+排序演示赛的私有 Runner 位于 `organizer_demo/runner_demo`：
 
 ```bash
 cd organizer_demo/runner_demo
-cp .env.example .env   # 或用 copy / Copy-Item
+copy .env.example .env   # 或 cp .env.example .env
 npm install
 npm run start
 ```
 
-默认环境变量：
-
+Runner 默认配置：
 - `ARY_BASE_URL=http://localhost:3000`
-- `ARY_RUNNER_TOKEN=ary-runner-dev-secret`
 - `ARY_RACE_ID=race_sort_demo`
-- `POLL_INTERVAL_MS=2000`
-- `TASK_TIMEOUT_MS=5000`
+- 每 2 s 轮询一次
 
-## 完整演示流程
+---
 
-下面这套流程可以完整演示：
+## 完整演示流程（排序题 Runner）
 
-- Rider 提交 `solution.ts`
-- ARY 创建 Runner 任务
-- Organizer 私有 Runner 拉取并评分
-- Organizer 手动发起进度评测
-- 公开榜单显示分数和排名
-
-### 1. 首次准备
-
-在仓库根目录执行：
-
+**终端 A**（ARY 主程序）：
 ```bash
-npm install
-cp .env.example .env   # 或用 copy / Copy-Item
-npx prisma migrate dev --name init
-npx prisma generate
+npm install && cp .env.example .env
+npx prisma migrate deploy && npx prisma generate
 npm run db:seed
-```
-
-如果你之前已经初始化过数据库，只想把演示数据重置回默认状态，执行：
-
-```bash
-npm run db:seed
-```
-
-### 2. 终端 A：启动 ARY Web 应用
-
-在仓库根目录执行：
-
-```bash
 npm run dev
 ```
 
-启动后访问：
-
-- 主界面：[http://localhost:3000](http://localhost:3000)
-- Audience 视图：[http://localhost:3000/audience](http://localhost:3000/audience)
-
-### 3. 终端 B：启动 Organizer 私有 Runner
-
-在 `organizer_demo/runner_demo` 目录执行：
-
+**终端 B**（私有 Runner）：
 ```bash
 cd organizer_demo/runner_demo
-cp .env.example .env   # 或用 copy / Copy-Item
-npm install
-npm run start
+cp .env.example .env && npm install && npm run start
 ```
 
-正常情况下你会看到类似日志：
-
-```text
-[runner_demo] polling race race_sort_demo every 2000ms on http://localhost:3000
-No queued tasks for race race_sort_demo.
-```
-
-这表示私有 Runner 已经开始轮询 ARY。
-
-### 4. Rider 提交代码
-
-1. 打开 [http://localhost:3000](http://localhost:3000)
-2. 使用 Rider 账号登录
-   - 用户名：`rider_demo`
-   - 密码：`rider123`
-3. 找到默认活跃赛事“排序 Runner 演示赛”
-4. 由于种子数据已经创建了默认队伍“排序演示队”，登录后可以直接提交，不需要重新报名
-5. 在提交表单中保留 `solution.ts`，填入一个可执行的 JavaScript / TypeScript 解法，例如：
-
-```ts
-export function solve(input: number[]): number[] {
-  return [...input].sort((a, b) => a - b);
-}
-```
-
-6. 点击“进入待评测队列”
-
-### 5. 观察 SUBMISSION_TEST 自动评分
-
-提交之后：
-
-1. ARY 会自动创建一条 `SUBMISSION_TEST` Runner 任务
-2. 终端 B 中的私有 Runner 会自动拉取任务并执行隐藏排序用例
-3. 成功后终端 B 会出现类似日志：
-
-```text
-Processed submission_test task <task-id>.
-```
-
-此时含义是：
-
-- 提交已经被私有 Runner 处理
-- 分数已经回传给 ARY
-- 但公开榜单还不会自动刷新，因为这个 PoC 保留“手动发榜”
-
-### 6. Organizer 手动发起进度评测
-
-1. 在浏览器中退出 Rider，重新登录 Organizer
-   - 用户名：`organizer_demo`
-   - 密码：`organizer123`
-2. 进入同一场赛事“排序 Runner 演示赛”
-3. 点击现有按钮“发起进度评测”
-
-点击后：
-
-- ARY 会创建一条 `PROGRESS_EVAL` 任务
-- 终端 B 中的私有 Runner 会再次自动拉取并评分
-- 成功后你会看到类似日志：
-
-```text
-Processed progress_eval task <task-id>.
-```
-
-### 7. 查看公开榜单
-
-现在打开以下任一页面：
-
-- [http://localhost:3000](http://localhost:3000)
-- [http://localhost:3000/audience](http://localhost:3000/audience)
-
-你应该能看到：
-
-- 榜单列中有“排名”
-- 队伍“排序演示队”
-- 总分
-- 当前排名
-
-在默认演示数据和上面的示例代码下，通常会看到该队伍以 `100` 分显示在第 `1` 名。
-
-### 8. 一次完整演示的最短命令清单
-
-如果你只想快速复现整套流程，可以直接按下面顺序执行。
-
-终端 A：
-
-```bash
-cd D:\Desktop\ARY-for-ARY
-npm install
-cp .env.example .env
-npx prisma migrate dev --name init
-npx prisma generate
-npm run db:seed
-npm run dev
-```
-
-终端 B：
-
-```bash
-cd D:\Desktop\ARY-for-ARY\organizer_demo\runner_demo
-cp .env.example .env
-npm install
-npm run start
-```
-
-浏览器操作：
-
-1. 用 `rider_demo / rider123` 登录并提交 `solution.ts`
+**浏览器操作**：
+1. `rider_demo / rider123` 登录 → 找到「排序 Runner 演示赛」→ 提交 `solution.ts`
 2. 等终端 B 出现 `Processed submission_test task ...`
-3. 用 `organizer_demo / organizer123` 登录并点击“发起进度评测”
+3. `organizer_demo / organizer123` 登录 → 点击"发起进度评测"
 4. 等终端 B 出现 `Processed progress_eval task ...`
 5. 打开 `/audience` 查看公开榜单
 
-这个 PoC 刻意保留“手动发榜”语义：评分自动完成，但公开榜单刷新仍由 Organizer 手动触发。
+---
 
 ## 验证命令
 
@@ -322,19 +245,17 @@ npm run lint
 npm run build
 ```
 
-## 数据边界
+---
 
-ARY 持久化保存：
+## 演示视频
 
-- 赛事公开元数据
-- 队伍、反馈、通知
-- 提交状态与公开榜单投影
-- 公开赛后展示投影
+- [GRS_001 完整演示](https://www.bilibili.com/video/BV1qdEs62Egz/)
+- [主要功能介绍](https://www.bilibili.com/video/BV1LZEs6LEtV/)
 
-ARY 不保存 Organizer 私有测试集，也不保存 Organizer 私有 Runner 逻辑。
+---
 
 ## 相关文档
 
-- [PRD.md](/D:/Desktop/ARY-for-ARY/PRD.md)
-- [ROADMAP.md](/D:/Desktop/ARY-for-ARY/ROADMAP.md)
-- [runner_doc/organizer-demo-runner.md](/D:/Desktop/ARY-for-ARY/runner_doc/organizer-demo-runner.md)
+- [ROADMAP.md](./ROADMAP.md) — 迭代历史与 MVP 完成情况
+- [plan/2026-06-10-jumbotron-subsystem.md](./plan/2026-06-10-jumbotron-subsystem.md) — Jumbotron 子系统设计文档
+- [Jumbotron/SUBSYSTEM.md](./Jumbotron/SUBSYSTEM.md) — 子系统技术规格
