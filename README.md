@@ -19,6 +19,10 @@ npm run dev
 
 打开 `http://localhost:3000`，主页顶部即见 Jumbotron 赛马横幅轮播。
 
+## 演示视频
+
+[![ARY GRS 002 Jumbotron 演示](https://img.shields.io/badge/Bilibili-演示视频-00a1d6?logo=bilibili)](https://www.bilibili.com/video/BV1GYJ561Eb1/?vd_source=1b134e71774d2264b0206c4267e3e406)
+
 ---
 
 ## 演示账号
