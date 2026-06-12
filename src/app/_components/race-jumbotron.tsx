@@ -63,6 +63,7 @@ export function RaceJumbotron({ race }: { race: RaceListItem }) {
       trackDirection={race.trackDirection}
       trackStartFinishS={race.trackStartFinishS}
       checkpointCount={race.checkpointCount ?? 3}
+      trackBgImageUrl={race.trackBgImageUrl}
       embedded
       raceStartMs={race.raceStart?.getTime() ?? undefined}
     />

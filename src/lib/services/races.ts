@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getRacePhase } from "@/lib/race-phase";
 import { normalizeWeights, parseKeywords } from "@/lib/services/scoring";
 import { createRaceSchema } from "@/lib/validation";
+import fs from "fs/promises";
+import path from "path";
+import crypto from "crypto";
 
 export async function listRaces() {
   const races = await prisma.race.findMany({
@@ -106,6 +109,19 @@ export async function getRaceById(raceId: string) {
 }
 
 export async function createRace(organizerId: string, formData: FormData) {
+  // Handle background image upload (outside Zod — it's a File, not a text field)
+  let trackBgImageUrl: string | null = null;
+  const bgFile = formData.get("trackBgImage");
+  if (bgFile instanceof File && bgFile.size > 0) {
+    const rawExt = bgFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const safeExt = ["jpg", "jpeg", "png", "webp"].includes(rawExt) ? rawExt : "jpg";
+    const filename = `${crypto.randomUUID()}.${safeExt}`;
+    const dir = path.join(process.cwd(), "public", "jumbotron-bg");
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(path.join(dir, filename), Buffer.from(await bgFile.arrayBuffer()));
+    trackBgImageUrl = `/jumbotron-bg/${filename}`;
+  }
+
   const parsed = createRaceSchema.parse({
     title: formData.get("title"),
     summary: formData.get("summary"),
@@ -200,6 +216,7 @@ export async function createRace(organizerId: string, formData: FormData) {
       trackDirection: parsed.trackDirection,
       trackStartFinishS: parsed.trackStartFinishS,
       checkpointCount: parsed.checkpointCount,
+      trackBgImageUrl,
     },
   });
 }

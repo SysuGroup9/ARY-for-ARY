@@ -1,10 +1,14 @@
-# 产品需求文档6.0版
+# 产品需求文档 7.0 版（GRS 001 + GRS 002）
 
 ## 1. 引言
 
 ### 1.1 编写目标
 
-本文档旨在定义 Agent Racing Yard Genesis Race Series 001（简称 ARY GRS 001）的产品需求，明确在 Race 数据存留于 Organizer 侧、ARY 不持久化 Race 数据的前提下，ARY 如何完成赛事的创建、披露、组织与展示。
+本文档旨在定义 Agent Racing Yard Genesis Race Series（简称 ARY GRS）的产品需求。
+
+**GRS 001 核心命题（第 1–9 章）：** 在 Race 数据存留于 Organizer 侧、ARY 不持久化 Race 数据的前提下，ARY 如何完成赛事的创建、披露、组织与展示。
+
+**GRS 002 扩展命题（第 10 章）：** 在 GRS 001 全栈 PoC 基础上，新增 Jumbotron 赛马大屏可视化子系统与 Calibrator 赛道校准编辑器，实现基于进度数据的实时赛马轨迹展示，并支持 Organizer 在创建赛事时自定义赛道参数。
 
 ### 1.2 读者对象
 
@@ -25,7 +29,8 @@
 - 第6章：界面需求，定义页面与交互要求
 - 第7章：接口定义，定义 Runner 接口
 - 第8章：验收标准
-- 第9章：下一步计划，记录当前版本的已知限制与改进方向
+- 第9章：GRS 001 下一步计划，记录当前版本的已知限制与改进方向
+- 第10章：描述GRS 002 的Jumbotron 赛马大屏子系统
 
 ### 1.4 术语定义
 
@@ -61,6 +66,8 @@ ARY 是一个**去中心化的智能体赛事平台**。它的核心理念是：
 - Rider向Organizer反馈问题
 - Organizer修改题目/训练数据
 - Organizer赛后评论
+- **[GRS 002]** Jumbotron 赛马大屏：基于进度数据驱动的赛道可视化，实时展示马匹位置、排名变化、风险状态
+- **[GRS 002]** Calibrator 赛道校准工具：可视化绘制赛道控制点，配置车道参数，导出 TrackProfile JSON
 
 ### 2.2 GRS 001 要解决的核心问题
 
@@ -113,7 +120,7 @@ ARY 是一个**去中心化的智能体赛事平台**。它的核心理念是：
 
 **用户**：`User` — id · username · passwordHash · role
 
-**赛事**：`Race` — 题目包标识与描述、报名/比赛时间窗口、封榜配置、评分权重（含 Harness 子分权重 `harnessWeightReasoning`/`harnessWeightKeyword`）、赛后展示开关、Token 限制、提交冷却、Cloud Studio 链接
+**赛事**：`Race` — 题目包标识与描述、报名/比赛时间窗口、封榜配置、评分权重（含 Harness 子分权重 `harnessWeightReasoning`/`harnessWeightKeyword`）、赛后展示开关、Token 限制、提交冷却、Cloud Studio 链接；**[GRS 002]** 赛道参数：`trackId`（预设赛道 ID）、`trackCenterlineJson`（自定义控制点 JSON）、`trackDirection`（顺时针/逆时针）、`trackStartFinishS`（起/终点弧长比例 0–1）、`checkpointCount`（检查点数，等于赛事阶段数）
 
 **参赛**
 - `Team` / `TeamMember`：队伍关联赛事与队长；成员仅需 displayName（userId 可选）
@@ -571,3 +578,174 @@ Runner 回传结果后，ARY 按任务类型执行以下数据操作：
 1. **角色定义**：小组内设置 Reviewer（审核者）和 Contributor（贡献者）角色
 2. **提交审核流程**：Contributor 提交代码后需经 Reviewer 审核通过才计入成绩
 3. **权限区分**：Reviewer 有审核权限，Contributor 仅有提交权限
+
+---
+
+## 10. GRS 002 扩展：Jumbotron 可视化子系统
+
+> 本章定义 GRS 002 新增的 Jumbotron 赛马大屏与 Calibrator 赛道编辑器的产品需求。第 1–9 章的所有内容在 GRS 002 中继续有效。
+
+### 10.1 背景与目标
+
+GRS 001 已验证核心命题（数据边界 + Runner 协议 + 全栈 PoC）。GRS 002 在此基础上新增赛场可视化层：将 Runner 回传的进度数据实时映射为赛道上的马匹位置，提供对评审和观众友好的可视化展示，同时提供 Calibrator 工具让 Organizer 可自定义赛道轮廓。
+
+### 10.2 核心概念
+
+#### 10.2.1 三维数据模型
+
+Jumbotron 大屏的所有视觉元素由三条独立数据流驱动，互不混淆：
+
+| 维度 | 触发方 | Runner 任务类型 | 存储位置 | 在大屏上的映射 |
+|------|--------|-----------------|----------|----------------|
+| **进度**（Progress） | ARY 调度 → Runner 自动 | `PROGRESS_EVAL` | `LeaderboardEntry.totalScore` | 马匹位置（弧长比例 s） |
+| **质量**（Quality） | Rider 主动提交 | `SUBMISSION_TEST` | `Submission.totalScore`（最新 SCORED） | 辅助参考，不驱动位置 |
+| **风险/违规**（Risk） | ARY 推导 | — | `antiCheatPenalty > 0` | 虚线彩圈光环、红色违规徽章 |
+
+> **关键约束**：马匹位置仅由进度分（`PROGRESS_EVAL`）决定。主动提交（`SUBMISSION_TEST`）的质量分不影响马匹位置。两者来源绝对不可混淆。
+
+#### 10.2.2 赛道系统（TrackProfile）
+
+赛道由一组 1920×1080 坐标系内的二维控制点定义，通过 Catmull-Rom 样条插值生成平滑闭合曲线。一个 `TrackProfile` 包含：
+
+- `centerline.points`：控制点数组，至少 4 个
+- `centerline.smoothing`：`"catmull-rom"`
+- `laneHalfWidth`：赛道半宽（像素），决定车道宽度
+- `lanes`：车道数组（`laneId`、offset 相对赛道中心的偏移量）
+- `startFinish.s`：起/终点弧长比例（0–1）
+- `direction`：`"clockwise"` 或 `"counterclockwise"`
+- `viewBox`：坐标系宽高（1920×1080）
+
+**内置预设：**
+
+| trackId | 形状 | 控制点数 |
+|---------|------|----------|
+| `oval-standard` | 标准椭圆（默认） | 12 |
+| `rect-standard` | 标准方形 | 12 |
+
+#### 10.2.3 弧长参数化与马匹定位
+
+`TrackRuntime` 引擎对曲线执行弧长参数化（arc-length parameterization），使 `sampleAt(s)` 以等速比例返回位置和方向：
+
+- `s = LeaderboardEntry.totalScore / 100`（0%–100% 进度映射到 0.0–1.0 弧长）
+- `sampleAt(s)` 返回 `{ pos, tangent, normal }`，其中 `normal` = 切线逆时针旋转 90°
+- 车道偏移公式：`offset = -halfWidth + (2×halfWidth) / (N+1) × (laneIdx+1)`
+
+#### 10.2.4 Calibrator（赛道校准工具）
+
+Calibrator 是一个独立的可视化编辑器（`/jumbotron/calibrator`），与 Jumbotron 共用同一套 `TrackRuntime` 引擎。它的职责是让 Organizer 在创建赛事前可视化地设计赛道轮廓，并将结果导出为 `TrackProfile` JSON 或直接粘贴到创建比赛表单。
+
+### 10.3 功能性需求
+
+#### 10.3.1 Jumbotron 大屏（`/jumbotron?raceId=<id>`）
+
+**必须展示：**
+
+| 元素 | 数据来源 | 说明 |
+|------|----------|------|
+| 真实赛场底图 | 静态图片 `/jumbotron底图.jpg` | 作为背景，`preserveAspectRatio="xMidYMid slice"` 填充 |
+| 土黄色赛道环 | TrackProfile + SVG mask | `#c4924a`，mask 绘制无裂缝 |
+| 绿色内场 | 内圈 clipPath | `rgba(10,55,10,0.28)` 叠加 |
+| 白色护栏 | 内外边界路径 | 双层（柔光 + 锐边），`rgba(255,255,255,0.95)` |
+| 检查点 | `checkpointCount` 均分 | 琥珀 `#f59e0b` 虚线 + 端头圆柱 |
+| 起/终点线 | `startFinishS` | 白色 + 黑色棋格叠加 |
+| 马匹 | `LeaderboardEntry.totalScore` | 带队伍色彩的圆形标记 + 排名数字 |
+| 排名变化 ↑↓ | `sessionStorage` 快照对比 | 绿色上升 / 红色下降 |
+| 风险光环 | `antiCheatPenalty` + 分数差 | 橙=中风险，红=高风险 |
+| 违规徽章 | `antiCheatPenalty > 0` | 红色 `!` 角标 |
+| 气泡消息 | 里程碑 / 排名变化 | 25/50/75/100% 里程碑优先；4 秒淡出；最多 3 条 |
+| 左侧面板 | 多数据源 | 活跃骑手 TOP3 + 赛道小地图 + KPI |
+| 底部 ticker | 风险/违规队伍 | 滚动提示 |
+
+**调试模式（`?debug=1`）：** 叠加中心线、车道边界、每匹马 s 值、碰撞框。
+
+**刷新机制：** 每 30 秒执行 `router.refresh()` 拉取新服务端数据。
+
+#### 10.3.2 Calibrator（`/jumbotron/calibrator`）
+
+**必须支持的操作：**
+
+| 操作 | 说明 |
+|------|------|
+| 添加控制点 | 单击 SVG 画布空白处 |
+| 移动控制点 | 鼠标拖拽 |
+| 删除控制点 | 双击控制点 |
+| 加载预设 | 点击"预设：椭圆"/"预设：方形"，≥ 4 点立即渲染 |
+| 实时预览 | ≥ 4 点自动渲染 Catmull-Rom 曲线、车道、检查点、起/终点 |
+| 马匹预览 | Scrubber（0–1）查看任意 s 位置的马匹分布（验证 lane offset） |
+| 配置车道 | 车道数 + laneHalfWidth |
+| 设置方向 | 顺时针 / 逆时针 |
+| 设置起/终点 | S 值（0.0–1.0）输入 |
+| 上传底图 | PNG/JPG/WebP，透明度可调，无底图时默认显示赛场照片 |
+| 显示控制点序号 | 开关切换 |
+| 验证 | 检查点数（≥4）、弧长（> 0）、laneId 非空、车道数（≥1） |
+| 下载 profile.json | 导出完整 TrackProfile JSON |
+| 复制控制点 | 仅导出 `[[x,y],...]` 格式，粘贴到创建比赛表单 |
+| 清空 | 清除所有控制点 |
+
+**视觉要求（与 Jumbotron 保持一致）：**
+
+- 赛场底图（无用户上传时默认 0.28 透明度）
+- 土黄色 `#c4924a` 赛道面（SVG mask，无裂缝）
+- 白色护栏（双层渲染）
+- 琥珀 `#f59e0b` 检查点 + 圆柱端头
+- 黑/白棋格起终线
+
+#### 10.3.3 Organizer 创建比赛时的赛道参数
+
+在创建比赛表单中新增以下字段：
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `trackId` | 下拉 | `oval-standard` | 选择预设赛道 |
+| `trackDirection` | 下拉 | `counterclockwise` | 顺时针 / 逆时针 |
+| `trackStartFinishS` | 数字输入 0–1 | `0.0` | 起/终点弧长比例 |
+| `trackCenterlineJson` | 文本框 | 空 | 自定义控制点 JSON，覆盖 trackId |
+| Calibrator 链接 | — | — | 引导 Organizer 用 Calibrator 生成控制点 |
+
+### 10.4 技术规格
+
+#### 10.4.1 共享引擎文件
+
+```
+Jumbotron/
+  types.ts            — TrackProfile, RacingEntrySnapshot, HorsePose 等接口
+  track-runtime.ts    — Catmull-Rom 样条 + 弧长参数化（sampleAt / getPathD）
+  adapter.ts          — LeaderboardEntry + Submission + TeamArchive → RaceSnapshot
+  tracks/
+    track.profile.json   — 标准椭圆（12 控制点）
+    rect.profile.json    — 标准方形（12 控制点）
+```
+
+#### 10.4.2 SVG 渲染技术
+
+- **无裂缝赛道环**：使用 `<mask>`（外圈=白色，内圈=黑色）+ 单一 `<rect fill="#c4924a">`，避免两层 fill 的抗锯齿间隙
+- **内场**：`<clipPath>` + `rgba(10,55,10,0.28)` 叠加 rect
+- **唯一 ID**：使用 `useId()` 为每个 TrackSVG 实例生成唯一 mask/clipPath ID，避免多实例冲突
+- **背景图**：`preserveAspectRatio="xMidYMid slice"` 填充 SVG 并裁剪两侧
+
+#### 10.4.3 数据库迁移
+
+| 迁移文件 | 新增列 |
+|---------|--------|
+| `20260610000000_jumbotron_track` | `Race.trackId`, `Race.checkpointCount` |
+| `20260612000000_add_track_direction` | `Race.trackDirection`, `Race.trackStartFinishS` |
+
+### 10.5 验收标准（GRS 002）
+
+| # | 验收项 | 状态 |
+|---|--------|------|
+| V01 | Jumbotron 大屏可访问且正确渲染马匹位置 | ✅ |
+| V02 | 马匹位置仅由 PROGRESS_EVAL 结果驱动，与 SUBMISSION_TEST 无关 | ✅ |
+| V03 | ≥ 2 条预设赛道（椭圆 + 方形）可正常渲染 | ✅ |
+| V04 | Calibrator 可添加/移动/删除控制点，实时预览赛道 | ✅ |
+| V05 | Calibrator 控制点与 Jumbotron 使用相同预设数据 | ✅ |
+| V06 | Calibrator 可导出 TrackProfile JSON | ✅ |
+| V07 | Calibrator 与 Jumbotron 共用 TrackRuntime 引擎 | ✅ |
+| V08 | Organizer 创建比赛时可配置 trackDirection / trackStartFinishS | ✅ |
+| V09 | 自定义控制点 JSON 可从 Calibrator 粘贴到创建比赛表单并生效 | ✅ |
+| V10 | 排名变化（↑↓）在 30 s 刷新后正确计算并展示 | ✅ |
+| V11 | 风险光环和违规徽章按数据正确显示 | ✅ |
+| V12 | 气泡消息在里程碑 / 排名变化时弹出，4 秒淡出 | ✅ |
+| V13 | `?debug=1` 可激活调试叠加层 | ✅ |
+| V14 | SVG 赛道环无裂缝（mask 方案） | ✅ |
+| V15 | Calibrator 操作区字号 ≥ 13px，可读性满足要求 | ✅ |

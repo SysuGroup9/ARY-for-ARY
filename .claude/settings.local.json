@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(npx --yes next build)",
+      "Bash(npm install *)",
+      "Bash(node_modules/.bin/next build *)",
+      "Bash(node_modules/.bin/prisma generate *)",
+      "Bash(cp .env.example .env)",
+      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" node_modules/.bin/prisma generate)",
+      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" node_modules/.bin/next build)",
+      "Bash(npx next *)",
+      "Bash(npm run *)",
+      "Bash(npx prisma *)",
+      "Bash(timeout 30 npx eslint src/app/jumbotron/race-live-view.tsx)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(node *)"
+    ]
+  }
+}

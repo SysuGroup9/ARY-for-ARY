@@ -368,7 +368,7 @@ export function PublicRaceSections({ race }: { race: RaceListItem }) {
 
 export function CreateRaceForm({ action }: { action: FormAction }) {
   return (
-    <form action={action} className="form-grid">
+    <form action={action} className="form-grid" encType="multipart/form-data">
       <label>
         赛事名称
         <input defaultValue="排序算法挑战赛" name="title" required />
@@ -686,6 +686,17 @@ export function CreateRaceForm({ action }: { action: FormAction }) {
           name="checkpointCount"
           type="number"
         />
+      </label>
+      <label>
+        Jumbotron 赛道底图（可选）
+        <input
+          type="file"
+          name="trackBgImage"
+          accept="image/jpeg,image/png,image/webp"
+        />
+        <small style={{ color: "#64748b" }}>
+          支持 JPG / PNG / WebP，建议 1920×1080 或更宽。留空则使用默认赛场底图。
+        </small>
       </label>
 
       <button type="submit">创建赛事</button>

@@ -14,16 +14,18 @@ const TEAM_COLORS = [
   "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899",
 ];
 
+// Points match Jumbotron/tracks/track.profile.json exactly (0.80× from center 960,540)
 const OVAL_POINTS: [number, number][] = [
-  [1600, 540], [1600, 400], [1420, 280], [960, 250],
-  [500, 280], [320, 400], [320, 540], [320, 680],
-  [500, 800], [960, 830], [1420, 800], [1600, 680],
+  [1472, 540], [1403, 424], [1216, 339], [960, 308],
+  [704,  339], [517,  424], [448,  540], [517,  656],
+  [704,  741], [960,  772], [1216, 741], [1403, 656],
 ];
 
+// Points match Jumbotron/tracks/rect.profile.json exactly (0.80× from center 960,540)
 const RECT_POINTS: [number, number][] = [
-  [1580, 540], [1580, 320], [1360, 260], [960, 250],
-  [560, 260], [340, 320], [340, 540], [340, 760],
-  [560, 820], [960, 830], [1360, 820], [1580, 760],
+  [1456, 540], [1456, 364], [1280, 316], [960, 308],
+  [640,  316], [464,  364], [464,  540], [464,  716],
+  [640,  764], [960,  772], [1280, 764], [1456, 716],
 ];
 
 interface CalState {
@@ -324,61 +326,100 @@ export function CalibratorUI() {
             onMouseLeave={onMouseUp}
             onClick={onSVGClick}
           >
-            {/* Background image */}
+            {/* ── Defs: mask + clipPath + vignette ── */}
+            <defs>
+              <mask id="calMask">
+                {outerPath && <path d={outerPath} fill="white" />}
+                {innerPath && <path d={innerPath} fill="black" />}
+              </mask>
+              <clipPath id="calInnerClip">
+                {innerPath && <path d={innerPath} />}
+              </clipPath>
+              <radialGradient id="calVign" cx="50%" cy="55%" r="62%">
+                <stop offset="55%" stopColor="rgba(0,0,0,0)" />
+                <stop offset="100%" stopColor="rgba(0,0,0,0.5)" />
+              </radialGradient>
+            </defs>
+
+            {/* Stadium base — default when no user image */}
+            {!bgUrl && (
+              <image
+                href="/jumbotron底图.jpg"
+                x={0} y={0} width={VB_W} height={VB_H}
+                preserveAspectRatio="xMidYMid slice"
+                opacity={0.28}
+              />
+            )}
             {bgUrl && (
-              <image href={bgUrl} x={0} y={0} width={VB_W} height={VB_H} opacity={bgOpacity} />
+              <image href={bgUrl} x={0} y={0} width={VB_W} height={VB_H}
+                preserveAspectRatio="xMidYMid slice" opacity={bgOpacity} />
             )}
 
-            {/* Track surface — evenodd fill between outer and inner */}
+            {/* Vignette */}
+            <rect x={0} y={0} width={VB_W} height={VB_H} fill="url(#calVign)" />
+
+            {/* Track surface — sandy/dirt, mask (crack-free) */}
             {outerPath && innerPath && (
-              <path
-                d={`${outerPath} ${innerPath}`}
-                fill="#1a3a1a"
-                fillOpacity={0.55}
-                fillRule="evenodd"
-                stroke="none"
+              <rect x={0} y={0} width={VB_W} height={VB_H}
+                fill="#c4924a" mask="url(#calMask)" opacity={0.88} />
+            )}
+
+            {/* Inner field overlay */}
+            {innerPath && (
+              <rect x={0} y={0} width={VB_W} height={VB_H}
+                fill="rgba(10,55,10,0.28)" clipPath="url(#calInnerClip)" />
+            )}
+
+            {/* Raw polyline before enough points */}
+            {!centerlinePath && state.points.length >= 2 && (
+              <polyline
+                points={[...state.points, state.points[0]].map(([x, y]) => `${x},${y}`).join(" ")}
+                fill="none"
+                stroke="rgba(255,255,255,0.35)"
+                strokeWidth={1.5}
+                strokeDasharray="20 10"
               />
             )}
 
-            {/* Outer boundary */}
+            {/* Outer boundary rail */}
             {outerPath && (
-              <path d={outerPath} fill="none" stroke="#2d5a2d" strokeWidth={2} />
+              <>
+                <path d={outerPath} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={6} />
+                <path d={outerPath} fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth={2.5} />
+              </>
             )}
 
-            {/* Inner boundary */}
+            {/* Inner boundary rail */}
             {innerPath && (
-              <path d={innerPath} fill="none" stroke="#2d5a2d" strokeWidth={2} />
+              <>
+                <path d={innerPath} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={6} />
+                <path d={innerPath} fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth={2.5} />
+              </>
             )}
 
             {/* Lane dividers */}
             {lanePaths.map((d, i) => (
-              <path key={i} d={d} fill="none" stroke="#38bdf820" strokeWidth={1} strokeDasharray="12 8" />
+              <path key={i} d={d} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={1} strokeDasharray="12 8" />
             ))}
 
             {/* Centerline */}
-            {centerlinePath ? (
-              <path d={centerlinePath} fill="none" stroke="#38bdf850" strokeWidth={1.5} strokeDasharray="20 10" />
-            ) : state.points.length >= 2 ? (
-              <polyline
-                points={[...state.points, state.points[0]].map(([x, y]) => `${x},${y}`).join(" ")}
-                fill="none"
-                stroke="#38bdf840"
-                strokeWidth={1.5}
-                strokeDasharray="20 10"
-              />
-            ) : null}
+            {centerlinePath && (
+              <path d={centerlinePath} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={1.5} strokeDasharray="20 10" />
+            )}
 
-            {/* Checkpoint lines */}
+            {/* Checkpoint lines — amber with pillar circles */}
             {checkpointLines.map((ln, i) => (
               <g key={i}>
-                <line {...ln} stroke="#eab308" strokeWidth={2} strokeDasharray="8 4" strokeOpacity={0.7} />
+                <line {...ln} stroke="#f59e0b" strokeWidth={3} strokeDasharray="10 6" strokeOpacity={0.85} />
+                <circle cx={ln.x1} cy={ln.y1} r={8} fill="#f59e0b" opacity={0.9} />
+                <circle cx={ln.x2} cy={ln.y2} r={8} fill="#f59e0b" opacity={0.9} />
                 <text
                   x={(ln.x1 + ln.x2) / 2 + 10}
-                  y={(ln.y1 + ln.y2) / 2 - 6}
-                  fill="#eab308"
+                  y={(ln.y1 + ln.y2) / 2 - 8}
+                  fill="#fcd34d"
                   fontSize={22}
                   fontWeight="bold"
-                  opacity={0.8}
+                  opacity={0.9}
                 >
                   CP{i + 1}
                 </text>
@@ -388,8 +429,8 @@ export function CalibratorUI() {
             {/* Start/finish line */}
             {startFinishLine && (
               <g>
-                <line {...startFinishLine} stroke="white" strokeWidth={4} />
-                <line {...startFinishLine} stroke="black" strokeWidth={4} strokeDasharray="12 12" />
+                <line {...startFinishLine} stroke="white" strokeWidth={5} />
+                <line {...startFinishLine} stroke="black" strokeWidth={5} strokeDasharray="12 12" />
               </g>
             )}
 

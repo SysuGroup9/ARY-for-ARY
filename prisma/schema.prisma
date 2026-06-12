@@ -92,6 +92,7 @@ model Race {
   trackDirection             String   @default("counterclockwise")
   trackStartFinishS          Float    @default(0.0)
   checkpointCount            Int      @default(3)
+  trackBgImageUrl            String?
   displayShowTrainingData    Boolean  @default(false)
   displayShowOrganizerComment Boolean @default(false)
   displayShowTopHighlights   Boolean  @default(false)

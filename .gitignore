@@ -39,3 +39,6 @@ outputs/
 .vercel
 
 /src/generated/prisma
+
+# TypeScript build info
+*.tsbuildinfo

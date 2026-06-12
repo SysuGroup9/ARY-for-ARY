@@ -215,6 +215,7 @@ export function RaceLiveView({
   trackDirection,
   trackStartFinishS,
   checkpointCount,
+  trackBgImageUrl,
   debug = false,
   embedded = false,
   raceStartMs,
@@ -225,6 +226,7 @@ export function RaceLiveView({
   trackDirection?: string | null;
   trackStartFinishS?: number | null;
   checkpointCount: number;
+  trackBgImageUrl?: string | null;
   debug?: boolean;
   embedded?: boolean;
   raceStartMs?: number;
@@ -401,6 +403,7 @@ export function RaceLiveView({
       checkpoints={dynamicCheckpoints}
       bubbles={bubbles}
       rankDeltas={rankDeltas}
+      bgUrl={trackBgImageUrl ?? undefined}
       debug={debug}
     />
   );
@@ -756,6 +759,7 @@ function TrackSVG({
   checkpoints,
   bubbles,
   rankDeltas,
+  bgUrl,
   debug = false,
 }: {
   runtime: TrackRuntime;
@@ -765,6 +769,7 @@ function TrackSVG({
   checkpoints: Array<{ id: string; s: number; label: string }>;
   bubbles: Map<string, string>;
   rankDeltas: Map<string, number>;
+  bgUrl?: string;
   debug?: boolean;
 }) {
   const uid = useId().replace(/:/g, "_");
@@ -853,9 +858,9 @@ function TrackSVG({
         </radialGradient>
       </defs>
 
-      {/* ── BACKGROUND: stadium photo ── */}
+      {/* ── BACKGROUND: custom or default stadium photo ── */}
       <image
-        href="/jumbotron底图.jpg"
+        href={bgUrl ?? "/jumbotron底图.jpg"}
         x={0} y={0}
         width={width} height={height}
         preserveAspectRatio="xMidYMid slice"
