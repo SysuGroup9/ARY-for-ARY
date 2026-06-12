@@ -747,21 +747,7 @@ const AD_CONFIGS = [
   { s: 0.82, text: "GRS 001",    color: "#f39c12" },
 ] as const;
 
-/* ── Deterministic star positions ── */
-const STARS = Array.from({ length: 60 }, (_, i) => ({
-  cx: (i * 271 + 47) % 1920,
-  cy: (i * 173 + 83) % 210,
-  r: (i * 37) % 3 === 0 ? 2.5 : 1.5,
-  opacity: 0.3 + (i % 5) * 0.14,
-}));
-
-/* ── City skyline blocks ── */
-const SKYLINE = [
-  [120,70],[200,95],[280,50],[360,85],[450,115],[540,58],[620,100],[720,75],
-  [820,135],[920,88],[1020,105],[1130,62],[1240,78],[1380,125],[1490,98],[1600,68],[1720,85],[1820,55],
-] as const;
-
-/* ── TrackSVG: futuristic race track with SVG horse silhouettes ── */
+/* ── TrackSVG: race track with stadium background ── */
 function TrackSVG({
   runtime,
   entries,
@@ -799,16 +785,6 @@ function TrackSVG({
         geo: runtime.checkpointGeometry(cp.s),
       })),
     [runtime, checkpoints]
-  );
-
-  /* Tree positions — 14 evenly spaced, 135 units outside centerline */
-  const treePoses = useMemo(
-    () =>
-      Array.from({ length: 14 }, (_, i) => {
-        const { pos, normal } = runtime.sampleAt(i / 14);
-        return { x: pos.x + normal.x * 135, y: pos.y + normal.y * 135 };
-      }),
-    [runtime]
   );
 
   /* Advertising board positions on inner fence */
@@ -861,144 +837,75 @@ function TrackSVG({
       preserveAspectRatio="xMidYMid meet"
     >
       <defs>
-        {/* Sky gradient — deep night sky */}
-        <linearGradient id={`${uid}sky`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#03071a" />
-          <stop offset="55%" stopColor="#0a1830" />
-          <stop offset="100%" stopColor="#0f2240" />
-        </linearGradient>
-        {/* Ground grass */}
-        <linearGradient id={`${uid}grass`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#0d2c14" />
-          <stop offset="100%" stopColor="#071a0c" />
-        </linearGradient>
-        {/* Track surface — dark metallic with warm tint */}
-        <linearGradient id={`${uid}track`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#2a1f12" />
-          <stop offset="50%" stopColor="#1e160c" />
-          <stop offset="100%" stopColor="#160f08" />
-        </linearGradient>
-        {/* Inner field */}
-        <radialGradient id={`${uid}field`} cx="50%" cy="50%" r="55%">
-          <stop offset="0%" stopColor="#122a18" />
-          <stop offset="100%" stopColor="#091510" />
-        </radialGradient>
-        {/* Holographic grid pattern for inner field */}
-        <pattern id={`${uid}hologrid`} x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
-          <path d="M 80 0 L 0 0 0 80" fill="none" stroke="rgba(0,210,255,0.10)" strokeWidth="1.5" />
-        </pattern>
-        {/* Clip inner field shape */}
+        {/* Track ring mask — true donut shape, eliminates crack rendering artifacts */}
+        <mask id={`${uid}mask`}>
+          <path d={outerD} fill="white" />
+          <path d={innerD} fill="black" />
+        </mask>
+        {/* Clip inner field */}
         <clipPath id={`${uid}innerClip`}>
           <path d={innerD} />
         </clipPath>
+        {/* Edge vignette */}
+        <radialGradient id={`${uid}vign`} cx="50%" cy="55%" r="62%">
+          <stop offset="55%" stopColor="rgba(0,0,0,0)" />
+          <stop offset="100%" stopColor="rgba(0,0,0,0.5)" />
+        </radialGradient>
       </defs>
 
-      {/* ── BACKGROUND: deep space sky ── */}
-      <rect x={0} y={0} width={width} height={height} fill={`url(#${uid}sky)`} />
+      {/* ── BACKGROUND: stadium photo ── */}
+      <image
+        href="/jumbotron底图.jpg"
+        x={0} y={0}
+        width={width} height={height}
+        preserveAspectRatio="xMidYMid slice"
+      />
 
-      {/* Stars */}
-      {STARS.map((s, i) => (
-        <circle key={`star-${i}`} cx={s.cx} cy={s.cy} r={s.r} fill="white" opacity={s.opacity} />
-      ))}
+      {/* Edge vignette — darkens corners/edges, makes track pop */}
+      <rect x={0} y={0} width={width} height={height} fill={`url(#${uid}vign)`} />
 
-      {/* City skyline silhouette */}
-      <g opacity={0.25}>
-        {SKYLINE.map(([x, h], i) => (
-          <rect key={`sky-${i}`} x={x} y={260 - h} width={32 + (i % 3) * 10} height={h}
-            fill="#1a2840" />
-        ))}
-      </g>
-
-      {/* Ground */}
-      <rect x={0} y={250} width={width} height={height - 250} fill={`url(#${uid}grass)`} />
-      <rect x={0} y={240} width={width} height={30} fill="#0d2c14" opacity={0.5} />
-
-      {/* ── STADIUM BLEACHERS (top) ── */}
-      <rect x={140} y={0} width={1640} height={195} fill="#0b1520" opacity={0.92} />
-      {/* Seat row bands */}
-      {[18, 42, 66, 90, 114, 138, 162].map((y) => (
-        <rect key={`sr-${y}`} x={148} y={y} width={1624} height={20} fill="#0f1e2d" opacity={0.8} />
-      ))}
-      {/* Roof parapet with neon edge */}
-      <rect x={140} y={0} width={1640} height={16} fill="#1a2d42" />
-      <rect x={140} y={14} width={1640} height={2} fill="#00d4ff" opacity={0.6} />
-      {/* Stadium lights — neon glow */}
-      {[260, 540, 820, 1100, 1380, 1660].map((x) => (
-        <g key={`sl-${x}`}>
-          <rect x={x - 5} y={0} width={10} height={24} fill="#3a5068" />
-          {/* Glow bloom */}
-          <ellipse cx={x} cy={6} rx={40} ry={20} fill="#c8e8ff" opacity={0.07} />
-          <ellipse cx={x} cy={6} rx={20} ry={10} fill="#e0f0ff" opacity={0.15} />
-          <circle cx={x} cy={6} r={8} fill="#fffef0" opacity={0.9} />
-        </g>
-      ))}
-      {/* Crowd dots in stands */}
-      {Array.from({ length: 90 }, (_, i) => {
-        const cx = 152 + (i % 45) * 35 + (Math.floor(i / 45) * 17);
-        const cy = 26 + Math.floor(i / 45) * 44 + ((i % 3) * 6);
-        return (
-          <circle key={`crowd-${i}`} cx={cx} cy={cy} r={5}
-            fill={i % 5 === 0 ? "#e53935" : i % 7 === 0 ? "#1565c0" : "#546e7a"}
-            opacity={0.4}
-          />
-        );
-      })}
-
-      {/* ── TREES around outer boundary ── */}
-      {treePoses.map(({ x, y }, i) => (
-        <g key={`tree-${i}`}>
-          <rect x={x - 4} y={y - 2} width={8} height={22} rx={2} fill="#2d1b0a" />
-          <circle cx={x} cy={y - 22} r={18} fill="#1a4a1a" opacity={0.9} />
-          <circle cx={x} cy={y - 32} r={13} fill="#1e5c1e" opacity={0.85} />
-          <circle cx={x} cy={y - 40} r={8}  fill="#2a7a2a" opacity={0.8} />
-        </g>
-      ))}
-
-      {/* ── TRACK SURFACE ── */}
-      <path d={outerD} fill={`url(#${uid}track)`} />
-      <path d={innerD} fill={`url(#${uid}field)`} />
-
-      {/* Holographic grid on inner field */}
+      {/* ── TRACK SURFACE: sandy/dirt ring via mask (crack-free donut) ── */}
       <rect x={0} y={0} width={width} height={height}
-        fill={`url(#${uid}hologrid)`}
-        clipPath={`url(#${uid}innerClip)`} />
+        fill="#c4924a"
+        mask={`url(#${uid}mask)`}
+        opacity={0.85}
+      />
+
+      {/* Inner field — subtle green overlay to deepen the grass */}
+      <rect x={0} y={0} width={width} height={height}
+        fill="rgba(10,55,10,0.28)"
+        clipPath={`url(#${uid}innerClip)`}
+      />
 
       {/* Inner field ARY watermark */}
       <text
         x={width / 2}
-        y={height / 2 + 70}
+        y={height / 2 + 60}
         textAnchor="middle"
-        fill="rgba(0,200,255,0.06)"
-        fontSize={240}
+        fill="rgba(255,255,255,0.04)"
+        fontSize={220}
         fontWeight="900"
         style={{ userSelect: "none", fontFamily: "sans-serif" }}
       >
         ARY
       </text>
 
-      {/* ── LANE GUIDE LINES (subtle) ── */}
+      {/* ── LANE GUIDE LINES ── */}
       {laneGuidePaths.map((d, i) => (
-        <path key={`lg-${i}`} d={d} fill="none" stroke="rgba(0,180,255,0.06)" strokeWidth={1.5} />
+        <path key={`lg-${i}`} d={d} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth={1.5} />
       ))}
 
-      {/* ── TRACK BOUNDARY LINES (neon glow) ── */}
-      {/* Outer boundary */}
-      <path d={outerD} fill="none" stroke="#00d4ff" strokeWidth={22} opacity={0.05} />
-      <path d={outerD} fill="none" stroke="#00d4ff" strokeWidth={8} opacity={0.18} />
-      <path d={outerD} fill="none" stroke="#00d4ff" strokeWidth={2.5} opacity={0.95} />
-      {/* Inner boundary */}
-      <path d={innerD} fill="none" stroke="#00d4ff" strokeWidth={22} opacity={0.05} />
-      <path d={innerD} fill="none" stroke="#00d4ff" strokeWidth={8} opacity={0.18} />
-      <path d={innerD} fill="none" stroke="#00d4ff" strokeWidth={2.5} opacity={0.95} />
+      {/* ── TRACK BOUNDARY RAILS ── */}
+      <path d={outerD} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={6} />
+      <path d={outerD} fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth={2.5} />
+      <path d={innerD} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={6} />
+      <path d={innerD} fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth={2.5} />
 
-      {/* ── ADVERTISING BOARDS (holographic panels) ── */}
+      {/* ── ADVERTISING BOARDS on inner rail ── */}
       {adBoards.map((b, i) => (
         <g key={`ad-${i}`} transform={`rotate(${b.angle.toFixed(1)},${b.x.toFixed(1)},${b.y.toFixed(1)})`}>
-          {/* Panel glow */}
-          <rect x={b.x - 56} y={b.y - 14} width={112} height={28} rx={4} fill={b.color} opacity={0.12} />
-          {/* Panel border */}
-          <rect x={b.x - 54} y={b.y - 12} width={108} height={24} rx={3}
-            fill="rgba(0,0,0,0.85)" stroke={b.color} strokeWidth={1.5} opacity={0.95} />
+          <rect x={b.x - 52} y={b.y - 11} width={104} height={22} rx={3}
+            fill="rgba(10,20,40,0.88)" stroke={b.color} strokeWidth={1.5} />
           <text
             x={b.x} y={b.y + 5}
             textAnchor="middle"
@@ -1012,7 +919,7 @@ function TrackSVG({
         </g>
       ))}
 
-      {/* ── CHECKPOINTS (energy gates) ── */}
+      {/* ── CHECKPOINTS ── */}
       {cpGeos.map((cp) => {
         const { pos, normal } = cp.geo;
         const x1 = pos.x - normal.x * 90;
@@ -1021,18 +928,16 @@ function TrackSVG({
         const y2 = pos.y + normal.y * 90;
         return (
           <g key={cp.id}>
-            {/* Beam glow */}
-            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#a78bfa" strokeWidth={14} opacity={0.12} />
-            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#a78bfa" strokeWidth={3} opacity={0.75} />
-            {/* Gate pillars */}
-            <circle cx={x1} cy={y1} r={10} fill="#a78bfa" opacity={0.9} />
-            <circle cx={x2} cy={y2} r={10} fill="#a78bfa" opacity={0.9} />
+            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#f59e0b" strokeWidth={10} opacity={0.15} />
+            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#f59e0b" strokeWidth={2.5} opacity={0.9} strokeDasharray="10 5" />
+            <circle cx={x1} cy={y1} r={8} fill="#f59e0b" opacity={0.9} />
+            <circle cx={x2} cy={y2} r={8} fill="#f59e0b" opacity={0.9} />
             <text
               x={pos.x - normal.y * 112}
               y={pos.y + normal.x * 112}
               textAnchor="middle"
-              fill="#c4b5fd"
-              fontSize={20}
+              fill="#fbbf24"
+              fontSize={18}
               fontWeight="700"
             >
               {cp.label}
@@ -1041,7 +946,7 @@ function TrackSVG({
         );
       })}
 
-      {/* Start / Finish line (neon green) */}
+      {/* ── START / FINISH LINE ── */}
       {(() => {
         const { pos, normal } = sfGeo;
         const x1 = pos.x - normal.x * 90;
@@ -1050,16 +955,16 @@ function TrackSVG({
         const y2 = pos.y + normal.y * 90;
         return (
           <g>
-            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#00ff88" strokeWidth={16} opacity={0.12} />
-            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#00ff88" strokeWidth={4} opacity={0.9} />
+            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="white" strokeWidth={14} opacity={0.2} />
+            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="white" strokeWidth={4} opacity={0.95} />
+            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="black" strokeWidth={4} opacity={0.5} strokeDasharray="12 12" />
             <text
               x={pos.x - normal.y * 115}
               y={pos.y + normal.x * 115}
               textAnchor="middle"
-              fill="#00ff88"
-              fontSize={18}
+              fill="white"
+              fontSize={16}
               fontWeight="700"
-              opacity={0.9}
             >
               S/F
             </text>
