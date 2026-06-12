@@ -1,0 +1,167 @@
+{
+  "generatedAt": "2026-06-12T14:17:06.758Z",
+  "raceId": "race_signup",
+  "trackId": "oval-track",
+  "competition": {
+    "competitionId": "race_signup",
+    "title": "📋 API 设计大赛",
+    "subtitle": "设计一套符合 RESTful 规范的 Task Manager API，关注可扩展性和错误处理。",
+    "theme": "ARY GRS 001",
+    "organizer": "organizer_demo",
+    "liveStatus": "not_started",
+    "currentPhase": "registration",
+    "currentRound": 1,
+    "nextPhase": "比赛中",
+    "elapsedTime": 0,
+    "systemTime": "2026-06-12T14:17:06.758Z"
+  },
+  "entries": [
+    {
+      "entryId": "team_signup_0",
+      "riderName": "rider_iris",
+      "projectName": "接口艺术家",
+      "caProvider": "other",
+      "overallProgress": 0.5,
+      "roundProgress": -0.02,
+      "phaseProgress": -0.02,
+      "currentPhase": "DEV",
+      "costTokens": 0,
+      "costUsd": 0,
+      "riskLevel": "low",
+      "obstacleCount": 0,
+      "violationCount": 0,
+      "status": "idle",
+      "lastMessage": {
+        "messageId": "msg-mock-team_signup_0",
+        "entryId": "team_signup_0",
+        "source": "dc",
+        "type": "progress_update",
+        "severity": "info",
+        "summary": "正在优化边界条件处理",
+        "createdAt": "2026-06-12T14:17:06.758Z",
+        "displayMode": "bubble"
+      },
+      "updatedAt": "2026-06-12T14:17:06.758Z"
+    },
+    {
+      "entryId": "team_signup_1",
+      "riderName": "rider_jack",
+      "projectName": "REST 大师",
+      "caProvider": "other",
+      "overallProgress": 0.5,
+      "roundProgress": -0.02,
+      "phaseProgress": -0.02,
+      "currentPhase": "DEV",
+      "costTokens": 0,
+      "costUsd": 0,
+      "riskLevel": "low",
+      "obstacleCount": 0,
+      "violationCount": 0,
+      "status": "idle",
+      "lastMessage": {
+        "messageId": "msg-mock-team_signup_1",
+        "entryId": "team_signup_1",
+        "source": "dc",
+        "type": "progress_update",
+        "severity": "info",
+        "summary": "正在优化边界条件处理",
+        "createdAt": "2026-06-12T14:17:06.758Z",
+        "displayMode": "bubble"
+      },
+      "updatedAt": "2026-06-12T14:17:06.758Z"
+    },
+    {
+      "entryId": "team_signup_2",
+      "riderName": "rider_kate",
+      "projectName": "API 工匠",
+      "caProvider": "other",
+      "overallProgress": 0.5,
+      "roundProgress": -0.02,
+      "phaseProgress": -0.02,
+      "currentPhase": "DEV",
+      "costTokens": 0,
+      "costUsd": 0,
+      "riskLevel": "low",
+      "obstacleCount": 0,
+      "violationCount": 0,
+      "status": "idle",
+      "lastMessage": {
+        "messageId": "msg-mock-team_signup_2",
+        "entryId": "team_signup_2",
+        "source": "dc",
+        "type": "progress_update",
+        "severity": "info",
+        "summary": "正在优化边界条件处理",
+        "createdAt": "2026-06-12T14:17:06.758Z",
+        "displayMode": "bubble"
+      },
+      "updatedAt": "2026-06-12T14:17:06.758Z"
+    }
+  ],
+  "kpis": {
+    "completionRate": 0,
+    "totalTokens": 0,
+    "activeRiders": 0,
+    "onlineRiders": 3,
+    "activeCockpits": 0,
+    "codexTokens": 0,
+    "claudeTokens": 0,
+    "codexShare": 0,
+    "claudeShare": 0,
+    "riskCount": 0,
+    "obstacleCount": 0,
+    "violationCount": 0
+  },
+  "messages": [
+    {
+      "messageId": "msg-mock-team_signup_0",
+      "entryId": "team_signup_0",
+      "source": "dc",
+      "type": "milestone",
+      "severity": "info",
+      "summary": "接口艺术家: 正在进行代码实现",
+      "createdAt": "2026-06-12T14:11:50.427Z",
+      "displayMode": "bubble"
+    },
+    {
+      "messageId": "msg-mock-team_signup_1",
+      "entryId": "team_signup_1",
+      "source": "dc",
+      "type": "milestone",
+      "severity": "info",
+      "summary": "REST 大师: 提交通过所有测试用例 ✓",
+      "createdAt": "2026-06-12T14:13:16.968Z",
+      "displayMode": "bubble"
+    },
+    {
+      "messageId": "msg-mock-team_signup_2",
+      "entryId": "team_signup_2",
+      "source": "dc",
+      "type": "milestone",
+      "severity": "info",
+      "summary": "API 工匠: 已完成需求分析阶段",
+      "createdAt": "2026-06-12T14:16:46.954Z",
+      "displayMode": "bubble"
+    }
+  ],
+  "attentionItems": [
+    {
+      "itemId": "risk-mock-team_signup_0",
+      "entryId": "team_signup_0",
+      "category": "risk",
+      "severity": "low",
+      "summary": "接口艺术家: 提交间隔即将到期，请尽快提交",
+      "status": "active",
+      "createdAt": "2026-06-12T14:17:06.758Z"
+    },
+    {
+      "itemId": "risk-mock-team_signup_1",
+      "entryId": "team_signup_1",
+      "category": "risk",
+      "severity": "low",
+      "summary": "REST 大师: 提交间隔即将到期，请尽快提交",
+      "status": "active",
+      "createdAt": "2026-06-12T14:17:06.758Z"
+    }
+  ]
+}

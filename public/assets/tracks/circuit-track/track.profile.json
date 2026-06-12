@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "trackId": "circuit-track",
+  "name": "环形赛道",
+  "viewBox": { "w": 1920, "h": 1080 },
+  "background": {
+    "src": "/assets/tracks/circuit-track/background.svg",
+    "naturalWidth": 1920,
+    "naturalHeight": 1080
+  },
+  "centerline": {
+    "type": "polyline",
+    "closed": true,
+    "points": [
+      { "x": 280, "y": 700 },
+      { "x": 280, "y": 540 },
+      { "x": 280, "y": 380 },
+      { "x": 480, "y": 260 },
+      { "x": 720, "y": 240 },
+      { "x": 960, "y": 240 },
+      { "x": 1200, "y": 240 },
+      { "x": 1440, "y": 260 },
+      { "x": 1640, "y": 380 },
+      { "x": 1640, "y": 540 },
+      { "x": 1640, "y": 700 },
+      { "x": 1440, "y": 820 },
+      { "x": 1200, "y": 840 },
+      { "x": 960, "y": 840 },
+      { "x": 720, "y": 840 },
+      { "x": 480, "y": 820 }
+    ],
+    "smoothing": "catmull-rom"
+  },
+  "direction": "counterclockwise",
+  "startFinish": { "s": 0 },
+  "lanes": [
+    { "id": "lane-0", "name": "内侧车道", "offset": -45 },
+    { "id": "lane-1", "name": "中间车道", "offset": 0 },
+    { "id": "lane-2", "name": "外侧车道", "offset": 45 }
+  ],
+  "checkpoints": [
+    { "id": "cp-1", "name": "第一弯", "s": 0.2 },
+    { "id": "cp-2", "name": "直道中点", "s": 0.5 },
+    { "id": "cp-3", "name": "第二弯", "s": 0.8 }
+  ]
+}

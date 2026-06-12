@@ -1,6 +1,7 @@
 import {
   clearRaceAction,
   createRaceAction,
+  generateRaceSnapshotAction,
   logoutAction,
   publishLeaderboardAction,
   publishShowcaseAction,
@@ -36,6 +37,12 @@ import {
 import { getTeamForCaptain } from "@/lib/services/teams";
 import { getRoleCapabilities } from "@/lib/viewer-access";
 import { redirect } from "next/navigation";
+import JumbotronInline from "@/app/JumbotronInline";
+import JumbotronBanner from "@/app/JumbotronBanner";
+import { loadRaceSnapshot } from "@/lib/services/race-snapshot";
+import fs from "node:fs";
+import path from "node:path";
+import type { TrackProfile } from "@/lib/jumbotron/track-runtime/types";
 
 type RiderTeamMap = Map<string, Awaited<ReturnType<typeof getTeamForCaptain>>>;
 
@@ -51,6 +58,21 @@ export default async function HomePage() {
   const grouped = groupRacesByPhase(races);
   const { canManage, canRide } = getRoleCapabilities(sessionUser.role);
 
+  // 加载各赛事的 Jumbotron 快照（如果已生成）
+  const jumbotronMap = new Map(
+    races.map((race) => {
+      const snapshot = loadRaceSnapshot(race.id);
+      let trackProfile: TrackProfile | null = null;
+      if (snapshot) {
+        const tpPath = path.join(process.cwd(), "public", "assets", "tracks", snapshot.trackId, "track.profile.json");
+        if (fs.existsSync(tpPath)) {
+          trackProfile = JSON.parse(fs.readFileSync(tpPath, "utf-8")) as TrackProfile;
+        }
+      }
+      return [race.id, { snapshot, trackProfile }] as const;
+    }),
+  );
+
   const riderTeams = canRide
     ? await Promise.all(
         races.map(async (race) => ({
@@ -64,8 +86,25 @@ export default async function HomePage() {
     riderTeams.map((item) => [item.raceId, item.team]),
   );
 
+  // Jumbotron 轮播数据
+  const bannerItems = races
+    .filter((race) => {
+      const jt = jumbotronMap.get(race.id);
+      return jt?.snapshot && jt?.trackProfile;
+    })
+    .map((race) => {
+      const jt = jumbotronMap.get(race.id)!;
+      return {
+        raceId: race.id,
+        raceTitle: race.title,
+        snapshot: jt.snapshot!,
+        trackProfile: jt.trackProfile!,
+      };
+    });
+
   return (
     <main>
+      <JumbotronBanner items={bannerItems} />
       <HeroSection mode="member" />
 
       <section className="shell">
@@ -292,6 +331,12 @@ export default async function HomePage() {
                               发起 Harness 评测
                             </button>
                           </form>
+                          <form action={generateRaceSnapshotAction}>
+                            <input name="raceId" type="hidden" value={race.id} />
+                            <button className="button-secondary" type="submit">
+                              生成 Jumbotron 快照
+                            </button>
+                          </form>
                         </div>
                         <form
                           action={updateOrganizerCommentAction}
@@ -499,6 +544,18 @@ export default async function HomePage() {
                     </table>
                   )}
                 </Panel>
+
+                {/* Jumbotron 嵌入式大屏 */}
+                {(() => {
+                  const jt = jumbotronMap.get(race.id);
+                  return (
+                    <JumbotronInline
+                      raceId={race.id}
+                      snapshot={jt?.snapshot ?? null}
+                      trackProfile={jt?.trackProfile ?? null}
+                    />
+                  );
+                })()}
               </article>
             );
           })}

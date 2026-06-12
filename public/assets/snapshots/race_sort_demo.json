@@ -1,0 +1,105 @@
+{
+  "generatedAt": "2026-06-10T13:35:04.096Z",
+  "raceId": "race_sort_demo",
+  "trackId": "oval-track",
+  "competition": {
+    "competitionId": "race_sort_demo",
+    "title": "排序 Runner 演示赛",
+    "subtitle": "这是一个私有 Runner 排序题 PoC：Rider 提交 solve(input)，Organizer 私有 Runner 返回最终分数。",
+    "theme": "ARY GRS 001",
+    "organizer": "organizer_demo",
+    "liveStatus": "finished",
+    "currentPhase": "finished",
+    "currentRound": 1,
+    "nextPhase": "比赛结束",
+    "elapsedTime": 304513,
+    "systemTime": "2026-06-10T13:35:04.096Z"
+  },
+  "entries": [
+    {
+      "entryId": "team_sort_demo",
+      "riderName": "rider_demo",
+      "projectName": "排序演示队",
+      "caProvider": "other",
+      "rank": 1,
+      "overallProgress": 1,
+      "roundProgress": 0.5,
+      "phaseProgress": 0.5,
+      "currentPhase": "DEV",
+      "costTokens": 1200,
+      "costUsd": 0.12000000000000001,
+      "riskLevel": "low",
+      "obstacleCount": 0,
+      "violationCount": 0,
+      "status": "sprinting",
+      "lastMessage": {
+        "messageId": "msg-team_sort_demo",
+        "entryId": "team_sort_demo",
+        "source": "feedback",
+        "type": "progress_update",
+        "severity": "info",
+        "summary": "需要。提交前请重点验证重复值与边界条件。",
+        "createdAt": "2026-06-07T01:29:50.597Z",
+        "displayMode": "ticker"
+      },
+      "updatedAt": "2026-06-07T01:32:02.066Z"
+    }
+  ],
+  "kpis": {
+    "completionRate": 100,
+    "totalTokens": 1200,
+    "activeRiders": 1,
+    "onlineRiders": 1,
+    "activeCockpits": 1,
+    "codexTokens": 0,
+    "claudeTokens": 0,
+    "codexShare": 0,
+    "claudeShare": 0,
+    "riskCount": 0,
+    "obstacleCount": 0,
+    "violationCount": 0
+  },
+  "messages": [
+    {
+      "messageId": "msg-team_sort_demo-1781098504096-0.6202546138123055",
+      "entryId": "team_sort_demo",
+      "source": "feedback",
+      "type": "progress_update",
+      "severity": "info",
+      "summary": "请确认重复值是否需要保持稳定顺序？",
+      "createdAt": "2026-06-07T01:29:50.597Z",
+      "displayMode": "ticker"
+    },
+    {
+      "messageId": "msg-team_sort_demo-1781098504096-0.8682981575662152",
+      "entryId": "team_sort_demo",
+      "source": "feedback",
+      "type": "progress_update",
+      "severity": "info",
+      "summary": "需要。提交前请重点验证重复值与边界条件。",
+      "createdAt": "2026-06-07T01:29:50.597Z",
+      "displayMode": "ticker"
+    },
+    {
+      "messageId": "msg-mock-team_sort_demo",
+      "entryId": "team_sort_demo",
+      "source": "dc",
+      "type": "milestone",
+      "severity": "info",
+      "summary": "排序演示队: 开始测试验证",
+      "createdAt": "2026-06-10T13:34:17.343Z",
+      "displayMode": "bubble"
+    }
+  ],
+  "attentionItems": [
+    {
+      "itemId": "risk-mock-team_sort_demo",
+      "entryId": "team_sort_demo",
+      "category": "risk",
+      "severity": "low",
+      "summary": "排序演示队: 提交间隔即将到期，请尽快提交",
+      "status": "active",
+      "createdAt": "2026-06-10T13:35:04.096Z"
+    }
+  ]
+}

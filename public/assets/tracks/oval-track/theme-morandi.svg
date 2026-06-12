@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2560 1263">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="#f5efe6"/>
+      <stop offset="100%" stop-color="#e8dfd2"/>
+    </radialGradient>
+  </defs>
+  <rect width="2560" height="1263" fill="url(#g)"/>
+  <ellipse cx="1280" cy="631" rx="1050" ry="530" fill="none" stroke="rgba(68,55,37,0.06)" stroke-width="150"/>
+  <ellipse cx="1280" cy="631" rx="1030" ry="510" fill="none" stroke="#d4c8b8" stroke-width="140"/>
+  <ellipse cx="1280" cy="631" rx="960" ry="440" fill="none" stroke="#c0b0a0" stroke-width="2"/>
+  <ellipse cx="1280" cy="631" rx="1100" ry="580" fill="none" stroke="#c0b0a0" stroke-width="2"/>
+  <ellipse cx="1280" cy="631" rx="920" ry="400" fill="#ede5da"/>
+  <ellipse cx="1280" cy="631" rx="980" ry="460" fill="none" stroke="rgba(140,124,106,0.35)" stroke-width="2" stroke-dasharray="16,16"/>
+  <ellipse cx="1280" cy="631" rx="1080" ry="560" fill="none" stroke="rgba(140,124,106,0.35)" stroke-width="2" stroke-dasharray="16,16"/>
+  <line x1="1230" y1="121" x2="1330" y2="121" stroke="#c34e36" stroke-width="10"/>
+  <text x="1280" y="108" text-anchor="middle" fill="#c34e36" font-size="18" font-weight="bold" font-family="sans-serif">START</text>
+</svg>

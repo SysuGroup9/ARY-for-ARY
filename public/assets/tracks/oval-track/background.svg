@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2560 1263">
+  <defs>
+    <radialGradient id="grass" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="#4caf50"/>
+      <stop offset="60%" stop-color="#388e3c"/>
+      <stop offset="100%" stop-color="#2e7d32"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 草地 -->
+  <rect width="2560" height="1263" fill="url(#grass)"/>
+
+  <!-- 草地纹理 -->
+  <g opacity="0.08" stroke="#fff" stroke-width="1">
+    <line x1="0" y1="200" x2="2560" y2="200"/>
+    <line x1="0" y1="400" x2="2560" y2="400"/>
+    <line x1="0" y1="600" x2="2560" y2="600"/>
+    <line x1="0" y1="800" x2="2560" y2="800"/>
+    <line x1="0" y1="1000" x2="2560" y2="1000"/>
+  </g>
+
+  <!-- 赛道外圈阴影 -->
+  <ellipse cx="1280" cy="631" rx="1050" ry="530" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="90"/>
+
+  <!-- 赛道主体 -->
+  <ellipse cx="1280" cy="631" rx="1030" ry="510" fill="none" stroke="#e8c97a" stroke-width="80"/>
+
+  <!-- 赛道内边线 -->
+  <ellipse cx="1280" cy="631" rx="990" ry="470" fill="none" stroke="#d4a850" stroke-width="3"/>
+  <ellipse cx="1280" cy="631" rx="1070" ry="550" fill="none" stroke="#d4a850" stroke-width="3"/>
+
+  <!-- 内圈草地 -->
+  <ellipse cx="1280" cy="631" rx="940" ry="430" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/>
+
+  <!-- 内圈装饰文字 -->
+  <ellipse cx="1280" cy="631" rx="120" ry="55" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="4"/>
+  <text x="1280" y="637" text-anchor="middle" fill="#fff" font-size="22" font-weight="bold" font-family="sans-serif" opacity="0.7">ARY RACING</text>
+
+  <!-- 车道虚线 -->
+  <ellipse cx="1280" cy="631" rx="1010" ry="490" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="14,14"/>
+  <ellipse cx="1280" cy="631" rx="1050" ry="530" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="14,14"/>
+
+  <!-- 起跑线 -->
+  <line x1="1230" y1="121" x2="1330" y2="121" stroke="#fff" stroke-width="8"/>
+  <line x1="1230" y1="121" x2="1330" y2="121" stroke="#ff4444" stroke-width="3" stroke-dasharray="10,10"/>
+  <text x="1280" y="110" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold" font-family="sans-serif">🏁 START</text>
+</svg>

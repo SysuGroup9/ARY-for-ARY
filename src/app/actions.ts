@@ -14,6 +14,7 @@ import {
 import {
   createSubmission,
 } from "@/lib/services/submissions";
+import { generateRaceSnapshot } from "@/lib/services/race-snapshot";
 import {
   completeRunnerTask,
   enqueueHarnessEvalTasks,
@@ -144,6 +145,12 @@ export async function updateDisplayOptionsAction(formData: FormData) {
   });
 
   revalidatePath("/");
+}
+
+export async function generateRaceSnapshotAction(formData: FormData) {
+  await requireRole("ORGANIZER");
+  await generateRaceSnapshot(String(formData.get("raceId") ?? ""));
+  revalidatePath("/jumbotron/" + String(formData.get("raceId") ?? ""));
 }
 
 export async function scoreRunnerTaskAction(formData: FormData) {

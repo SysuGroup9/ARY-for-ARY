@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2560 1263">
+  <defs><radialGradient id="g" cx="50%" cy="50%"><stop offset="0%" stop-color="#f8bbd0"/><stop offset="100%" stop-color="#c2185b"/></radialGradient></defs>
+  <rect width="2560" height="1263" fill="url(#g)"/>
+  <ellipse cx="1280" cy="631" rx="1050" ry="530" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="90"/>
+  <ellipse cx="1280" cy="631" rx="1030" ry="510" fill="none" stroke="#fff" stroke-width="80" opacity="0.85"/>
+  <ellipse cx="1280" cy="631" rx="990" ry="470" fill="none" stroke="#f48fb1" stroke-width="3"/>
+  <ellipse cx="1280" cy="631" rx="1070" ry="550" fill="none" stroke="#f48fb1" stroke-width="3"/>
+  <ellipse cx="1280" cy="631" rx="940" ry="430" fill="#ad1457"/>
+  <ellipse cx="1280" cy="631" rx="1010" ry="490" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="14,14"/>
+  <ellipse cx="1280" cy="631" rx="1050" ry="530" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="14,14"/>
+  <line x1="1230" y1="121" x2="1330" y2="121" stroke="#fff" stroke-width="8"/><line x1="1230" y1="121" x2="1330" y2="121" stroke="#ffeb3b" stroke-width="3" stroke-dasharray="10,10"/>
+  <text x="1280" y="110" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold" font-family="sans-serif">🏁 START</text>
+  <text x="1280" y="638" text-anchor="middle" fill="rgba(255,255,255,0.25)" font-size="24" font-weight="bold" font-family="sans-serif">ARY RACING</text>
+</svg>

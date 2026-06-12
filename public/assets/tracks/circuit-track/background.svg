@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">
+  <defs>
+    <radialGradient id="bg2" cx="50%" cy="50%"><stop offset="0%" stop-color="#1a2a3a"/><stop offset="100%" stop-color="#0a1220"/></radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg2)"/>
+  <!-- 城市背景 -->
+  <rect x="0" y="0" width="1920" height="1080" fill="none" stroke="#1a3a5a" stroke-width="2" opacity="0.3"/>
+  <!-- 赛道外形 -->
+  <path d="M 400,200 Q 200,200 200,400 L 200,680 Q 200,880 400,880 L 1520,880 Q 1720,880 1720,680 L 1720,400 Q 1720,200 1520,200 Z" fill="#1e3a5a" stroke="#3a6a8a" stroke-width="6"/>
+  <path d="M 400,200 Q 200,200 200,400 L 200,680 Q 200,880 400,880 L 1520,880 Q 1720,880 1720,680 L 1720,400 Q 1720,200 1520,200 Z" fill="none" stroke="#5a8aaa" stroke-width="160" opacity="0.3"/>
+  <!-- 赛道内圈 -->
+  <path d="M 520,300 Q 360,300 360,440 L 360,640 Q 360,780 520,780 L 1400,780 Q 1560,780 1560,640 L 1560,440 Q 1560,300 1400,300 Z" fill="#0a1a2a" stroke="#2a4a6a" stroke-width="2"/>
+  <!-- 起跑线 -->
+  <line x1="360" y1="710" x2="360" y2="600" stroke="#fff" stroke-width="4" stroke-dasharray="10,6"/>
+  <!-- 中心logo -->
+  <text x="960" y="555" text-anchor="middle" fill="#3a6a9a" font-size="18" font-family="sans-serif">ARY CIRCUIT</text>
+</svg>

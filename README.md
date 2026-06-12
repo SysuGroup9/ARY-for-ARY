@@ -1,228 +1,14 @@
-# ARY for ARY
+# ARY GRS 002 — Jumbotron 赛马大屏子系统
 
-这是一个基于 `Next.js + Prisma + SQLite` 的 ARY GRS 001 全栈 PoC。
+> 一块由 RaceSnapshot、Track Profile 和 Riding Message 驱动的赛事大屏——马匹位置全链路计算，赛道几何经 Calibrator 人工校准，数据经 Adapter 映射入轨，不写死一个坐标。
 
-当前仓库已经实现：
+基于 `Next.js 16 + Prisma 7 + SQLite`，并入现有 ARY 项目。包含 Jumbotron Race Live View（运行时大屏）、Track Profile Calibrator（设计时 SVG 编辑器）和 track-runtime（共享位置计算包）。
 
-- Organizer / Rider 真实账号与 Cookie Session
-- 赛事创建、组队报名、代码提交、反馈、通知
-- Runner 任务拉取与结果回传 API
-- 位于 `organizer_demo/runner_demo` 的 Organizer 私有排序评测 Runner
-- 公开榜单与 Audience 视图
+---
 
-## 技术栈
-
-- Next.js 16 App Router
-- TypeScript
-- Prisma 7
-- SQLite
-- Zod
-- bcryptjs
-- jose
-
-## 演示视频
-
-- [GRS_001 完整演示](https://www.bilibili.com/video/BV1qdEs62Egz/)
-- [主要功能介绍](https://www.bilibili.com/video/BV1LZEs6LEtV/)
-
-## 本地启动
+## 快速开始
 
 ```bash
-# 1. 安装依赖
-npm install
-
-# 2. 创建环境变量文件（任选一种）
-# Windows (CMD)
-copy .env.example .env
-# 或 Windows (PowerShell)
-Copy-Item .env.example .env
-# 或 Mac/Linux/Git Bash
-cp .env.example .env
-
-# 3. 初始化数据库
-npx prisma migrate dev --name init
-
-# 4. 生成 Prisma Client
-npx prisma generate
-
-# 5. 种子数据
-npm run db:seed
-
-# 6. 启动项目
-npm run dev
-```
-
-## 种子演示数据
-
-执行 `npm run db:seed` 后，仓库会生成：
-
-- Organizer 账号：`organizer_demo` / `organizer123`
-- Rider 账号：`rider_demo` / `rider123`
-- 活跃赛事 ID：`race_sort_demo`
-- Rider 默认队伍：`排序演示队`
-
-默认种子赛事已经处于进行中状态，Rider 登录后可以直接提交。
-
-## Organizer 演示 Runner
-
-Organizer 私有排序 Runner 位于 [organizer_demo/runner_demo](/D:/Desktop/ARY-for-ARY/organizer_demo/runner_demo)。
-
-启动方式：
-
-```bash
-cd organizer_demo/runner_demo
-cp .env.example .env   # 或用 copy / Copy-Item
-npm install
-npm run start
-```
-
-默认环境变量：
-
-- `ARY_BASE_URL=http://localhost:3000`
-- `ARY_RUNNER_TOKEN=ary-runner-dev-secret`
-- `ARY_RACE_ID=race_sort_demo`
-- `POLL_INTERVAL_MS=2000`
-- `TASK_TIMEOUT_MS=5000`
-
-## 完整演示流程
-
-下面这套流程可以完整演示：
-
-- Rider 提交 `solution.ts`
-- ARY 创建 Runner 任务
-- Organizer 私有 Runner 拉取并评分
-- Organizer 手动发起进度评测
-- 公开榜单显示分数和排名
-
-### 1. 首次准备
-
-在仓库根目录执行：
-
-```bash
-npm install
-cp .env.example .env   # 或用 copy / Copy-Item
-npx prisma migrate dev --name init
-npx prisma generate
-npm run db:seed
-```
-
-如果你之前已经初始化过数据库，只想把演示数据重置回默认状态，执行：
-
-```bash
-npm run db:seed
-```
-
-### 2. 终端 A：启动 ARY Web 应用
-
-在仓库根目录执行：
-
-```bash
-npm run dev
-```
-
-启动后访问：
-
-- 主界面：[http://localhost:3000](http://localhost:3000)
-- Audience 视图：[http://localhost:3000/audience](http://localhost:3000/audience)
-
-### 3. 终端 B：启动 Organizer 私有 Runner
-
-在 `organizer_demo/runner_demo` 目录执行：
-
-```bash
-cd organizer_demo/runner_demo
-cp .env.example .env   # 或用 copy / Copy-Item
-npm install
-npm run start
-```
-
-正常情况下你会看到类似日志：
-
-```text
-[runner_demo] polling race race_sort_demo every 2000ms on http://localhost:3000
-No queued tasks for race race_sort_demo.
-```
-
-这表示私有 Runner 已经开始轮询 ARY。
-
-### 4. Rider 提交代码
-
-1. 打开 [http://localhost:3000](http://localhost:3000)
-2. 使用 Rider 账号登录
-   - 用户名：`rider_demo`
-   - 密码：`rider123`
-3. 找到默认活跃赛事“排序 Runner 演示赛”
-4. 由于种子数据已经创建了默认队伍“排序演示队”，登录后可以直接提交，不需要重新报名
-5. 在提交表单中保留 `solution.ts`，填入一个可执行的 JavaScript / TypeScript 解法，例如：
-
-```ts
-export function solve(input: number[]): number[] {
-  return [...input].sort((a, b) => a - b);
-}
-```
-
-6. 点击“进入待评测队列”
-
-### 5. 观察 SUBMISSION_TEST 自动评分
-
-提交之后：
-
-1. ARY 会自动创建一条 `SUBMISSION_TEST` Runner 任务
-2. 终端 B 中的私有 Runner 会自动拉取任务并执行隐藏排序用例
-3. 成功后终端 B 会出现类似日志：
-
-```text
-Processed submission_test task <task-id>.
-```
-
-此时含义是：
-
-- 提交已经被私有 Runner 处理
-- 分数已经回传给 ARY
-- 但公开榜单还不会自动刷新，因为这个 PoC 保留“手动发榜”
-
-### 6. Organizer 手动发起进度评测
-
-1. 在浏览器中退出 Rider，重新登录 Organizer
-   - 用户名：`organizer_demo`
-   - 密码：`organizer123`
-2. 进入同一场赛事“排序 Runner 演示赛”
-3. 点击现有按钮“发起进度评测”
-
-点击后：
-
-- ARY 会创建一条 `PROGRESS_EVAL` 任务
-- 终端 B 中的私有 Runner 会再次自动拉取并评分
-- 成功后你会看到类似日志：
-
-```text
-Processed progress_eval task <task-id>.
-```
-
-### 7. 查看公开榜单
-
-现在打开以下任一页面：
-
-- [http://localhost:3000](http://localhost:3000)
-- [http://localhost:3000/audience](http://localhost:3000/audience)
-
-你应该能看到：
-
-- 榜单列中有“排名”
-- 队伍“排序演示队”
-- 总分
-- 当前排名
-
-在默认演示数据和上面的示例代码下，通常会看到该队伍以 `100` 分显示在第 `1` 名。
-
-### 8. 一次完整演示的最短命令清单
-
-如果你只想快速复现整套流程，可以直接按下面顺序执行。
-
-终端 A：
-
-```bash
-cd D:\Desktop\ARY-for-ARY
 npm install
 cp .env.example .env
 npx prisma migrate dev --name init
@@ -231,47 +17,134 @@ npm run db:seed
 npm run dev
 ```
 
-终端 B：
+打开 `http://localhost:3000`，主页顶部即见 Jumbotron 赛马横幅轮播。
 
-```bash
-cd D:\Desktop\ARY-for-ARY\organizer_demo\runner_demo
-cp .env.example .env
-npm install
-npm run start
+---
+
+## 演示账号
+
+| 角色      | 用户名                             | 密码             |
+| --------- | ---------------------------------- | ---------------- |
+| Organizer | `organizer_demo`                 | `organizer123` |
+| Rider     | `rider_alice` ~ `rider_olivia` | `rider123`     |
+
+---
+
+## 路由
+
+| 路由                    | 说明                          | 权限      |
+| ----------------------- | ----------------------------- | --------- |
+| `/`                   | 主页（含 Jumbotron 轮播横幅） | 需登录    |
+| `/jumbotron/[raceId]` | Jumbotron 全屏大屏            | 公开      |
+| `/calibrator`         | Track Profile Calibrator      | Organizer |
+
+---
+
+## 功能
+
+### Jumbotron Race Live View
+
+| 功能             | 说明                                                         |
+| ---------------- | ------------------------------------------------------------ |
+| 赛马轮播横幅     | 主页顶部，自动 8 秒切换赛事，鼠标悬停暂停                    |
+| 五个信息区域     | Header / KPI Strip / 赛道 SVG / TOP3+Legend / Ticker+Footer  |
+| 马匹动画         | s 轴补间（非 x/y）、每马不同速度、起跑效果、9 种动画状态     |
+| per-entry 可视化 | 12 种颜色环 + 12 种 emoji + 排名 badge + 队名标签 + 消息气泡 |
+| KPI drill-down   | 点击完成度 / Tokens / CA / 风险 → 展开各队明细表            |
+| 详情面板         | 点击马匹或 TOP3 → 弹窗展示 12 字段                          |
+| Debug Mode       | 按 D 键：中心线 / 采样点 / s 值                              |
+| 全屏             | 🔲 按钮 → 新标签页 100vw×100vh                             |
+
+### Track Profile Calibrator
+
+| 功能          | 说明                                               |
+| ------------- | -------------------------------------------------- |
+| 导入底图      | SVG / PNG → 显示在编辑区                          |
+| 编辑控制点    | 拖拽移动 / 右键删除 / 双击空白添加                 |
+| 路径预览      | Catmull-Rom 平滑 + 方向箭头                        |
+| 车道 / 检查点 | Inspector 中配置                                   |
+| 单马预览      | 底部 scrubber 0%→100%                             |
+| 多马预览      | 1~12 匹                                            |
+| Validate      | schema + geometry 15+ 项校验                       |
+| Export        | 导出 `track.profile.json`，直接供 Jumbotron 加载 |
+
+### track-runtime（共享包）
+
+Calibrator 的马匹预览与 Jumbotron 的马匹渲染使用**同一套函数**（`sampleAt` / `normal` / `tangentAngle`）。
+
+---
+
+## 操作速览
+
+| 操作                                 | 效果                     |
+| ------------------------------------ | ------------------------ |
+| 点击 KPI 项                          | 展开各队明细表           |
+| 点击马匹 / TOP3                      | 弹出 drill-down 详情面板 |
+| 按 D 键                              | Debug Mode               |
+| 点 🔲 全屏                           | 满屏大屏                 |
+| 主页横幅 Tab 切换                    | 浏览不同赛事             |
+| Calibrator: 导入底图 → 拖点 → 导出 | 校准赛道资产             |
+
+---
+
+## 赛道资产
+
+| 赛道          | 控制点     | 车道 | 底图                |
+| ------------- | ---------- | ---- | ------------------- |
+| oval-track    | 12（椭圆） | 3    | SVG（Morandi 暖调） |
+| circuit-track | 16（环形） | 3    | SVG（蓝灰冷调）     |
+
+两条赛道均通过 Calibrator 校准，可被 Jumbotron 直接加载。
+
+---
+
+## 数据流
+
+```
+ARY DB → Server Action → RaceSnapshot JSON → Adapter → track-runtime → HorsePose → Jumbotron SVG
 ```
 
-浏览器操作：
+MVVP 阶段 DC 侧数据未接入，缺失字段（phaseProgress / currentPhase 等）使用 mock 补全。`DCRaceDataProvider` 接口已预留，DC 接入时零改动渲染层。
 
-1. 用 `rider_demo / rider123` 登录并提交 `solution.ts`
-2. 等终端 B 出现 `Processed submission_test task ...`
-3. 用 `organizer_demo / organizer123` 登录并点击“发起进度评测”
-4. 等终端 B 出现 `Processed progress_eval task ...`
-5. 打开 `/audience` 查看公开榜单
+---
 
-这个 PoC 刻意保留“手动发榜”语义：评分自动完成，但公开榜单刷新仍由 Organizer 手动触发。
+## 文档
 
-## 验证命令
+| 文档                                                                          | 说明                                            |
+| ----------------------------------------------------------------------------- | ----------------------------------------------- |
+| [Jumbotron-PRD.md](Jumbotron-PRD.md)                                             | 作品说明文档（系统架构/功能清单/数据契约/验收） |
+| [Jumbotron信息架构.md](Jumbotron信息架构.md)                                     | 信息架构（前置参考）                            |
+| [Jumbotron子系统定义.md](Jumbotron子系统定义.md)                                 | 子系统定义（前置参考）                          |
+| [DEMO-GUIDE.md](DEMO-GUIDE.md)                                                   | 演示流程指南                                    |
+| [VIDEO-SCRIPT.md](VIDEO-SCRIPT.md)                                               | 视频分镜脚本                                    |
+| [riding_record/GRS-002-riding-record.md](riding_record/GRS-002-riding-record.md) | Agent Riding Record                             |
+| [riding_record/uml/](riding_record/uml/)                                         | UML 建模图（用例/状态机/时序）                  |
+
+---
+
+## 验证
 
 ```bash
-node --import tsx --test src/lib/*.test.ts
-node --import tsx --test organizer_demo/runner_demo/src/*.test.ts
+npx tsc --noEmit
 npm run lint
 npm run build
 ```
 
-## 数据边界
+---
 
-ARY 持久化保存：
+## 提交物
 
-- 赛事公开元数据
-- 队伍、反馈、通知
-- 提交状态与公开榜单投影
-- 公开赛后展示投影
+| # | 提交物        | 路径                                                                                         |
+| - | ------------- | -------------------------------------------------------------------------------------------- |
+| 1 | 作品说明文档  | `Jumbotron-PRD.md`                                                                         |
+| 2 | 可运行 Demo   | `npm run db:seed && npm run dev`                                                           |
+| 3 | 短视频        | `https://www.bilibili.com/video/BV1GYJ561Eb1/?vd_source=1b134e71774d2264b0206c4267e3e406`  |
+| 4 | 赛道资产 ×2  | `public/assets/tracks/oval-track/` `circuit-track/`                                      |
+| 5 | 数据样例 ×3  | `public/assets/snapshots/race_*.json`                                                      |
+| 6 | Riding Record | `riding_record/GRS-002-riding-record.md`                                                   |
+| 8 | Demo 指南     | `DEMO-GUIDE.md`                                                                            |
+| 9 | 视频脚本      | `VIDEO-SCRIPT.md`                                                                          |
 
-ARY 不保存 Organizer 私有测试集，也不保存 Organizer 私有 Runner 逻辑。
+---
 
-## 相关文档
-
-- [PRD.md](/D:/Desktop/ARY-for-ARY/PRD.md)
-- [ROADMAP.md](/D:/Desktop/ARY-for-ARY/ROADMAP.md)
-- [runner_doc/organizer-demo-runner.md](/D:/Desktop/ARY-for-ARY/runner_doc/organizer-demo-runner.md)
+*ARY GRS 002 — 陈怀容24325033— 2026*
