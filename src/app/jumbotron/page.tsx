@@ -95,6 +95,8 @@ export default async function JumbotronPage({ searchParams }: Props) {
       snapshot={snapshot}
       trackId={race.trackId}
       trackCenterlineJson={race.trackCenterlineJson}
+      trackDirection={race.trackDirection}
+      trackStartFinishS={race.trackStartFinishS}
       checkpointCount={race.checkpointCount}
       debug={isDebug}
       raceStartMs={race.raceStart?.getTime()}

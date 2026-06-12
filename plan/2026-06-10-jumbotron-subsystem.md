@@ -179,3 +179,45 @@ Organizer 在每次"发起进度评测"并收到 Runner 回传结果后，刷新
 | 活跃骑手 TOP3 | ✅ 已实现 | 按主动提交次数（Submission 表）排名前 3，展示在左侧面板，KPI 栏显示有提交记录的队伍总数 |
 | rankDelta 排名变化箭头 | ✅ 已实现 | 触发源：Runner 回传 PROGRESS_EVAL → DB 更新 → 30s 轮询取新快照 → 与 sessionStorage 上次快照比较 → 排名变化显示 ↑绿/↓红；首次加载无历史不显示 |
 | Debug mode | ✅ 已实现 | URL 加 `?debug=1` 激活：中心线点阵、车道边界线、各车道导引线、每匹马 s 值标注、碰撞框虚线轮廓、STALE 文字标注 |
+
+---
+
+## Iteration 6 — Calibrator（2026-06-12）
+
+### 新增文件
+
+| 文件 | 说明 |
+|------|------|
+| `src/app/jumbotron/calibrator/page.tsx` | Server shell，metadata + 渲染 CalibratorUI |
+| `src/app/jumbotron/calibrator/calibrator-ui.tsx` | 完整 Client Component：SVG 画布、控制点交互、预览、导出 |
+| `src/app/jumbotron/calibrator/calibrator.module.css` | 两列布局样式 |
+| `prisma/migrations/20260612000000_add_track_direction/migration.sql` | 新增 `trackDirection` + `trackStartFinishS` |
+
+### 修改文件
+
+| 文件 | 修改内容 |
+|------|---------|
+| `prisma/schema.prisma` | Race 新增 `trackDirection String @default("counterclockwise")` 和 `trackStartFinishS Float @default(0.0)` |
+| `src/lib/validation.ts` | `raceBaseSchema` 新增 `trackDirection`（enum）和 `trackStartFinishS`（coerce.number）|
+| `src/lib/services/races.ts` | `createRace()` 解析并写入两个新字段 |
+| `src/app/jumbotron/race-live-view.tsx` | `buildProfile()` 接受 `direction` + `startFinishS`；`RaceLiveView` props 增加同名字段 |
+| `src/app/jumbotron/page.tsx` | `RaceLiveView` 传入 `trackDirection` + `trackStartFinishS` |
+| `src/app/_components/race-jumbotron.tsx` | 同上 |
+| `src/app/_components/ary-shared.tsx` | 创建比赛表单新增方向下拉、起/终点 S 输入、Calibrator 工具链接 |
+
+### Calibrator 核心设计
+
+- **SVG viewBox 1920×1080**，响应式缩放，与 Jumbotron 主屏一致
+- **控制点交互**：click→新增，mousedown+mousemove→拖拽（didDragRef 防止拖拽后触发 click），dblclick→删除
+- **实时预览**：`TrackRuntime` memo，中心线/外内边界/车道分隔/检查点/起终线/马匹均与主屏同源
+- **Lane offset 公式**：`offset = -halfWidth + (2*halfWidth)/(N+1) * (idx+1)`，与 race-live-view.tsx 一致
+- **导出**：完整 `TrackProfile` JSON（含 schemaVersion/viewBox/lanes/checkpoints/noBubbleZones）或仅复制控制点数组
+- **路径**：`/jumbotron/calibrator`（全屏，无需认证）
+
+### 更新 `已实现` 表
+
+| 功能 | 状态 |
+|------|------|
+| Calibrator 赛道编辑 | ✅ `/jumbotron/calibrator` |
+| 起/终点位置 + 方向可配置 | ✅ Race.trackDirection + Race.trackStartFinishS |
+| Calibrator 导出 → 创建比赛表单 | ✅ 「复制控制点」→ 粘贴到表单 JSON 字段 |

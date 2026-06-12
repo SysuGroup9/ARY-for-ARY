@@ -645,12 +645,37 @@ export function CreateRaceForm({ action }: { action: FormAction }) {
         </select>
       </label>
       <label>
+        赛道方向
+        <select name="trackDirection" defaultValue="counterclockwise">
+          <option value="counterclockwise">逆时针（默认）</option>
+          <option value="clockwise">顺时针</option>
+        </select>
+      </label>
+      <label>
+        起/终点位置 S（0.0–1.0，弧长比例）
+        <input
+          defaultValue={0}
+          min={0}
+          max={1}
+          step={0.01}
+          name="trackStartFinishS"
+          type="number"
+        />
+      </label>
+      <label>
         自定义赛道控制点 JSON（可选，填写后覆盖上方赛道类型）
         <textarea
           name="trackCenterlineJson"
           rows={3}
           placeholder={"高级选项：留空则使用上方选择的赛道类型。\n自定义格式（1920×1080 坐标系，至少 4 个点）：\n[[1600,540],[960,250],[320,540],[960,830]]"}
         />
+        <small style={{ color: "#64748b" }}>
+          可使用{" "}
+          <a href="/jumbotron/calibrator" target="_blank" style={{ color: "#38bdf8" }}>
+            Calibrator 可视化工具 →
+          </a>{" "}
+          生成控制点数据，再粘贴到此处。
+        </small>
       </label>
       <label>
         检查点数量 / 阶段数（1–10）

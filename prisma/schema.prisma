@@ -89,6 +89,8 @@ model Race {
   cloudStudioUrl             String
   trackId                    String   @default("oval-standard")
   trackCenterlineJson        String?
+  trackDirection             String   @default("counterclockwise")
+  trackStartFinishS          Float    @default(0.0)
   checkpointCount            Int      @default(3)
   displayShowTrainingData    Boolean  @default(false)
   displayShowOrganizerComment Boolean @default(false)

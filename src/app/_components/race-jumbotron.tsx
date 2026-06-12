@@ -60,6 +60,8 @@ export function RaceJumbotron({ race }: { race: RaceListItem }) {
       snapshot={snapshot}
       trackId={race.trackId}
       trackCenterlineJson={race.trackCenterlineJson}
+      trackDirection={race.trackDirection}
+      trackStartFinishS={race.trackStartFinishS}
       checkpointCount={race.checkpointCount ?? 3}
       embedded
       raceStartMs={race.raceStart?.getTime() ?? undefined}

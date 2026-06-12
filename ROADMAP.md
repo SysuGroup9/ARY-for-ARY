@@ -192,3 +192,41 @@ prisma/migrations/20260610000000_jumbotron_track/migration.sql
 
 - 早期从旧 PoC 迁移时有编码损坏的中文文本混入新实现。
 - 改进措施：不再从旧损坏文件复制中文字面量，所有中文文案重新手写并在最终构建前做人工检查。
+
+### Iteration 6 — Calibrator 可视化赛道编辑工具（2026-06-12）
+
+**背景：** GRS 002 评审要求 Calibrator 功能（20 分 + 硬性入场门槛），实现内嵌 Jumbotron 的赛道可视化校准工具。
+
+**新增功能：**
+
+- 可视化 Calibrator 页面：`/jumbotron/calibrator`
+  - SVG 画布（1920×1080 viewBox），单击添加控制点，拖拽移动，双击删除
+  - 底图上传（PNG/JPG/WebP），透明度可调，用于对照实际赛场描绘轨迹
+  - 实时 Catmull-Rom 曲线预览、车道边界、检查点、起/终点标记
+  - 马匹预览：Scrubber 拖拽查看任意 s 位置的马匹分布
+  - 预设赛道加载（椭圆 / 方形）
+  - 验证（点数、弧长、ID 非空、车道数）
+  - 导出完整 `TrackProfile` JSON 文件，或一键「复制控制点」粘贴到创建比赛表单
+
+- 企业创建比赛新增参数：
+  - `Race.trackDirection`（顺时针/逆时针，默认逆时针）
+  - `Race.trackStartFinishS`（起/终点弧长比例，默认 0.0）
+  - 创建比赛表单新增对应下拉和输入，以及 Calibrator 工具链接
+
+- Prisma 迁移：`20260612000000_add_track_direction`
+
+**MVP 满足情况（截至 Iteration 6）：**
+
+| # | 条件 | 状态 |
+|---|------|------|
+| 1 | track.profile.json 能描述完整赛道 | ✅ |
+| 2 | Calibrator 微调赛道 | ✅（`/jumbotron/calibrator`） |
+| 3 | Calibrator 导出 → Preview | ✅（下载 JSON + 复制控制点 → 粘贴到比赛表单）|
+| 4 | Calibrator / Preview 共用 track-runtime | ✅（Calibrator 内复用 TrackRuntime）|
+| 5 | 单马 0%→100% 移动 | ✅ |
+| 6 | 多马 lane offset | ✅（Calibrator 可配置车道数 + 半宽）|
+| 7 | 弯道方向自然 | ✅（trackDirection 可选顺/逆时针）|
+| 8 | 所有马匹状态可表达 | ✅ |
+| 9 | Riding Message 降噪展示 | ✅ |
+| 10 | ≥2 条示例赛道资产 | ✅（oval + rect）|
+| 11 | RaceSnapshot → Adapter → runtime | ✅ |

@@ -47,17 +47,29 @@ const MILESTONES: Array<[number, PhraseKey]> = [
   [0.25, "milestone_25"],
 ];
 
-function buildProfile(trackId?: string | null, centerlineJson?: string | null): TrackProfile {
+function buildProfile(
+  trackId?: string | null,
+  centerlineJson?: string | null,
+  direction?: string | null,
+  startFinishS?: number | null,
+): TrackProfile {
   const base = trackId === "rect-standard" ? RECT_PROFILE : OVAL_PROFILE;
+  let profile = base;
   if (centerlineJson) {
     try {
       const points = JSON.parse(centerlineJson) as [number, number][];
       if (Array.isArray(points) && points.length >= 4) {
-        return { ...base, centerline: { ...base.centerline, points } };
+        profile = { ...profile, centerline: { ...profile.centerline, points } };
       }
     } catch { /* fall through */ }
   }
-  return base;
+  if (direction === "clockwise" || direction === "counterclockwise") {
+    profile = { ...profile, direction };
+  }
+  if (typeof startFinishS === "number" && startFinishS >= 0 && startFinishS <= 1) {
+    profile = { ...profile, startFinish: { s: startFinishS } };
+  }
+  return profile;
 }
 
 const LANE_COUNT = 8;
@@ -200,6 +212,8 @@ export function RaceLiveView({
   snapshot,
   trackId,
   trackCenterlineJson,
+  trackDirection,
+  trackStartFinishS,
   checkpointCount,
   debug = false,
   embedded = false,
@@ -208,12 +222,17 @@ export function RaceLiveView({
   snapshot: RaceSnapshot;
   trackId?: string | null;
   trackCenterlineJson?: string | null;
+  trackDirection?: string | null;
+  trackStartFinishS?: number | null;
   checkpointCount: number;
   debug?: boolean;
   embedded?: boolean;
   raceStartMs?: number;
 }) {
-  const profile = useMemo(() => buildProfile(trackId, trackCenterlineJson), [trackId, trackCenterlineJson]);
+  const profile = useMemo(
+    () => buildProfile(trackId, trackCenterlineJson, trackDirection, trackStartFinishS),
+    [trackId, trackCenterlineJson, trackDirection, trackStartFinishS],
+  );
   const runtime = useMemo(() => new TrackRuntime(profile), [profile]);
 
   const elapsedTime = useElapsedTime(raceStartMs, snapshot.elapsedTime);

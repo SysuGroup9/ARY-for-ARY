@@ -66,6 +66,8 @@ const raceBaseSchema = z.object({
     },
     { message: "控制点格式错误：需为 JSON 数组（至少 4 个点），如 [[960,200],[1600,540],...]" }
   ).transform((v) => v || null),
+  trackDirection: z.enum(["clockwise", "counterclockwise"]).default("counterclockwise"),
+  trackStartFinishS: z.coerce.number().min(0).max(1).default(0.0),
   checkpointCount: z.coerce.number().int().min(1).max(10).default(3),
 });
 

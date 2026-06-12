@@ -142,6 +142,8 @@ export async function createRace(organizerId: string, formData: FormData) {
     harnessWeightKeyword: formData.get("harnessWeightKeyword"),
     trackId: formData.get("trackId"),
     trackCenterlineJson: formData.get("trackCenterlineJson"),
+    trackDirection: formData.get("trackDirection"),
+    trackStartFinishS: formData.get("trackStartFinishS"),
     checkpointCount: formData.get("checkpointCount"),
   });
 
@@ -195,6 +197,8 @@ export async function createRace(organizerId: string, formData: FormData) {
       harnessWeightKeyword: parsed.harnessWeightKeyword,
       trackId: parsed.trackId,
       trackCenterlineJson: parsed.trackCenterlineJson ?? null,
+      trackDirection: parsed.trackDirection,
+      trackStartFinishS: parsed.trackStartFinishS,
       checkpointCount: parsed.checkpointCount,
     },
   });
