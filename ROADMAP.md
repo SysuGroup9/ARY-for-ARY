@@ -122,6 +122,14 @@ ARY 不持久化：
 - 新增 `docs/grs002-submission-checklist.md`，把评分标准映射到具体路由、文件和剩余录制事项
 - 调整 stale 状态规则，避免已完成 / 阻塞等终态队伍在演示时被错误地全部灰化
 
+### Iteration 7
+
+- 按用户要求补 PR 描述、最终提交文档、视频分镜、字幕文案、彩排报告和无声录制脚本
+- 新增 `scripts/grs002-rehearsal-check.mjs`，用于检查 Jumbotron、debug route、city-hairpin 和 Calibrator 页面
+- 新增 `scripts/record-grs002-demo.mjs`，用于生成 `outputs/grs002-jumbotron-silent-demo.webm`
+- 在 Riding Record 中补最终验收计划、录制准备和人工复盘占位
+- 记录 GitHub CLI 未登录时 PR 创建的限制，保留可复制的 PR 正文和 compare URL 流程
+
 ## 错误复盘
 
 - 早期从旧 PoC 迁移时有编码损坏的中文文本混入新实现。

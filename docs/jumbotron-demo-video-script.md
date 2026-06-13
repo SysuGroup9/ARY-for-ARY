@@ -18,7 +18,7 @@ Show:
 
 - Header: title, LIVE, round, phase, elapsed time.
 - KPI cards: completion, active riders, total tokens, Codex / Claude split.
-- TOP3 cards and Open cockpit drill-down placeholders.
+- TOP3 cards and Entry Inspect drill-down.
 - Main track with moving entries.
 - Riding Message bubbles and bottom ticker.
 - Risk / obstacle / violation items.
@@ -51,11 +51,14 @@ Show:
 - Drag a centerline point.
 - Toggle closed / open path or reverse direction.
 - Change a lane offset.
-- Add a checkpoint at the scrubber.
+- Set start / finish at the scrubber.
+- Add, rename or move a checkpoint at the scrubber.
+- Add or edit a lane.
 - Add a message zone, no bubble zone and risk zone.
 - Run validation by showing the validation panel.
 - Show JSON diff preview.
 - Export JSON and Export Debug SVG.
+- Mention the optional silent browser recording at `outputs/grs002-jumbotron-silent-demo.webm`.
 
 Talk track:
 

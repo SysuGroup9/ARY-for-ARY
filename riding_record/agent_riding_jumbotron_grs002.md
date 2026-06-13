@@ -61,6 +61,14 @@ Second review intervention:
 - The agent strengthened seed data so the Jumbotron can demonstrate a semi-real DCR data story without relying only on mock fallback.
 - The agent added `docs/grs002-submission-checklist.md` to map each rubric item to concrete evidence.
 
+Final packaging intervention:
+
+- Owen asked the agent to prepare PR material, final submission docs, rehearsal checks, storyboard, subtitle copy and a silent browser demo recording path.
+- The agent added `docs/grs002-pr-description.md`, `docs/grs002-final-submission.md`, `docs/grs002-demo-storyboard.md` and `docs/grs002-rehearsal-report.md`.
+- The agent added `scripts/grs002-rehearsal-check.mjs` for local route validation.
+- The agent added `scripts/record-grs002-demo.mjs` for optional no-audio Playwright recording into `outputs/`.
+- GitHub PR creation still depends on GitHub CLI authentication in the local environment.
+
 ## Errors And Lessons
 
 ### Error 1: MVP Was Not Submission-Complete
@@ -110,6 +118,44 @@ Improvement:
 | Riding Skill | Plan, intervention, errors, correction and verification are recorded. | Final human rehearsal notes should be appended after recording. |
 | Deliverability | Checklist maps rubric evidence to routes and files. | Online deployment URL is not included in this branch. |
 
+## Final Validation Plan
+
+Automated:
+
+```bash
+npm run db:generate
+npm run db:deploy
+npm run db:seed
+npm run dev
+npm run grs002:check
+npm run grs002:record
+```
+
+Manual:
+
+- Open `/jumbotron?debug=1` and click TOP3 Entry Inspect.
+- Open `/jumbotron?track=city-hairpin&debug=1` and verify the second profile.
+- Open `/jumbotron/calibrator`, edit at least one point/lane/checkpoint/zone and show Validate / Export.
+- Upload final voiceover video and replace `VIDEO_URL_PLACEHOLDER`.
+
+## Recording Preparation
+
+- Use `docs/grs002-demo-storyboard.md` as the scene-by-scene guide.
+- Use `docs/jumbotron-demo-video-script.md` as the talk track.
+- Use `outputs/grs002-jumbotron-silent-demo.webm` as optional raw footage.
+- Keep `.env`, terminal secrets and private session logs out of frame.
+
+## Human Retrospective Placeholder
+
+```text
+Final recording date:
+Video URL:
+Human reviewer:
+Last issues found:
+Fixes after rehearsal:
+Final submission decision:
+```
+
 ## Verification
 
 Commands used during development:
@@ -133,3 +179,4 @@ Browser checks:
 - The app uses mock fallback when local Prisma data is unavailable.
 - The runtime is 2D SVG, not full physics or 3D simulation.
 - Actual GRS-002 video recording and manual live demonstration are intentionally deferred by user instruction.
+- PR creation can be automated only after `gh auth login` or `GH_TOKEN` is available.
