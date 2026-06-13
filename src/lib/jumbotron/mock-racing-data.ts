@@ -56,6 +56,10 @@ export const devcompassOvalTrack: TrackProfile = {
     { sEnd: 0.04, sStart: 0, zoneId: "title-safe-zone" },
     { sEnd: 1, sStart: 0.96, zoneId: "finish-safe-zone" },
   ],
+  riskZones: [
+    { label: "Token Burn Watch", sEnd: 0.66, sStart: 0.52, severity: "high", zoneId: "token-burn-watch" },
+    { label: "Final Review Gate", sEnd: 0.92, sStart: 0.82, severity: "medium", zoneId: "final-review-gate" },
+  ],
   schemaVersion: "jumbotron.track-profile.v1",
   startFinish: {
     label: "START / FINISH",
@@ -112,6 +116,9 @@ export const cityHairpinTrack: TrackProfile = {
   name: "City Hairpin",
   noBubbleZones: [
     { sEnd: 0.68, sStart: 0.6, zoneId: "kpi-safe-zone" },
+  ],
+  riskZones: [
+    { label: "Hairpin Obstacle Zone", sEnd: 0.58, sStart: 0.38, severity: "high", zoneId: "hairpin-obstacle-zone" },
   ],
   schemaVersion: "jumbotron.track-profile.v1",
   startFinish: {
@@ -301,3 +308,44 @@ export const mockJumbotronSnapshot: JumbotronSnapshot = {
   messages,
   track: devcompassOvalTrack,
 };
+
+export function buildMockJumbotronSnapshot(
+  track: TrackProfile = devcompassOvalTrack,
+  now = new Date(),
+): JumbotronSnapshot {
+  const liveIso = now.toISOString();
+  const liveMessages = messages.map((message, index) => ({
+    ...message,
+    createdAt: new Date(now.getTime() - index * 35_000).toISOString(),
+  }));
+  const liveEntries = entries.map((entry, index) => ({
+    ...entry,
+    laneId: track.lanes[index % track.lanes.length]?.laneId ?? entry.laneId,
+    lastMessage: liveMessages.find((message) => message.entryId === entry.entryId),
+    updatedAt:
+      entry.status === "blocked"
+        ? new Date(now.getTime() - 25_000).toISOString()
+        : liveIso,
+  }));
+
+  return {
+    attentionItems: attentionItems.map((item, index) => ({
+      ...item,
+      createdAt: new Date(now.getTime() - index * 42_000).toISOString(),
+    })),
+    competition: {
+      ...competition,
+      currentRound: "ROUND 3",
+      elapsedTime: "02:18:42",
+      systemTime: new Intl.DateTimeFormat("zh-CN", {
+        dateStyle: "medium",
+        hour12: false,
+        timeStyle: "short",
+      }).format(now),
+    },
+    entries: liveEntries,
+    kpis,
+    messages: liveMessages,
+    track,
+  };
+}

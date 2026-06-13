@@ -4,7 +4,10 @@ import {
   buildJumbotronSnapshotFromRace,
   type DcrRaceInput,
 } from "./adapter";
-import { devcompassOvalTrack } from "./mock-racing-data";
+import {
+  buildMockJumbotronSnapshot,
+  devcompassOvalTrack,
+} from "./mock-racing-data";
 
 test("builds mock snapshot when no DCR race exists", () => {
   const snapshot = buildJumbotronSnapshotFromRace(
@@ -60,4 +63,12 @@ test("maps DCR teams to racing entries with fallback progress source", () => {
   assert.equal(snapshot.entries[0]?.laneId, "lane-1");
   assert.equal(snapshot.entries[1]?.laneId, "lane-2");
   assert.equal(snapshot.kpis.activeRiders, 2);
+});
+
+test("builds live mock snapshots with current timestamps", () => {
+  const now = new Date("2026-06-13T12:00:00.000Z");
+  const snapshot = buildMockJumbotronSnapshot(devcompassOvalTrack, now);
+
+  assert.equal(snapshot.entries[0]?.updatedAt, now.toISOString());
+  assert.equal(snapshot.messages[0]?.createdAt, now.toISOString());
 });

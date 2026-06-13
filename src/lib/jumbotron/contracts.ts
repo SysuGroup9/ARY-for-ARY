@@ -110,8 +110,15 @@ export interface JumbotronSnapshot {
 }
 
 export interface HorsePose {
+  collisionBox: {
+    height: number;
+    width: number;
+    x: number;
+    y: number;
+  };
   entryId: string;
   laneId: string;
+  laneResolvedByFallback: boolean;
   normal: Point;
   rotation: number;
   s: number;
@@ -120,6 +127,14 @@ export interface HorsePose {
   x: number;
   y: number;
   zIndex: number;
+}
+
+export interface RaceSnapshot {
+  attentionItems: AttentionItem[];
+  competition: CompetitionSnapshot;
+  entries: RacingEntrySnapshot[];
+  kpis?: CompetitionKpiSnapshot;
+  messages: RidingMessageSnapshot[];
 }
 
 export interface MessageBubbleCandidate {

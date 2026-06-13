@@ -104,7 +104,18 @@ ARY 不持久化：
 - 新增两条示例 track profile 与视觉底图资产
 - 新增 Jumbotron runtime / adapter 单元测试与 `docs/jumbotron-mvp.md`
 
+### Iteration 5
+
+- 按 GRS-002 评分标准新增 A/S 冲刺矩阵
+- 将 mock snapshot 改为当前时间生成，避免演示时被 stale 逻辑误伤
+- Race Live View 增加客户端动态推进、s 轴补间、drill-down 入口、Live Story 和 debug collision boxes
+- Track Profile 增加 risk zones，Calibrator 增加 message / no bubble / risk zone 编辑、JSON diff preview 与 debug SVG export
+- 为两条赛道生成 `preview.png`
+- 新增 GRS-002 短视频脚本和 Agent Riding Record
+
 ## 错误复盘
 
 - 早期从旧 PoC 迁移时有编码损坏的中文文本混入新实现。
 - 改进措施：不再从旧损坏文件复制中文字面量，所有中文文案重新手写并在最终构建前做人工检查。
+- Jumbotron 第一版 MVP 偏重代码实现，未先按 GRS-002 硬门槛补齐短视频脚本、Riding Record 和评分证据。
+- 改进措施：先建立评分矩阵，再将视频脚本、Riding Record、debug 证据和 Calibrator 流程作为可交付物同步实现。

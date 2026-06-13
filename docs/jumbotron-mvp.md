@@ -13,7 +13,10 @@ Implemented:
 - `src/lib/jumbotron/track-runtime.ts`: shared runtime for Jumbotron and Calibrator.
 - `src/lib/jumbotron/adapter.ts`: DCR race data to Jumbotron snapshot adapter.
 - `assets/tracks/*/track.profile.json`: two sample semantic track profiles.
+- `assets/tracks/*/preview.png`: generated debug preview for track review.
 - `public/jumbotron/tracks/*/background.svg`: visual-only track backgrounds.
+- `docs/jumbotron-demo-video-script.md`: 3-5 minute recording script.
+- `riding_record/agent_riding_jumbotron_grs002.md`: Agent Riding process record.
 
 Not implemented in MVP:
 
@@ -29,6 +32,7 @@ RaceListItem from DCR
   -> buildJumbotronSnapshotFromRace
   -> RacingEntrySnapshot[]
   -> buildTrackRuntime(track.profile)
+  -> interpolateProgressOnSAxis(roundProgress)
   -> calculateHorsePose(roundProgress + lane offset)
   -> Race Live View SVG layers
 ```
@@ -49,6 +53,8 @@ Track profiles are validated with Zod and additional geometry checks:
 - path length threshold
 - invalid zone ranges
 - sharp turn and long segment warnings
+- s-axis interpolation for live movement
+- collision boxes and lane fallback markers in debug mode
 
 ## Calibrator
 
@@ -63,7 +69,23 @@ The Calibrator reuses `track-runtime` for preview. It supports:
 - checkpoint creation at current scrubber progress
 - single and multi-horse preview
 - validation results
+- message zone editing
+- no bubble zone editing
+- risk zone editing
+- JSON diff preview
+- debug SVG export
 - JSON export
+
+## Demo Routes
+
+```bash
+/jumbotron
+/jumbotron?debug=1
+/jumbotron?track=city-hairpin&debug=1
+/jumbotron/calibrator
+```
+
+The default demo can run without a local database. If DCR race data cannot be loaded, the page falls back to `buildMockJumbotronSnapshot`.
 
 ## Verification
 
@@ -72,4 +94,3 @@ node --import tsx --test src/lib/jumbotron/*.test.ts
 npm run lint
 npm run build
 ```
-

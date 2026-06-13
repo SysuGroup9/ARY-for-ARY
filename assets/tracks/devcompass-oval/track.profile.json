@@ -53,5 +53,9 @@
   "noBubbleZones": [
     { "zoneId": "title-safe-zone", "sStart": 0, "sEnd": 0.04 },
     { "zoneId": "finish-safe-zone", "sStart": 0.96, "sEnd": 1 }
+  ],
+  "riskZones": [
+    { "zoneId": "token-burn-watch", "label": "Token Burn Watch", "severity": "high", "sStart": 0.52, "sEnd": 0.66 },
+    { "zoneId": "final-review-gate", "label": "Final Review Gate", "severity": "medium", "sStart": 0.82, "sEnd": 0.92 }
   ]
 }

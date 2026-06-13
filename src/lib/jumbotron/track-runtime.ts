@@ -176,8 +176,10 @@ export function calculateHorsePose(
   const sampled = sampleLanePoint(runtime, lane.laneId, entry.roundProgress);
 
   return {
+    collisionBox: buildCollisionBox(sampled),
     entryId: entry.entryId,
     laneId: lane.laneId,
+    laneResolvedByFallback: lane.laneId !== entry.laneId,
     normal: sampled.normal,
     rotation: sampled.rotation,
     s: sampled.s,
@@ -187,6 +189,48 @@ export function calculateHorsePose(
     y: sampled.y,
     zIndex: Math.round(sampled.y),
   };
+}
+
+export function interpolateProgressOnSAxis(input: {
+  closed: boolean;
+  from: number;
+  t: number;
+  to: number;
+}): number {
+  const from = normalizeProgress(input.from);
+  const to = normalizeProgress(input.to);
+  const t = normalizeProgress(input.t);
+
+  if (!input.closed) {
+    return from + (to - from) * t;
+  }
+
+  const direct = to - from;
+  const wrapped =
+    Math.abs(direct) <= 0.5
+      ? direct
+      : direct > 0
+        ? direct - 1
+        : direct + 1;
+  const value = from + wrapped * t;
+  return value < 0 ? value + 1 : value % 1;
+}
+
+export function calculateInterpolatedHorsePose(
+  runtime: TrackRuntime,
+  entry: RacingEntrySnapshot,
+  previousRoundProgress: number,
+  t: number,
+): HorsePose {
+  return calculateHorsePose(runtime, {
+    ...entry,
+    roundProgress: interpolateProgressOnSAxis({
+      closed: runtime.profile.centerline.closed,
+      from: previousRoundProgress,
+      t,
+      to: entry.roundProgress,
+    }),
+  });
 }
 
 export function calculateHorsePoses(
@@ -311,7 +355,11 @@ function collectLaneErrors(lanes: TrackLane[], errors: string[]): void {
 }
 
 function collectZoneErrors(profile: TrackProfile, errors: string[]): void {
-  for (const zone of [...profile.messageZones, ...profile.noBubbleZones]) {
+  for (const zone of [
+    ...profile.messageZones,
+    ...profile.noBubbleZones,
+    ...profile.riskZones,
+  ]) {
     if (zone.sStart > zone.sEnd) {
       errors.push(`${zone.zoneId} has sStart greater than sEnd`);
     }
@@ -355,9 +403,18 @@ function findSegment(segments: TrackSegment[], targetDistance: number): TrackSeg
   );
 }
 
-function resolveLane(profile: TrackProfile, laneId: string | undefined): TrackLane {
+export function resolveLane(profile: TrackProfile, laneId: string | undefined): TrackLane {
   const lane = profile.lanes.find((item) => item.laneId === laneId);
   return lane ?? profile.lanes[0];
+}
+
+function buildCollisionBox(point: Point): HorsePose["collisionBox"] {
+  return {
+    height: 50,
+    width: 74,
+    x: point.x - 37,
+    y: point.y - 25,
+  };
 }
 
 function findMessageZone(profile: TrackProfile, s: number): { dx: number; dy: number } {

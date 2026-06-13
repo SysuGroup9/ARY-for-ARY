@@ -276,7 +276,10 @@ Jumbotron MVP 由两部分组成：
 - `src/lib/jumbotron/track-runtime.ts`：路径采样、lane offset、horse pose、stale 状态和 message bubble 候选。
 - `src/lib/jumbotron/adapter.ts`：把现有 DCR `RaceListItem` 映射为 Jumbotron snapshot。
 - `assets/tracks/*/track.profile.json`：示例语义赛道资产。
+- `assets/tracks/*/preview.png`：带语义 overlay 的赛道预览图。
 - `public/jumbotron/tracks/*/background.svg`：视觉底图，只用于展示，不作为定位事实来源。
+- `docs/jumbotron-demo-video-script.md`：GRS-002 录制脚本与分镜。
+- `riding_record/agent_riding_jumbotron_grs002.md`：Agent Riding 过程记录。
 
 详细说明见 [docs/jumbotron-mvp.md](/D:/Desktop/ARY-for-ARY/docs/jumbotron-mvp.md)。
 

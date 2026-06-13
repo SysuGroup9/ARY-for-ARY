@@ -8,6 +8,7 @@ import {
   buildTrackRuntime,
   calculateHorsePose,
   deriveHorseMotionState,
+  interpolateProgressOnSAxis,
   selectMessageBubbles,
   validateTrackProfile,
 } from "./track-runtime";
@@ -33,6 +34,8 @@ test("calculates horse pose from progress and lane offset", () => {
   assert.ok(Number.isFinite(pose.y));
   assert.ok(Number.isFinite(pose.rotation));
   assert.ok(pose.s >= 0 && pose.s <= 1);
+  assert.ok(pose.collisionBox.width > 0);
+  assert.equal(pose.laneResolvedByFallback, false);
 });
 
 test("marks stale entries when updatedAt exceeds threshold", () => {
@@ -63,4 +66,33 @@ test("limits message bubbles and skips no-bubble zones", () => {
 
   assert.equal(bubbles.length, 1);
   assert.notEqual(bubbles[0]?.entryId, "team-vector");
+});
+
+test("interpolates progress on s-axis across closed track boundary", () => {
+  const progress = interpolateProgressOnSAxis({
+    closed: true,
+    from: 0.96,
+    t: 0.5,
+    to: 0.04,
+  });
+
+  assert.ok(progress > 0.98 || progress < 0.02);
+});
+
+test("validates risk zone ranges", () => {
+  const report = validateTrackProfile({
+    ...devcompassOvalTrack,
+    riskZones: [
+      {
+        label: "Bad Risk Zone",
+        sEnd: 0.1,
+        sStart: 0.8,
+        severity: "high",
+        zoneId: "bad-risk-zone",
+      },
+    ],
+  });
+
+  assert.equal(report.valid, false);
+  assert.match(report.errors.join("\n"), /bad-risk-zone/);
 });

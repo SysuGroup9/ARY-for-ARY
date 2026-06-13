@@ -63,6 +63,15 @@ export const trackProfileSchema = z.object({
       zoneId: z.string().min(1),
     }),
   ).default([]),
+  riskZones: z.array(
+    z.object({
+      label: z.string().min(1),
+      severity: z.enum(["critical", "high", "low", "medium"]),
+      sEnd: progressValue,
+      sStart: progressValue,
+      zoneId: z.string().min(1),
+    }),
+  ).default([]),
 });
 
 export type Point = z.infer<typeof pointSchema>;
@@ -71,6 +80,7 @@ export type TrackDirection = TrackProfile["direction"];
 export type TrackLane = TrackProfile["lanes"][number];
 export type TrackCheckpoint = TrackProfile["checkpoints"][number];
 export type TrackMessageZone = TrackProfile["messageZones"][number];
+export type TrackRiskZone = TrackProfile["riskZones"][number];
 
 export interface TrackValidationReport {
   errors: string[];

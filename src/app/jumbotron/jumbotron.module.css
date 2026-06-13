@@ -152,6 +152,19 @@
   font-size: 0.74rem;
 }
 
+.drilldownLink {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  border: 1px solid rgba(94, 209, 255, 0.28);
+  border-radius: 8px;
+  color: #b7edff;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
 .kpiGrid {
   display: grid;
   grid-template-columns: repeat(6, minmax(116px, 1fr));
@@ -203,6 +216,34 @@
   display: grid;
   gap: 8px;
   margin-top: 16px;
+}
+
+.storyPanel {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  border: 1px solid rgba(94, 209, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(94, 209, 255, 0.07);
+  padding: 12px;
+}
+
+.storyPanel strong {
+  color: #fff8d8;
+}
+
+.storyPanel p {
+  margin: 0;
+  color: #cbd8d0;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.storyPanel code {
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.08rem 0.28rem;
+  color: #b7edff;
 }
 
 .checkpointItem {
@@ -338,6 +379,29 @@
 
 .debugLayer circle {
   fill: #f85b66;
+}
+
+.riskZoneLine {
+  stroke: rgba(232, 77, 77, 0.4);
+  stroke-linecap: round;
+}
+
+.messageZoneLine {
+  stroke: rgba(94, 209, 255, 0.36);
+  stroke-linecap: round;
+}
+
+.noBubbleZoneLine {
+  stroke: rgba(210, 220, 203, 0.32);
+  stroke-linecap: round;
+  stroke-dasharray: 12 10;
+}
+
+.collisionBox {
+  fill: rgba(232, 77, 77, 0.08);
+  stroke: rgba(255, 126, 126, 0.72);
+  stroke-dasharray: 8 6;
+  stroke-width: 2;
 }
 
 .ticker {
@@ -651,6 +715,29 @@
   white-space: nowrap;
 }
 
+.zoneCard {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(247, 243, 232, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px;
+}
+
+.zoneCard strong {
+  overflow: hidden;
+  color: #fff8d8;
+  font-size: 0.88rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zoneGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .validBadge,
 .invalidBadge {
   width: fit-content;
@@ -674,6 +761,20 @@
   color: #f7d79b;
   font-size: 0.86rem;
   line-height: 1.5;
+}
+
+.diffPreview {
+  max-height: 220px;
+  overflow: auto;
+  margin: 0;
+  border: 1px solid rgba(94, 209, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.32);
+  color: #b7edff;
+  padding: 10px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
 }
 
 .previewBar {

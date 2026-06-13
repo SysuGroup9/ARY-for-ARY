@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import styles from "@/app/jumbotron/jumbotron.module.css";
 import type {
   AttentionItem,
@@ -10,6 +13,7 @@ import type {
 import {
   buildTrackRuntime,
   calculateHorsePoses,
+  interpolateProgressOnSAxis,
   sampleLanePath,
   selectMessageBubbles,
 } from "@/lib/jumbotron/track-runtime";
@@ -28,12 +32,46 @@ export function JumbotronRaceLiveView({
   races: RaceOption[];
   snapshot: JumbotronSnapshot;
 }) {
-  const runtime = buildTrackRuntime(snapshot.track);
-  const poses = calculateHorsePoses(runtime, snapshot.entries);
-  const bubbles = selectMessageBubbles(snapshot.track, poses, snapshot.entries);
-  const topEntries = [...snapshot.entries]
+  const runtime = useMemo(() => buildTrackRuntime(snapshot.track), [snapshot.track]);
+  const [entries, setEntries] = useState(snapshot.entries);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setEntries((current) =>
+        current.map((entry, index) => {
+          if (entry.status !== "running") {
+            return entry;
+          }
+
+          const target = (entry.roundProgress + 0.012 + index * 0.002) % 1;
+          return {
+            ...entry,
+            overallProgress: Math.max(entry.overallProgress, target),
+            roundProgress: interpolateProgressOnSAxis({
+              closed: snapshot.track.centerline.closed,
+              from: entry.roundProgress,
+              t: 0.28,
+              to: target,
+            }),
+            updatedAt: new Date().toISOString(),
+          };
+        }),
+      );
+    }, 220);
+
+    return () => window.clearInterval(intervalId);
+  }, [snapshot.track.centerline.closed]);
+
+  const liveSnapshot = {
+    ...snapshot,
+    entries,
+  };
+  const poses = calculateHorsePoses(runtime, entries);
+  const bubbles = selectMessageBubbles(snapshot.track, poses, entries);
+  const topEntries = [...entries]
     .sort((left, right) => (left.rank ?? 999) - (right.rank ?? 999))
     .slice(0, 3);
+  const leadEntry = topEntries[0];
 
   return (
     <main className={styles.screen}>
@@ -60,14 +98,15 @@ export function JumbotronRaceLiveView({
             ))}
           </div>
         </div>
-        <KpiStrip snapshot={snapshot} />
+        <KpiStrip snapshot={liveSnapshot} />
       </section>
 
       <section className={styles.stageLayout}>
         <aside className={styles.leftRail}>
           <p className={styles.sectionLabel}>Track Mini Map</p>
-          <MiniMap poses={poses} snapshot={snapshot} />
-          <CheckpointList snapshot={snapshot} />
+          <MiniMap poses={poses} snapshot={liveSnapshot} />
+          <CheckpointList snapshot={liveSnapshot} />
+          {leadEntry ? <RaceStoryPanel leadEntry={leadEntry} snapshot={liveSnapshot} /> : null}
         </aside>
 
         <section className={styles.trackStage}>
@@ -75,12 +114,12 @@ export function JumbotronRaceLiveView({
             bubbles={bubbles}
             debug={debug}
             poses={poses}
-            snapshot={snapshot}
+            snapshot={liveSnapshot}
           />
         </section>
       </section>
 
-      <Ticker items={snapshot.attentionItems} snapshot={snapshot} />
+      <Ticker items={snapshot.attentionItems} snapshot={liveSnapshot} />
 
       <footer className={styles.footer}>
         <span>{snapshot.competition.theme}</span>
@@ -125,7 +164,36 @@ function TopEntryCard({ entry }: { entry: RacingEntrySnapshot }) {
         <p>{entry.riderName}</p>
       </div>
       <span className={styles.motionPill}>{entry.status}</span>
+      <a className={styles.drilldownLink} href={entry.cockpitId ?? "#"}>
+        Open cockpit
+      </a>
     </article>
+  );
+}
+
+function RaceStoryPanel({
+  leadEntry,
+  snapshot,
+}: {
+  leadEntry: RacingEntrySnapshot;
+  snapshot: JumbotronSnapshot;
+}) {
+  const activeRisk = snapshot.attentionItems[0];
+
+  return (
+    <div className={styles.storyPanel}>
+      <p className={styles.sectionLabel}>Live Story</p>
+      <strong>{leadEntry.projectName} 正在领跑</strong>
+      <p>
+        当前领先位置来自 <code>{leadEntry.positionSource}</code>，
+        roundProgress = {Math.round(leadEntry.roundProgress * 100)}%。
+      </p>
+      {activeRisk ? (
+        <p>
+          组织者关注：{activeRisk.summary}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -196,7 +264,7 @@ function TrackSvg({
           x="0"
           y="0"
         />
-        {debug ? <DebugLayers runtime={runtime} snapshot={snapshot} /> : null}
+        {debug ? <DebugLayers poses={poses} runtime={runtime} snapshot={snapshot} /> : null}
         {snapshot.track.checkpoints.map((checkpoint) => {
           const point = runtime.sampledPoints[Math.round(checkpoint.s * (runtime.sampledPoints.length - 1))];
           return point ? (
@@ -229,9 +297,11 @@ function TrackSvg({
 }
 
 function DebugLayers({
+  poses,
   runtime,
   snapshot,
 }: {
+  poses: HorsePose[];
   runtime: ReturnType<typeof buildTrackRuntime>;
   snapshot: JumbotronSnapshot;
 }) {
@@ -251,6 +321,31 @@ function DebugLayers({
       ))}
       {runtime.sampledPoints.filter((_, index) => index % 8 === 0).map((point) => (
         <circle cx={point.x} cy={point.y} key={`${point.s}-${point.x}`} r="4" />
+      ))}
+      {snapshot.track.riskZones.map((zone) => {
+        const start = runtime.sampledPoints[Math.round(zone.sStart * (runtime.sampledPoints.length - 1))];
+        const end = runtime.sampledPoints[Math.round(zone.sEnd * (runtime.sampledPoints.length - 1))];
+        return start && end ? (
+          <line
+            className={styles.riskZoneLine}
+            key={zone.zoneId}
+            strokeWidth="18"
+            x1={start.x}
+            x2={end.x}
+            y1={start.y}
+            y2={end.y}
+          />
+        ) : null;
+      })}
+      {poses.map((pose) => (
+        <rect
+          className={styles.collisionBox}
+          height={pose.collisionBox.height}
+          key={`${pose.entryId}-collision`}
+          width={pose.collisionBox.width}
+          x={pose.collisionBox.x}
+          y={pose.collisionBox.y}
+        />
       ))}
     </g>
   );
@@ -276,7 +371,7 @@ function HorseMarker({
         {entry.projectName}
       </text>
       <text className={styles.debugText} transform={`rotate(${-pose.rotation})`} x="20" y="26">
-        {entry.positionSource === "overallProgress_fallback" ? "fallback" : `${Math.round(pose.s * 100)}%`}
+        {pose.laneResolvedByFallback ? "lane fallback" : `s=${Math.round(pose.s * 100)}%`}
       </text>
     </g>
   );

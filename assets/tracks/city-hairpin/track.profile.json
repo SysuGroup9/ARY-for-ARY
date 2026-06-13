@@ -52,5 +52,8 @@
   ],
   "noBubbleZones": [
     { "zoneId": "kpi-safe-zone", "sStart": 0.6, "sEnd": 0.68 }
+  ],
+  "riskZones": [
+    { "zoneId": "hairpin-obstacle-zone", "label": "Hairpin Obstacle Zone", "severity": "high", "sStart": 0.38, "sEnd": 0.58 }
   ]
 }

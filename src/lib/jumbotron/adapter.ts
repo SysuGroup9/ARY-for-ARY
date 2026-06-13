@@ -9,7 +9,7 @@ import type {
   RidingMessageSnapshot,
   RiskLevel,
 } from "@/lib/jumbotron/contracts";
-import { mockJumbotronSnapshot } from "@/lib/jumbotron/mock-racing-data";
+import { buildMockJumbotronSnapshot } from "@/lib/jumbotron/mock-racing-data";
 import type { TrackProfile } from "@/lib/jumbotron/track-profile";
 
 interface DcrTeam {
@@ -89,14 +89,7 @@ export function buildJumbotronSnapshotFromRace(
   now = new Date(),
 ): JumbotronSnapshot {
   if (!race) {
-    return {
-      ...mockJumbotronSnapshot,
-      competition: {
-        ...mockJumbotronSnapshot.competition,
-        systemTime: formatSystemTime(now),
-      },
-      track,
-    };
+    return buildMockJumbotronSnapshot(track, now);
   }
 
   const entries = buildEntries(race, track, now);
