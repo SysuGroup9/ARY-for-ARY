@@ -38,6 +38,12 @@ npm run dev
 
 ---
 
+## 演示视频
+
+- [ARY GRS 002 演示视频](https://www.bilibili.com/video/BV1oZJH6rEUh/)
+
+---
+
 ## GRS 002 评审演示指南
 
 > 本节供评审直接使用，按顺序操作即可完整覆盖 GRS 002 所有评分点。
@@ -244,13 +250,6 @@ node --import tsx --test organizer_demo/runner_demo/src/*.test.ts
 npm run lint
 npm run build
 ```
-
----
-
-## 演示视频
-
-- [GRS_001 完整演示](https://www.bilibili.com/video/BV1qdEs62Egz/)
-- [主要功能介绍](https://www.bilibili.com/video/BV1LZEs6LEtV/)
 
 ---
 
