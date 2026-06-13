@@ -9,6 +9,7 @@
 - Runner 任务拉取与结果回传 API
 - 位于 `organizer_demo/runner_demo` 的 Organizer 私有排序评测 Runner
 - 公开榜单与 Audience 视图
+- Jumbotron Race Live View 与 Track Profile Calibrator MVP
 
 ## 技术栈
 
@@ -124,6 +125,9 @@ npm run dev
 
 - 主界面：[http://localhost:3000](http://localhost:3000)
 - Audience 视图：[http://localhost:3000/audience](http://localhost:3000/audience)
+- Jumbotron 大屏：[http://localhost:3000/jumbotron](http://localhost:3000/jumbotron)
+- Jumbotron Debug：[http://localhost:3000/jumbotron?debug=1](http://localhost:3000/jumbotron?debug=1)
+- Track Calibrator：[http://localhost:3000/jumbotron/calibrator](http://localhost:3000/jumbotron/calibrator)
 
 ### 3. 终端 B：启动 Organizer 私有 Runner
 
@@ -253,11 +257,145 @@ npm run start
 ## 验证命令
 
 ```bash
+node --import tsx --test src/lib/jumbotron/*.test.ts
 node --import tsx --test src/lib/*.test.ts
 node --import tsx --test organizer_demo/runner_demo/src/*.test.ts
 npm run lint
 npm run build
 ```
+
+## Jumbotron 子系统
+
+Jumbotron MVP 由两部分组成：
+
+- `/jumbotron`：公开 Race Live View，展示 LIVE 状态、TOP3、KPI、赛道位置、Riding Message 气泡和底部风险 ticker。
+- `/jumbotron/calibrator`：设计时 Track Profile Calibrator，支持导入底图 / profile、编辑 centerline、配置 lane offset、添加 checkpoint、预览多马和导出 JSON。
+
+核心代码：
+
+- `src/lib/jumbotron/track-runtime.ts`：路径采样、lane offset、horse pose、stale 状态和 message bubble 候选。
+- `src/lib/jumbotron/adapter.ts`：把现有 DCR `RaceListItem` 映射为 Jumbotron snapshot。
+- `assets/tracks/*/track.profile.json`：示例语义赛道资产。
+- `assets/tracks/*/preview.png`：带语义 overlay 的赛道预览图。
+- `public/jumbotron/tracks/*/background.svg`：视觉底图，只用于展示，不作为定位事实来源。
+- `docs/jumbotron-demo-video-script.md`：GRS-002 录制脚本与分镜。
+- `riding_record/agent_riding_jumbotron_grs002.md`：Agent Riding 过程记录。
+
+详细说明见 [docs/jumbotron-mvp.md](/D:/Desktop/ARY-for-ARY/docs/jumbotron-mvp.md)。
+
+## ARY GRS 002 Jumbotron 提交说明
+
+本仓库在 GRS 001 PoC 基础上继续完成了 **ARY GRS 002：Jumbotron** 子系统提交包。GRS 002 的核心不是静态大屏截图，而是证明：
+
+- Jumbotron 可以由 `RaceSnapshot` / `RacingEntrySnapshot` / `RidingMessageSnapshot` / `AttentionItem` 驱动；
+- 赛马位置来自 `track.profile.json`、centerline sampling 和 lane offset，而不是画死在背景图里；
+- Calibrator 可以把视觉底图校准成可运行、可验证、可导出的语义赛道资产；
+- Agent Riding 过程有计划、干预、错误复盘、验收和提交证据。
+
+### GRS 002 本地运行
+
+推荐从干净数据库开始：
+
+```bash
+npm install
+npm run db:generate
+npm run db:deploy
+npm run db:seed
+npm run dev
+```
+
+打开以下入口：
+
+- Jumbotron 大屏：[http://localhost:3000/jumbotron](http://localhost:3000/jumbotron)
+- Jumbotron Debug：[http://localhost:3000/jumbotron?debug=1](http://localhost:3000/jumbotron?debug=1)
+- 第二条赛道 Debug：[http://localhost:3000/jumbotron?track=city-hairpin&debug=1](http://localhost:3000/jumbotron?track=city-hairpin&debug=1)
+- Track Calibrator：[http://localhost:3000/jumbotron/calibrator](http://localhost:3000/jumbotron/calibrator)
+
+### GRS 002 已实现能力
+
+- 16:9 Race Live View。
+- LIVE 状态、Round / Phase、elapsed time。
+- KPI strip：完成度、在线 Rider、Tokens、Codex / Claude 占比、风险 / 阻碍 / 违规计数。
+- TOP3 cards。
+- Entry Inspect 页内 drill-down：rank、provider、phase、tokens、progress source、message、risk signals。
+- 主赛道 SVG 渲染和动态 s-axis progress。
+- Riding Message bubbles 与底部 ticker。
+- Risk zone、checkpoint、collision box 和 lane fallback debug overlay。
+- 两条示例赛道：`devcompass-oval` 和 `city-hairpin`。
+- Track Profile Calibrator：导入、centerline 编辑、start / finish、direction、lane、checkpoint、message zone、no-bubble zone、risk zone、validation、JSON diff、Export JSON、Export Debug SVG。
+- 半真实 DCR seed story：四支队伍、不同 Agent provider、提交状态、Runner task、公开榜单、反馈线程、通知、harness entry 和 riding highlight。
+
+### GRS 002 自动彩排与录制
+
+自动检查四个关键页面：
+
+```bash
+npm run grs002:check
+```
+
+生成无声浏览器 demo：
+
+```bash
+npm run grs002:record
+```
+
+当前已提交的无声 demo 位于：
+
+```text
+outputs/grs002-jumbotron-silent-demo.webm
+```
+
+这段视频是自动浏览器录制素材，适合作为提交附件或后续配音剪辑的原始材料。如果课程要求真人讲解，建议按 `docs/grs002-demo-storyboard.md` 和 `docs/jumbotron-demo-video-script.md` 再录一版有声视频。
+
+### GRS 002 关键证据文件
+
+| 类型 | 文件 / 路由 | 说明 |
+|---|---|---|
+| 大屏入口 | `/jumbotron` | 公开 Race Live View |
+| Debug 入口 | `/jumbotron?debug=1` | 几何、采样点、lane、risk、collision debug |
+| 第二赛道 | `/jumbotron?track=city-hairpin&debug=1` | 证明 profile 可切换 |
+| Calibrator | `/jumbotron/calibrator` | 赛道资产生产流程 |
+| 数据契约 | `src/lib/jumbotron/contracts.ts` | Jumbotron snapshot / entry / message / attention contracts |
+| Track Profile | `src/lib/jumbotron/track-profile.ts` | `track.profile.json` schema |
+| Runtime | `src/lib/jumbotron/track-runtime.ts` | progress -> horse pose |
+| DCR Adapter | `src/lib/jumbotron/adapter.ts` | DCR race data -> Jumbotron snapshot |
+| Seed Story | `prisma/seed.ts` | 半真实 DCR demo 数据 |
+| 赛道资产 | `assets/tracks/*/track.profile.json` | 可运行语义赛道资产 |
+| 预览图 | `assets/tracks/*/preview.png` | 带 overlay 的 track preview |
+| MVP 文档 | `docs/jumbotron-mvp.md` | 实现说明和边界 |
+| 提交清单 | `docs/grs002-submission-checklist.md` | 按评分项映射证据 |
+| 最终提交说明 | `docs/grs002-final-submission.md` | 运行、视频、PR、提交说明 |
+| PR 描述 | `docs/grs002-pr-description.md` | 可复制到 GitHub PR |
+| 分镜与字幕 | `docs/grs002-demo-storyboard.md` | 录制分镜、旁白、字幕 |
+| 彩排报告 | `docs/grs002-rehearsal-report.md` | 自动彩排结果 |
+| Riding Record | `riding_record/agent_riding_jumbotron_grs002.md` | Agent Riding 过程记录 |
+| 无声视频 | `outputs/grs002-jumbotron-silent-demo.webm` | 已提交的自动录屏 demo |
+
+### GRS 002 评分项对齐
+
+- **问题理解与系统边界**：见 `docs/jumbotron-mvp.md`、`docs/grs002-final-submission.md`、`riding_record/agent_riding_jumbotron_grs002.md`。
+- **Race Live View 运行体验**：见 `/jumbotron`、TOP3、KPI、Entry Inspect、ticker、risk panel。
+- **Calibrator 与赛道资产生产**：见 `/jumbotron/calibrator` 和 `assets/tracks/*`。
+- **track-runtime 与数据契约**：见 `src/lib/jumbotron/*` 和对应测试。
+- **Demo 有效性**：见 `docs/jumbotron-demo-video-script.md`、`docs/grs002-demo-storyboard.md`、`outputs/grs002-jumbotron-silent-demo.webm`。
+- **Agent Riding Skill**：见 `riding_record/agent_riding_jumbotron_grs002.md` 和 `ROADMAP.md`。
+- **文档与工程交付性**：见 `docs/grs002-submission-checklist.md`、`docs/grs002-final-submission.md`。
+
+### GRS 002 PoC 边界
+
+- Calibrator 当前导出本地 JSON / SVG，不把 profile 写入数据库。
+- Remote Racing Cockpit 只暴露 seed race URL，不实现完整 cockpit 鉴权。
+- Runtime 是 2D SVG 语义赛道渲染，不是物理引擎或 3D 引擎。
+- 无声视频已提交；若评分要求讲解，需要额外录制有声版。
+- 本地 Prisma 不可用时，Jumbotron 会 fallback 到当前时间 mock snapshot，保证演示入口可用。
+
+### GRS 002 提交仓库
+
+本内容已经同步到：
+
+- `SysuGroup9/ARY-for-ARY` 分支：`xiaoyi24/jumbotron-subsystem`
+- `sysu-se/ary-grs-002-xiaoyi24`：`main`
+- `sysu-se/ary-grs-001-xiaoyi24`：`main`
 
 ## 数据边界
 

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "jumbotron.track-profile.v1",
+  "trackId": "devcompass-oval",
+  "name": "DevCompass Oval",
+  "viewBox": {
+    "width": 1280,
+    "height": 720
+  },
+  "background": {
+    "href": "/jumbotron/tracks/devcompass-oval/background.svg",
+    "opacity": 1,
+    "type": "image"
+  },
+  "centerline": {
+    "type": "polyline",
+    "closed": true,
+    "points": [
+      { "x": 184, "y": 414 },
+      { "x": 252, "y": 258 },
+      { "x": 436, "y": 168 },
+      { "x": 778, "y": 150 },
+      { "x": 1020, "y": 240 },
+      { "x": 1108, "y": 420 },
+      { "x": 1002, "y": 596 },
+      { "x": 724, "y": 660 },
+      { "x": 386, "y": 620 },
+      { "x": 214, "y": 524 }
+    ],
+    "smoothing": 0.35
+  },
+  "direction": "clockwise",
+  "startFinish": {
+    "label": "START / FINISH",
+    "s": 0
+  },
+  "lanes": [
+    { "laneId": "lane-1", "label": "Lane 1", "offset": -42 },
+    { "laneId": "lane-2", "label": "Lane 2", "offset": -14 },
+    { "laneId": "lane-3", "label": "Lane 3", "offset": 14 },
+    { "laneId": "lane-4", "label": "Lane 4", "offset": 42 }
+  ],
+  "checkpoints": [
+    { "checkpointId": "prd-gate", "label": "PRD Gate", "s": 0.16 },
+    { "checkpointId": "dev-split", "label": "DEV Split", "s": 0.39 },
+    { "checkpointId": "release-line", "label": "REL Line", "s": 0.68 },
+    { "checkpointId": "ops-watch", "label": "OPS Watch", "s": 0.86 }
+  ],
+  "messageZones": [
+    { "zoneId": "north-stand", "sStart": 0.08, "sEnd": 0.32, "dx": 24, "dy": -82, "priority": 2 },
+    { "zoneId": "right-turn", "sStart": 0.42, "sEnd": 0.62, "dx": -244, "dy": -48, "priority": 3 },
+    { "zoneId": "home-stretch", "sStart": 0.7, "sEnd": 0.92, "dx": 30, "dy": -86, "priority": 1 }
+  ],
+  "noBubbleZones": [
+    { "zoneId": "title-safe-zone", "sStart": 0, "sEnd": 0.04 },
+    { "zoneId": "finish-safe-zone", "sStart": 0.96, "sEnd": 1 }
+  ],
+  "riskZones": [
+    { "zoneId": "token-burn-watch", "label": "Token Burn Watch", "severity": "high", "sStart": 0.52, "sEnd": 0.66 },
+    { "zoneId": "final-review-gate", "label": "Final Review Gate", "severity": "medium", "sStart": 0.82, "sEnd": 0.92 }
+  ]
+}
