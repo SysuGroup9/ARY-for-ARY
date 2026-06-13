@@ -40,4 +40,4 @@ The automated no-audio recording should be generated at:
 outputs/grs002-jumbotron-silent-demo.webm
 ```
 
-Use it as raw material for final voiceover or editing. Do not commit the binary video to Git unless the team explicitly decides to store large media in the repository.
+Use it as raw material for final voiceover or editing. The current branch commits this silent demo artifact because the team explicitly requires the video in the repository.

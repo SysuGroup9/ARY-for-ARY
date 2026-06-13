@@ -42,7 +42,7 @@ outputs/grs002-jumbotron-silent-demo.webm
 size: 1,469,042 bytes
 ```
 
-The video file is intentionally not committed because `outputs/` is ignored.
+The video file is committed with `git add -f` because the team explicitly requires the silent demo artifact in the branch.
 
 ## Manual Rehearsal Checklist
 
