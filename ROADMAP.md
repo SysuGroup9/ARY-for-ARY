@@ -113,9 +113,20 @@ ARY 不持久化：
 - 为两条赛道生成 `preview.png`
 - 新增 GRS-002 短视频脚本和 Agent Riding Record
 
+### Iteration 6
+
+- 用户明确要求实际录视频和人工演示后续再做，本轮先补齐其他评分材料
+- Race Live View 将 TOP3 占位链接升级为页内 Entry Inspect 面板，并支持点击马匹 marker 选择队伍
+- Calibrator 补齐 start / finish 设置、lane 增删改、checkpoint 重命名 / 移动 / 删除、zone 删除和 profile import 校验
+- `prisma/seed.ts` 增加四队伍半真实 DCR demo story：提交、公开榜单、Runner task、反馈、通知、harness 与 highlight
+- 新增 `docs/grs002-submission-checklist.md`，把评分标准映射到具体路由、文件和剩余录制事项
+- 调整 stale 状态规则，避免已完成 / 阻塞等终态队伍在演示时被错误地全部灰化
+
 ## 错误复盘
 
 - 早期从旧 PoC 迁移时有编码损坏的中文文本混入新实现。
 - 改进措施：不再从旧损坏文件复制中文字面量，所有中文文案重新手写并在最终构建前做人工检查。
 - Jumbotron 第一版 MVP 偏重代码实现，未先按 GRS-002 硬门槛补齐短视频脚本、Riding Record 和评分证据。
 - 改进措施：先建立评分矩阵，再将视频脚本、Riding Record、debug 证据和 Calibrator 流程作为可交付物同步实现。
+- Race Live View 曾经只有外链式 drill-down，占位 URL 会削弱“现场大屏可解释性”。
+- 改进措施：增加页内 Entry Inspect 面板，先在大屏内解释公开数据来源、风险和消息，再提供 cockpit URL。

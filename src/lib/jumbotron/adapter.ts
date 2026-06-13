@@ -348,16 +348,20 @@ function deriveEntryStatus(
     return "idle";
   }
 
-  if (now.getTime() - submission.createdAt.getTime() > 90_000) {
-    return "stale";
-  }
-
   if (submission.status === "FAILED") {
     return "blocked";
   }
 
   if (submission.status === "SCORED") {
     return "finished";
+  }
+
+  if (submission.runnerStatus === "LIVE_RUNNING") {
+    return "running";
+  }
+
+  if (now.getTime() - submission.createdAt.getTime() > 90_000) {
+    return "stale";
   }
 
   return "running";

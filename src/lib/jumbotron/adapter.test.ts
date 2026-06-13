@@ -72,3 +72,106 @@ test("builds live mock snapshots with current timestamps", () => {
   assert.equal(snapshot.entries[0]?.updatedAt, now.toISOString());
   assert.equal(snapshot.messages[0]?.createdAt, now.toISOString());
 });
+
+test("keeps scored DCR entries finished even when submission is old", () => {
+  const race: DcrRaceInput = {
+    cloudStudioUrl: "/races/race-002",
+    evaluationNotes: "Runner evaluates correctness and reasoning.",
+    feedbackThreads: [],
+    id: "race-002",
+    leaderboardEntries: [
+      {
+        agentType: "OPENAI",
+        createdAt: new Date("2026-06-09T10:20:00.000Z"),
+        rank: 1,
+        team: {
+          id: "team-a",
+          members: [{ displayName: "Alice" }],
+          name: "Alpha",
+        },
+        teamId: "team-a",
+        totalScore: 94,
+      },
+    ],
+    notifications: [],
+    organizer: { username: "organizer_demo" },
+    phase: "active",
+    raceEnd: new Date("2026-06-09T14:00:00.000Z"),
+    raceStart: new Date("2026-06-09T10:00:00.000Z"),
+    runnerTasks: [],
+    submissions: [
+      {
+        agentType: "OPENAI",
+        createdAt: new Date("2026-06-09T10:20:00.000Z"),
+        runnerStatus: "SCORED",
+        status: "SCORED",
+        teamId: "team-a",
+        tokenUsed: 12000,
+        totalScore: 94,
+      },
+    ],
+    summary: "Public live race",
+    taskPackageLabel: "sort-task-v1.zip",
+    teams: [
+      {
+        id: "team-a",
+        members: [{ displayName: "Alice" }],
+        name: "Alpha",
+      },
+    ],
+    title: "排序算法挑战赛",
+  };
+
+  const snapshot = buildJumbotronSnapshotFromRace(
+    race,
+    devcompassOvalTrack,
+    new Date("2026-06-09T12:00:00.000Z"),
+  );
+
+  assert.equal(snapshot.entries[0]?.status, "finished");
+});
+
+test("keeps live runner submissions running even when seed time is old", () => {
+  const race: DcrRaceInput = {
+    cloudStudioUrl: "/races/race-003",
+    evaluationNotes: "Runner evaluates correctness and reasoning.",
+    feedbackThreads: [],
+    id: "race-003",
+    leaderboardEntries: [],
+    notifications: [],
+    organizer: { username: "organizer_demo" },
+    phase: "active",
+    raceEnd: new Date("2026-06-09T14:00:00.000Z"),
+    raceStart: new Date("2026-06-09T10:00:00.000Z"),
+    runnerTasks: [],
+    submissions: [
+      {
+        agentType: "OPENAI",
+        createdAt: new Date("2026-06-09T10:20:00.000Z"),
+        runnerStatus: "LIVE_RUNNING",
+        status: "PULLED",
+        teamId: "team-a",
+        tokenUsed: 12000,
+        totalScore: 86,
+      },
+    ],
+    summary: "Public live race",
+    taskPackageLabel: "sort-task-v1.zip",
+    teams: [
+      {
+        id: "team-a",
+        members: [{ displayName: "Alice" }],
+        name: "Alpha",
+      },
+    ],
+    title: "排序算法挑战赛",
+  };
+
+  const snapshot = buildJumbotronSnapshotFromRace(
+    race,
+    devcompassOvalTrack,
+    new Date("2026-06-09T12:00:00.000Z"),
+  );
+
+  assert.equal(snapshot.entries[0]?.status, "running");
+});

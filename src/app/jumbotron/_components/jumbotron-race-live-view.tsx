@@ -34,6 +34,9 @@ export function JumbotronRaceLiveView({
 }) {
   const runtime = useMemo(() => buildTrackRuntime(snapshot.track), [snapshot.track]);
   const [entries, setEntries] = useState(snapshot.entries);
+  const [selectedEntryId, setSelectedEntryId] = useState(
+    snapshot.entries[0]?.entryId ?? "",
+  );
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -72,6 +75,10 @@ export function JumbotronRaceLiveView({
     .sort((left, right) => (left.rank ?? 999) - (right.rank ?? 999))
     .slice(0, 3);
   const leadEntry = topEntries[0];
+  const selectedEntry =
+    entries.find((entry) => entry.entryId === selectedEntryId) ??
+    topEntries[0] ??
+    entries[0];
 
   return (
     <main className={styles.screen}>
@@ -94,7 +101,12 @@ export function JumbotronRaceLiveView({
           <p className={styles.sectionLabel}>Real-time TOP3</p>
           <div className={styles.rankList}>
             {topEntries.map((entry) => (
-              <TopEntryCard entry={entry} key={entry.entryId} />
+              <TopEntryCard
+                entry={entry}
+                key={entry.entryId}
+                onSelect={setSelectedEntryId}
+                selected={entry.entryId === selectedEntry?.entryId}
+              />
             ))}
           </div>
         </div>
@@ -107,13 +119,18 @@ export function JumbotronRaceLiveView({
           <MiniMap poses={poses} snapshot={liveSnapshot} />
           <CheckpointList snapshot={liveSnapshot} />
           {leadEntry ? <RaceStoryPanel leadEntry={leadEntry} snapshot={liveSnapshot} /> : null}
+          {selectedEntry ? (
+            <EntryDrilldownPanel entry={selectedEntry} snapshot={liveSnapshot} />
+          ) : null}
         </aside>
 
         <section className={styles.trackStage}>
           <TrackSvg
             bubbles={bubbles}
             debug={debug}
+            onSelectEntry={setSelectedEntryId}
             poses={poses}
+            selectedEntryId={selectedEntry?.entryId}
             snapshot={liveSnapshot}
           />
         </section>
@@ -155,18 +172,30 @@ function KpiStrip({ snapshot }: { snapshot: JumbotronSnapshot }) {
   );
 }
 
-function TopEntryCard({ entry }: { entry: RacingEntrySnapshot }) {
+function TopEntryCard({
+  entry,
+  onSelect,
+  selected,
+}: {
+  entry: RacingEntrySnapshot;
+  onSelect: (entryId: string) => void;
+  selected: boolean;
+}) {
   return (
-    <article className={styles.rankCard}>
+    <article className={`${styles.rankCard} ${selected ? styles.rankCardSelected : ""}`}>
       <span className={styles.rankBadge}>#{entry.rank ?? "-"}</span>
       <div>
         <strong>{entry.projectName}</strong>
         <p>{entry.riderName}</p>
       </div>
       <span className={styles.motionPill}>{entry.status}</span>
-      <a className={styles.drilldownLink} href={entry.cockpitId ?? "#"}>
-        Open cockpit
-      </a>
+      <button
+        className={styles.drilldownButton}
+        onClick={() => onSelect(entry.entryId)}
+        type="button"
+      >
+        Inspect entry
+      </button>
     </article>
   );
 }
@@ -179,6 +208,11 @@ function RaceStoryPanel({
   snapshot: JumbotronSnapshot;
 }) {
   const activeRisk = snapshot.attentionItems[0];
+  const secondEntry = [...snapshot.entries]
+    .sort((left, right) => (left.rank ?? 999) - (right.rank ?? 999))[1];
+  const leadGap = secondEntry
+    ? Math.max(0, leadEntry.roundProgress - secondEntry.roundProgress)
+    : 0;
 
   return (
     <div className={styles.storyPanel}>
@@ -186,13 +220,84 @@ function RaceStoryPanel({
       <strong>{leadEntry.projectName} 正在领跑</strong>
       <p>
         当前领先位置来自 <code>{leadEntry.positionSource}</code>，
-        roundProgress = {Math.round(leadEntry.roundProgress * 100)}%。
+        roundProgress = {Math.round(leadEntry.roundProgress * 100)}%，
+        与第二名差距 {Math.round(leadGap * 100)}%。
       </p>
       {activeRisk ? (
         <p>
           组织者关注：{activeRisk.summary}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+function EntryDrilldownPanel({
+  entry,
+  snapshot,
+}: {
+  entry: RacingEntrySnapshot;
+  snapshot: JumbotronSnapshot;
+}) {
+  const relatedAttention = snapshot.attentionItems.filter(
+    (item) => item.entryId === entry.entryId,
+  );
+  const latestMessage =
+    entry.lastMessage ??
+    snapshot.messages.find((message) => message.entryId === entry.entryId);
+
+  return (
+    <div className={styles.drilldownPanel}>
+      <div>
+        <p className={styles.sectionLabel}>Entry Inspect</p>
+        <strong>{entry.projectName}</strong>
+        <span>{entry.riderName}</span>
+      </div>
+      <div className={styles.drilldownGrid}>
+        <Metric label="Rank" value={`#${entry.rank ?? "-"}`} />
+        <Metric label="Round" value={formatPercent(entry.roundProgress)} />
+        <Metric label="Phase" value={entry.currentPhase ?? "-"} />
+        <Metric label="Provider" value={entry.caProvider} />
+        <Metric label="Tokens" value={formatNumber(entry.costTokens ?? 0)} />
+        <Metric label="Source" value={entry.positionSource} />
+      </div>
+      <div className={styles.signalRows}>
+        <span>{entry.status}</span>
+        <span>risk: {entry.riskLevel}</span>
+        <span>obs: {entry.obstacleCount}</span>
+        <span>vio: {entry.violationCount}</span>
+      </div>
+      {latestMessage ? (
+        <p className={styles.drilldownMessage}>{latestMessage.summary}</p>
+      ) : (
+        <p className={styles.drilldownMessage}>No public riding message yet.</p>
+      )}
+      {relatedAttention.length > 0 ? (
+        <ul className={styles.attentionList}>
+          {relatedAttention.map((item) => (
+            <li key={item.itemId}>
+              <strong>{item.category}</strong>
+              <span>{item.summary}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {entry.cockpitId ? (
+        <a className={styles.cockpitLink} href={entry.cockpitId}>
+          Open Remote Racing Cockpit
+        </a>
+      ) : (
+        <span className={styles.cockpitUnavailable}>Cockpit URL not exposed</span>
+      )}
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }
@@ -242,12 +347,16 @@ function CheckpointList({ snapshot }: { snapshot: JumbotronSnapshot }) {
 function TrackSvg({
   bubbles,
   debug,
+  onSelectEntry,
   poses,
+  selectedEntryId,
   snapshot,
 }: {
   bubbles: MessageBubbleCandidate[];
   debug: boolean;
+  onSelectEntry: (entryId: string) => void;
   poses: HorsePose[];
+  selectedEntryId: string | undefined;
   snapshot: JumbotronSnapshot;
 }) {
   const runtime = buildTrackRuntime(snapshot.track);
@@ -276,7 +385,15 @@ function TrackSvg({
         })}
         {poses.map((pose) => {
           const entry = snapshot.entries.find((item) => item.entryId === pose.entryId);
-          return entry ? <HorseMarker entry={entry} key={pose.entryId} pose={pose} /> : null;
+          return entry ? (
+            <HorseMarker
+              entry={entry}
+              key={pose.entryId}
+              onSelect={onSelectEntry}
+              pose={pose}
+              selected={pose.entryId === selectedEntryId}
+            />
+          ) : null;
         })}
       </svg>
 
@@ -353,15 +470,27 @@ function DebugLayers({
 
 function HorseMarker({
   entry,
+  onSelect,
   pose,
+  selected,
 }: {
   entry: RacingEntrySnapshot;
+  onSelect: (entryId: string) => void;
   pose: HorsePose;
+  selected: boolean;
 }) {
-  const markerClass = `${styles.horseMarker} ${styles[`state_${pose.state}`] ?? ""}`;
+  const markerClass = [
+    styles.horseMarker,
+    styles[`state_${pose.state}`] ?? "",
+    selected ? styles.horseMarkerSelected : "",
+  ].join(" ");
 
   return (
-    <g className={markerClass} transform={`translate(${pose.x} ${pose.y}) rotate(${pose.rotation})`}>
+    <g
+      className={markerClass}
+      onClick={() => onSelect(entry.entryId)}
+      transform={`translate(${pose.x} ${pose.y}) rotate(${pose.rotation})`}
+    >
       <path d="M28 0 L-22 -18 L-10 0 L-22 18 Z" fill={stateColor(pose.state)} />
       <circle cx="-26" cy="0" r="21" />
       <text transform={`rotate(${-pose.rotation})`} x="-34" y="7">

@@ -13,7 +13,11 @@ import {
 } from "react";
 import styles from "@/app/jumbotron/jumbotron.module.css";
 import type { RacingEntrySnapshot } from "@/lib/jumbotron/contracts";
-import type { Point, TrackProfile } from "@/lib/jumbotron/track-profile";
+import {
+  parseTrackProfile,
+  type Point,
+  type TrackProfile,
+} from "@/lib/jumbotron/track-profile";
 import {
   buildTrackRuntime,
   calculateHorsePoses,
@@ -34,6 +38,7 @@ export function TrackProfileCalibrator({
   const [progress, setProgress] = useState(0.42);
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   const [speed, setSpeed] = useState(1);
+  const [profileError, setProfileError] = useState("");
 
   const report = useMemo(() => validateTrackProfile(profile), [profile]);
   const jsonDiff = useMemo(
@@ -54,6 +59,10 @@ export function TrackProfileCalibrator({
   const previewPoses = runtime
     ? calculateHorsePoses(runtime, previewEntries, new Date("2026-06-09T12:00:00.000Z"))
     : [];
+  const livePreviewHref =
+    profile.trackId === "city-hairpin"
+      ? "/jumbotron?track=city-hairpin&debug=1"
+      : "/jumbotron?debug=1";
 
   useEffect(() => {
     if (!playing) {
@@ -130,17 +139,95 @@ export function TrackProfileCalibrator({
     }));
   }
 
+  function updateLaneLabel(laneId: string, label: string): void {
+    setProfile((current) => ({
+      ...current,
+      lanes: current.lanes.map((lane) =>
+        lane.laneId === laneId ? { ...lane, label } : lane,
+      ),
+    }));
+  }
+
+  function addLane(): void {
+    setProfile((current) => {
+      const laneNumber = current.lanes.length + 1;
+      const lastLane = current.lanes[current.lanes.length - 1];
+      const laneId = createUniqueId("lane", current.lanes.map((lane) => lane.laneId));
+
+      return {
+        ...current,
+        lanes: [
+          ...current.lanes,
+          {
+            label: `Lane ${laneNumber}`,
+            laneId,
+            offset: (lastLane?.offset ?? 0) + 28,
+          },
+        ],
+      };
+    });
+  }
+
+  function deleteLane(laneId: string): void {
+    setProfile((current) => {
+      if (current.lanes.length <= 1) {
+        return current;
+      }
+
+      return {
+        ...current,
+        lanes: current.lanes.filter((lane) => lane.laneId !== laneId),
+      };
+    });
+  }
+
   function addCheckpoint(): void {
     setProfile((current) => ({
       ...current,
       checkpoints: [
         ...current.checkpoints,
         {
-          checkpointId: `checkpoint-${current.checkpoints.length + 1}`,
+          checkpointId: createUniqueId(
+            "checkpoint",
+            current.checkpoints.map((checkpoint) => checkpoint.checkpointId),
+          ),
           label: `Checkpoint ${current.checkpoints.length + 1}`,
           s: progress,
         },
       ],
+    }));
+  }
+
+  function updateCheckpoint(
+    checkpointId: string,
+    patch: Partial<TrackProfile["checkpoints"][number]>,
+  ): void {
+    setProfile((current) => ({
+      ...current,
+      checkpoints: current.checkpoints.map((checkpoint) =>
+        checkpoint.checkpointId === checkpointId
+          ? { ...checkpoint, ...patch }
+          : checkpoint,
+      ),
+    }));
+  }
+
+  function deleteCheckpoint(checkpointId: string): void {
+    setProfile((current) => ({
+      ...current,
+      checkpoints: current.checkpoints.filter(
+        (checkpoint) => checkpoint.checkpointId !== checkpointId,
+      ),
+    }));
+  }
+
+  function setStartFinishToProgress(): void {
+    setProfile((current) => ({
+      ...current,
+      startFinish: {
+        ...current.startFinish,
+        s: progress,
+      },
     }));
   }
 
@@ -213,7 +300,7 @@ export function TrackProfileCalibrator({
           </button>
           <button onClick={downloadDebugPreview} type="button">Export Debug SVG</button>
           <button onClick={downloadProfile} type="button">Export JSON</button>
-          <Link href="/jumbotron?debug=1">Live Preview</Link>
+          <Link href={livePreviewHref}>Use in Jumbotron</Link>
         </div>
       </header>
 
@@ -341,6 +428,16 @@ export function TrackProfileCalibrator({
                 <option value="counterclockwise">counterclockwise</option>
               </select>
             </label>
+            <div className={styles.inspectorRow}>
+              <span>Start / Finish</span>
+              <strong>{formatPercent(profile.startFinish.s)}</strong>
+            </div>
+            <button onClick={setStartFinishToProgress} type="button">
+              Set Start / Finish at Scrubber
+            </button>
+            {profileError ? (
+              <p className={styles.validationLine}>{profileError}</p>
+            ) : null}
           </section>
 
           <section>
@@ -358,15 +455,32 @@ export function TrackProfileCalibrator({
 
           <section>
             <p className={styles.sectionLabel}>Lanes</p>
+            <button onClick={addLane} type="button">Add Lane</button>
             {profile.lanes.map((lane) => (
-              <label key={lane.laneId}>
-                {lane.label}
-                <input
-                  onChange={(event) => updateLaneOffset(lane.laneId, Number(event.target.value))}
-                  type="number"
-                  value={lane.offset}
-                />
-              </label>
+              <div className={styles.zoneCard} key={lane.laneId}>
+                <label>
+                  Label
+                  <input
+                    onChange={(event) => updateLaneLabel(lane.laneId, event.target.value)}
+                    value={lane.label}
+                  />
+                </label>
+                <label>
+                  Offset
+                  <input
+                    onChange={(event) => updateLaneOffset(lane.laneId, Number(event.target.value))}
+                    type="number"
+                    value={lane.offset}
+                  />
+                </label>
+                <button
+                  disabled={profile.lanes.length <= 1}
+                  onClick={() => deleteLane(lane.laneId)}
+                  type="button"
+                >
+                  Delete Lane
+                </button>
+              </div>
             ))}
           </section>
 
@@ -374,9 +488,45 @@ export function TrackProfileCalibrator({
             <p className={styles.sectionLabel}>Checkpoints</p>
             <button onClick={addCheckpoint} type="button">Add at Scrubber</button>
             {profile.checkpoints.map((checkpoint) => (
-              <div className={styles.inspectorRow} key={checkpoint.checkpointId}>
-                <span>{checkpoint.label}</span>
-                <strong>{Math.round(checkpoint.s * 100)}%</strong>
+              <div className={styles.zoneCard} key={checkpoint.checkpointId}>
+                <label>
+                  Label
+                  <input
+                    onChange={(event) =>
+                      updateCheckpoint(checkpoint.checkpointId, { label: event.target.value })
+                    }
+                    value={checkpoint.label}
+                  />
+                </label>
+                <div className={styles.zoneGrid}>
+                  <label>
+                    s
+                    <input
+                      max={1}
+                      min={0}
+                      onChange={(event) =>
+                        updateCheckpoint(checkpoint.checkpointId, { s: Number(event.target.value) })
+                      }
+                      step={0.01}
+                      type="number"
+                      value={checkpoint.s}
+                    />
+                  </label>
+                  <button
+                    onClick={() =>
+                      updateCheckpoint(checkpoint.checkpointId, { s: progress })
+                    }
+                    type="button"
+                  >
+                    Move Here
+                  </button>
+                </div>
+                <button
+                  onClick={() => deleteCheckpoint(checkpoint.checkpointId)}
+                  type="button"
+                >
+                  Delete Checkpoint
+                </button>
               </div>
             ))}
           </section>
@@ -435,6 +585,12 @@ export function TrackProfileCalibrator({
                     />
                   </label>
                 </div>
+                <button
+                  onClick={() => deleteMessageZone(zone.zoneId)}
+                  type="button"
+                >
+                  Delete Message Zone
+                </button>
               </div>
             ))}
           </section>
@@ -473,6 +629,12 @@ export function TrackProfileCalibrator({
                     />
                   </label>
                 </div>
+                <button
+                  onClick={() => deleteNoBubbleZone(zone.zoneId)}
+                  type="button"
+                >
+                  Delete No Bubble Zone
+                </button>
               </div>
             ))}
           </section>
@@ -490,6 +652,22 @@ export function TrackProfileCalibrator({
                     }
                     value={zone.label}
                   />
+                </label>
+                <label>
+                  Severity
+                  <select
+                    onChange={(event) =>
+                      updateRiskZone(zone.zoneId, {
+                        severity: event.target.value as TrackProfile["riskZones"][number]["severity"],
+                      })
+                    }
+                    value={zone.severity}
+                  >
+                    <option value="low">low</option>
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
+                    <option value="critical">critical</option>
+                  </select>
                 </label>
                 <div className={styles.zoneGrid}>
                   <label>
@@ -519,6 +697,12 @@ export function TrackProfileCalibrator({
                     />
                   </label>
                 </div>
+                <button
+                  onClick={() => deleteRiskZone(zone.zoneId)}
+                  type="button"
+                >
+                  Delete Risk Zone
+                </button>
               </div>
             ))}
           </section>
@@ -619,7 +803,16 @@ export function TrackProfileCalibrator({
         return;
       }
 
-      setProfile(JSON.parse(reader.result) as TrackProfile);
+      try {
+        setProfile(parseTrackProfile(JSON.parse(reader.result)));
+        setProfileError("");
+      } catch (error) {
+        setProfileError(
+          error instanceof Error
+            ? error.message
+            : "Unable to import track profile.",
+        );
+      }
     });
     reader.readAsText(file);
   }
@@ -682,6 +875,27 @@ export function TrackProfileCalibrator({
       riskZones: current.riskZones.map((zone) =>
         zone.zoneId === zoneId ? { ...zone, ...patch } : zone,
       ),
+    }));
+  }
+
+  function deleteMessageZone(zoneId: string): void {
+    setProfile((current) => ({
+      ...current,
+      messageZones: current.messageZones.filter((zone) => zone.zoneId !== zoneId),
+    }));
+  }
+
+  function deleteNoBubbleZone(zoneId: string): void {
+    setProfile((current) => ({
+      ...current,
+      noBubbleZones: current.noBubbleZones.filter((zone) => zone.zoneId !== zoneId),
+    }));
+  }
+
+  function deleteRiskZone(zoneId: string): void {
+    setProfile((current) => ({
+      ...current,
+      riskZones: current.riskZones.filter((zone) => zone.zoneId !== zoneId),
     }));
   }
 }
@@ -775,6 +989,23 @@ function formatPoint(point: Point): string {
 
 function clampProgress(value: number): number {
   return Math.min(1, Math.max(0, value));
+}
+
+function formatPercent(value: number): string {
+  return `${Math.round(value * 100)}%`;
+}
+
+function createUniqueId(prefix: string, existingIds: string[]): string {
+  const existing = new Set(existingIds);
+  let index = existing.size + 1;
+  let candidate = `${prefix}-${index}`;
+
+  while (existing.has(candidate)) {
+    index += 1;
+    candidate = `${prefix}-${index}`;
+  }
+
+  return candidate;
 }
 
 function buildJsonDiff(

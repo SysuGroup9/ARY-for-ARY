@@ -253,6 +253,15 @@ export function deriveHorseMotionState(
     return "stale";
   }
 
+  if (
+    entry.status === "blocked" ||
+    entry.status === "finished" ||
+    entry.status === "pit_stop" ||
+    entry.status === "takeover"
+  ) {
+    return entry.status;
+  }
+
   if (now.getTime() - updatedAt > staleThresholdMs) {
     return "stale";
   }

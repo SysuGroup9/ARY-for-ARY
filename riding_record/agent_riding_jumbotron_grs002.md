@@ -52,6 +52,15 @@ Corrections made:
 - Added Calibrator zone editing, JSON diff preview and debug SVG export.
 - Added this Riding Record and a video script.
 
+Second review intervention:
+
+- Owen decided to defer actual video recording and manual live demo until later.
+- The sprint therefore focused on every non-video deliverable that can raise the GRS-002 score now.
+- The agent added an in-page Entry Inspect drill-down instead of placeholder TOP3 links.
+- The agent expanded Calibrator controls for start / finish, lane add / delete, checkpoint rename / move / delete and zone delete.
+- The agent strengthened seed data so the Jumbotron can demonstrate a semi-real DCR data story without relying only on mock fallback.
+- The agent added `docs/grs002-submission-checklist.md` to map each rubric item to concrete evidence.
+
 ## Errors And Lessons
 
 ### Error 1: MVP Was Not Submission-Complete
@@ -80,6 +89,27 @@ Improvement:
 
 - Added zone authoring and diff preview to make asset production visible.
 
+### Error 4: Drill-Down Was Only A Placeholder
+
+The TOP3 cards initially exposed an `Open cockpit` link that could become `#` when no cockpit URL existed. That looked like a drill-down but did not actually explain the selected entry.
+
+Improvement:
+
+- Added an Entry Inspect panel on the Jumbotron screen.
+- TOP3 cards and horse markers now select an entry and show rank, progress source, provider, tokens, latest message and risk signals.
+
+## GRS-002 Self-Assessment
+
+| Area | Current State | Residual Risk |
+|---|---|---|
+| Problem framing | Runtime / Calibrator / DCR adapter boundaries are documented. | Need final spoken explanation in video. |
+| Race Live View | Dynamic 16:9 screen, TOP3, KPI, track, ticker, risk, Entry Inspect and debug mode. | Visual polish can still improve during final rehearsal. |
+| Calibrator | Import, edit centerline, start / finish, direction, lanes, checkpoints, zones, preview, validate, diff and export. | Export is local only, not database-backed. |
+| Runtime correctness | Shared track-runtime drives Jumbotron and Calibrator; tests cover sampling, lane offset, stale, terminal states and zones. | No full browser interaction test yet. |
+| Demo/video | Script and checklist exist. | Actual recording intentionally deferred. |
+| Riding Skill | Plan, intervention, errors, correction and verification are recorded. | Final human rehearsal notes should be appended after recording. |
+| Deliverability | Checklist maps rubric evidence to routes and files. | Online deployment URL is not included in this branch. |
+
 ## Verification
 
 Commands used during development:
@@ -102,3 +132,4 @@ Browser checks:
 - The Calibrator exports JSON / debug SVG locally; it does not persist profiles to the database.
 - The app uses mock fallback when local Prisma data is unavailable.
 - The runtime is 2D SVG, not full physics or 3D simulation.
+- Actual GRS-002 video recording and manual live demonstration are intentionally deferred by user instruction.

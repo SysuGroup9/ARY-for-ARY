@@ -51,6 +51,20 @@ test("marks stale entries when updatedAt exceeds threshold", () => {
   assert.equal(state, "stale");
 });
 
+test("preserves terminal states even when updatedAt is old", () => {
+  const state = deriveHorseMotionState(
+    {
+      ...mockJumbotronSnapshot.entries[0],
+      status: "finished",
+      updatedAt: "2026-06-09T11:00:00.000Z",
+    },
+    new Date("2026-06-09T12:00:00.000Z"),
+    90_000,
+  );
+
+  assert.equal(state, "finished");
+});
+
 test("limits message bubbles and skips no-bubble zones", () => {
   const runtime = buildTrackRuntime(devcompassOvalTrack);
   const entries = mockJumbotronSnapshot.entries.map((entry) => ({
