@@ -1,8 +1,8 @@
-# GRS-002 Demo Storyboard And Voiceover
+# GRS-002 Demo Storyboard And Captions
 
 ## Scene Plan
 
-| Time | Screen | Action | Voiceover |
+| Time | Screen | Action | Caption / On-screen explanation |
 |---:|---|---|---|
 | 0:00-0:20 | `/jumbotron?debug=1` | Show full screen. | "This is the ARY Race Live Jumbotron. It is a public event screen, not a private session viewer." |
 | 0:20-0:55 | Race Live header/KPI/TOP3 | Point to title, live phase, KPIs and TOP3. | "Audience and organizers can quickly see the race state, leaders, active riders, token usage and risk counts." |
@@ -32,12 +32,19 @@
 - Keep each scene short; avoid reading long docs line by line.
 - End by stating the PoC boundaries clearly.
 
-## Silent Demo Asset
+## Captioned Demo Asset
 
-The automated no-audio recording should be generated at:
+The primary automated no-audio recording is generated at:
 
 ```text
-outputs/grs002-jumbotron-silent-demo.webm
+outputs/grs002-jumbotron-captioned-demo.webm
+docs/grs002-captioned-demo.zh.srt
 ```
 
-Use it as raw material for final voiceover or editing. The current branch commits this silent demo artifact because the team explicitly requires the video in the repository.
+Run it with:
+
+```bash
+npm run grs002:record:captioned
+```
+
+The video intentionally has no audio. The explanation is embedded as large captions in the frame, with the same timing exported to the `.srt` file. The older `outputs/grs002-jumbotron-silent-demo.webm` remains as a short smoke demo.

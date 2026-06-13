@@ -333,19 +333,26 @@ npm run dev
 npm run grs002:check
 ```
 
-生成无声浏览器 demo：
+生成短版无声浏览器 smoke demo：
 
 ```bash
 npm run grs002:record
 ```
 
-当前已提交的无声 demo 位于：
+生成主提交用无声字幕版 demo：
+
+```bash
+npm run grs002:record:captioned
+```
+
+当前已提交的视频产物位于：
 
 ```text
+outputs/grs002-jumbotron-captioned-demo.webm
 outputs/grs002-jumbotron-silent-demo.webm
 ```
 
-这段视频是自动浏览器录制素材，适合作为提交附件或后续配音剪辑的原始材料。如果课程要求真人讲解，建议按 `docs/grs002-demo-storyboard.md` 和 `docs/jumbotron-demo-video-script.md` 再录一版有声视频。
+`grs002-jumbotron-captioned-demo.webm` 是主提交证据：约 4 分钟、无音轨、画面内嵌中文字幕，覆盖 ARY 平台边界、GRS-001 PoC 链路、Race Live View、Debug 几何、第二赛道、Calibrator、runtime 架构、Data Story、Agent Riding 和验证结果。外挂字幕文件位于 `docs/grs002-captioned-demo.zh.srt`。`grs002-jumbotron-silent-demo.webm` 保留为短版 smoke demo。
 
 ### GRS 002 关键证据文件
 
@@ -366,10 +373,11 @@ outputs/grs002-jumbotron-silent-demo.webm
 | 提交清单 | `docs/grs002-submission-checklist.md` | 按评分项映射证据 |
 | 最终提交说明 | `docs/grs002-final-submission.md` | 运行、视频、PR、提交说明 |
 | PR 描述 | `docs/grs002-pr-description.md` | 可复制到 GitHub PR |
-| 分镜与字幕 | `docs/grs002-demo-storyboard.md` | 录制分镜、旁白、字幕 |
+| 分镜与字幕 | `docs/grs002-demo-storyboard.md`, `docs/grs002-captioned-demo.zh.srt` | 录制分镜、字幕稿和外挂字幕 |
 | 彩排报告 | `docs/grs002-rehearsal-report.md` | 自动彩排结果 |
 | Riding Record | `riding_record/agent_riding_jumbotron_grs002.md` | Agent Riding 过程记录 |
-| 无声视频 | `outputs/grs002-jumbotron-silent-demo.webm` | 已提交的自动录屏 demo |
+| 主视频 | `outputs/grs002-jumbotron-captioned-demo.webm` | 已提交的无声字幕版自动录屏 demo |
+| 短版视频 | `outputs/grs002-jumbotron-silent-demo.webm` | 已提交的短版 smoke demo |
 
 ### GRS 002 评分项对齐
 
@@ -377,7 +385,7 @@ outputs/grs002-jumbotron-silent-demo.webm
 - **Race Live View 运行体验**：见 `/jumbotron`、TOP3、KPI、Entry Inspect、ticker、risk panel。
 - **Calibrator 与赛道资产生产**：见 `/jumbotron/calibrator` 和 `assets/tracks/*`。
 - **track-runtime 与数据契约**：见 `src/lib/jumbotron/*` 和对应测试。
-- **Demo 有效性**：见 `docs/jumbotron-demo-video-script.md`、`docs/grs002-demo-storyboard.md`、`outputs/grs002-jumbotron-silent-demo.webm`。
+- **Demo 有效性**：见 `docs/jumbotron-demo-video-script.md`、`docs/grs002-demo-storyboard.md`、`docs/grs002-captioned-demo.zh.srt`、`outputs/grs002-jumbotron-captioned-demo.webm`。
 - **Agent Riding Skill**：见 `riding_record/agent_riding_jumbotron_grs002.md` 和 `ROADMAP.md`。
 - **文档与工程交付性**：见 `docs/grs002-submission-checklist.md`、`docs/grs002-final-submission.md`。
 
@@ -386,7 +394,7 @@ outputs/grs002-jumbotron-silent-demo.webm
 - Calibrator 当前导出本地 JSON / SVG，不把 profile 写入数据库。
 - Remote Racing Cockpit 只暴露 seed race URL，不实现完整 cockpit 鉴权。
 - Runtime 是 2D SVG 语义赛道渲染，不是物理引擎或 3D 引擎。
-- 无声视频已提交；若评分要求讲解，需要额外录制有声版。
+- 无声字幕版视频已提交；本轮按用户要求不加入声音，讲解内容全部由画面字幕承担。
 - 本地 Prisma 不可用时，Jumbotron 会 fallback 到当前时间 mock snapshot，保证演示入口可用。
 
 ### GRS 002 提交仓库

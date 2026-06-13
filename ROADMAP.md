@@ -130,6 +130,14 @@ ARY 不持久化：
 - 在 Riding Record 中补最终验收计划、录制准备和人工复盘占位
 - 记录 GitHub CLI 未登录时 PR 创建的限制，保留可复制的 PR 正文和 compare URL 流程
 
+### Iteration 8
+
+- 用户指出第一版视频时间短、缺少 ARY 平台介绍、没有字幕，因此不足以支撑高分演示
+- 按用户要求保持无声音，改为画面内嵌中文字幕承担讲解
+- 新增 `scripts/record-grs002-captioned-demo.mjs` 和 `npm run grs002:record:captioned`
+- 生成并准备提交 `outputs/grs002-jumbotron-captioned-demo.webm` 与 `docs/grs002-captioned-demo.zh.srt`
+- 更新 README、提交说明、PR 描述、彩排报告、提交清单和 Riding Record，把字幕版视频设为主证据，短版视频降级为 smoke demo
+
 ## 错误复盘
 
 - 早期从旧 PoC 迁移时有编码损坏的中文文本混入新实现。

@@ -102,6 +102,8 @@ The final workstream was non-code but score-critical:
 - `docs/grs002-demo-storyboard.md`
 - `docs/grs002-rehearsal-report.md`
 - `docs/jumbotron-demo-video-script.md`
+- `docs/grs002-captioned-demo.zh.srt`
+- `outputs/grs002-jumbotron-captioned-demo.webm`
 - `outputs/grs002-jumbotron-silent-demo.webm`
 
 This part exists because the grading rubric values clarity, reproducibility and Agent Riding evidence. Code alone would not explain the proof.
@@ -129,6 +131,9 @@ Additional final packaging output:
 - `docs/grs002-rehearsal-report.md`: automated rehearsal result and manual checklist.
 - `scripts/grs002-rehearsal-check.mjs`: route-level smoke check.
 - `scripts/record-grs002-demo.mjs`: silent browser recording workflow.
+- `scripts/record-grs002-captioned-demo.mjs`: longer no-audio captioned recording workflow.
+- `outputs/grs002-jumbotron-captioned-demo.webm`: committed primary captioned demo artifact.
+- `docs/grs002-captioned-demo.zh.srt`: exported subtitle timing for the primary demo.
 - `outputs/grs002-jumbotron-silent-demo.webm`: committed silent demo artifact required by the team.
 
 ## Prompt And Decision Log
@@ -144,6 +149,7 @@ This is a summarized process log rather than a verbatim chat transcript.
 | 5 | Deferred real video and manual demo, asked to complete everything else first. | Added Entry Inspect, richer seed data, Calibrator editing controls and submission checklist. | Keep actual recording separate but prepare it. |
 | 6 | Asked to create PR description, final docs, rehearsal, materials and silent demo. | Added final submission docs, storyboard, rehearsal script and recording script. | Commit silent browser demo as an artifact. |
 | 7 | Requested submission to classroom repositories. | Merged current work into `ary-grs-002-xiaoyi24` and `ary-grs-001-xiaoyi24` main branches without force push. | Preserve classroom starter files and deadline badges. |
+| 8 | Criticized the first video as too short and lacking subtitles; requested no audio and subtitles instead. | Added a longer no-audio captioned recording workflow, generated `.webm` plus `.srt`, and updated submission docs to make it the primary video artifact. | For video scoring, a silent file still needs explicit narrative via embedded captions. |
 
 The repeated pattern was: agent proposes or implements, human evaluates against the rubric, then the agent corrects the implementation or evidence package.
 
@@ -276,7 +282,22 @@ Improvement:
 - Committed `outputs/grs002-jumbotron-silent-demo.webm` with `git add -f`.
 - Updated docs to state that the team explicitly required the silent demo artifact in Git.
 
-### Error 7: Classroom Repository Contents Needed Preservation
+### Error 7: First Video Was Too Short And Had No Narrative
+
+The first browser recording proved that the routes could be shown, but it did not explain the ARY platform, the GRS-001 to GRS-002 relationship, the data story, or the Calibrator flow. It also had no subtitles, so a silent reviewer could miss the argument.
+
+Correction:
+
+- Added `scripts/record-grs002-captioned-demo.mjs`.
+- Generated `outputs/grs002-jumbotron-captioned-demo.webm`, a longer no-audio video with embedded Chinese captions.
+- Exported `docs/grs002-captioned-demo.zh.srt` so the subtitle text is reviewable outside the video.
+- Updated README and submission docs to treat the captioned video as the primary artifact and the short video as a smoke demo.
+
+Prevention:
+
+- Do not treat route traversal as a complete demo. A scoring demo must contain an explicit narrative: platform boundary, feature evidence, data provenance, verification and PoC limits.
+
+### Error 8: Classroom Repository Contents Needed Preservation
 
 The target classroom repositories were not empty. They contained deadline badges and assignment material. A direct force push would have destroyed that history.
 
@@ -334,15 +355,24 @@ Trade-off:
 - Pros: reviewers can find the video directly in GitHub.
 - Cons: repository history grows with binary media.
 
+### Decision 6: Use Captions Instead Of Audio For The Final Browser Demo
+
+Owen rejected adding sound and asked for subtitles. The final automated recording therefore uses embedded captions plus an exported `.srt`, rather than a voiceover track.
+
+Trade-off:
+
+- Pros: no audio dependency, reviewable subtitle text, easier to commit and replay consistently.
+- Cons: the viewer must read the screen; caption timing and layout become part of the video quality bar.
+
 ## GRS-002 Self-Assessment
 
 | Area | Current State | Residual Risk |
 |---|---|---|
-| Problem framing | Runtime / Calibrator / DCR adapter boundaries are documented. | Need final spoken explanation in video. |
+| Problem framing | Runtime / Calibrator / DCR adapter boundaries are documented and summarized in the captioned video. | External upload URL may still be needed by the course platform. |
 | Race Live View | Dynamic 16:9 screen, TOP3, KPI, track, ticker, risk, Entry Inspect and debug mode. | Visual polish can still improve during final rehearsal. |
 | Calibrator | Import, edit centerline, start / finish, direction, lanes, checkpoints, zones, preview, validate, diff and export. | Export is local only, not database-backed. |
 | Runtime correctness | Shared track-runtime drives Jumbotron and Calibrator; tests cover sampling, lane offset, stale, terminal states and zones. | No full browser interaction test yet. |
-| Demo/video | Script and checklist exist. | Actual recording intentionally deferred. |
+| Demo/video | Captioned no-audio `.webm` and `.srt` are generated and committed. | Manual live rehearsal notes should still be appended after Owen reviews the final file. |
 | Riding Skill | Plan, intervention, errors, correction and verification are recorded. | Final human rehearsal notes should be appended after recording. |
 | Deliverability | Checklist maps rubric evidence to routes and files. | Online deployment URL is not included in this branch. |
 
@@ -359,10 +389,11 @@ Trade-off:
 | Runtime logic | `src/lib/jumbotron/track-runtime.ts` | Converts progress into horse pose. |
 | DCR adapter | `src/lib/jumbotron/adapter.ts` | Maps race data into public Jumbotron snapshot. |
 | Seed story | `prisma/seed.ts` | Provides semi-real multi-team DCR data. |
-| Demo script | `docs/jumbotron-demo-video-script.md` | Spoken recording plan. |
+| Demo script | `docs/jumbotron-demo-video-script.md` | Recording plan and caption narrative. |
 | Storyboard | `docs/grs002-demo-storyboard.md` | Scene plan and subtitle copy. |
 | Rehearsal report | `docs/grs002-rehearsal-report.md` | Automated route check and video artifact result. |
-| Silent demo | `outputs/grs002-jumbotron-silent-demo.webm` | No-audio browser walkthrough. |
+| Captioned demo | `outputs/grs002-jumbotron-captioned-demo.webm`, `docs/grs002-captioned-demo.zh.srt` | Primary no-audio browser walkthrough with embedded Chinese captions. |
+| Silent demo | `outputs/grs002-jumbotron-silent-demo.webm` | Short smoke walkthrough. |
 | Submission checklist | `docs/grs002-submission-checklist.md` | Rubric-to-evidence map. |
 | Final runbook | `docs/grs002-final-submission.md` | Submission package index. |
 
@@ -381,6 +412,7 @@ npm run db:deploy
 npm run db:seed
 npm run grs002:check
 npm run grs002:record
+npm run grs002:record:captioned
 ```
 
 The route rehearsal checked:
@@ -390,10 +422,17 @@ The route rehearsal checked:
 - `/jumbotron?track=city-hairpin&debug=1`
 - `/jumbotron/calibrator`
 
-The recording script generated:
+The short recording script generated:
 
 ```text
 outputs/grs002-jumbotron-silent-demo.webm
+```
+
+The captioned recording script generated:
+
+```text
+outputs/grs002-jumbotron-captioned-demo.webm
+docs/grs002-captioned-demo.zh.srt
 ```
 
 The repository submission checks included:
@@ -404,7 +443,7 @@ The repository submission checks included:
 
 ## What I Would Improve With More Time
 
-- Add a voiceover video and replace the silent demo as the primary artifact.
+- Review the captioned video and upload it externally only if the course platform requires a link.
 - Add Playwright interaction tests for click selection and Calibrator editing.
 - Persist exported Calibrator profiles to a database or asset registry.
 - Add a real Remote Racing Cockpit route with proper authorization.
@@ -423,6 +462,7 @@ npm run db:seed
 npm run dev
 npm run grs002:check
 npm run grs002:record
+npm run grs002:record:captioned
 ```
 
 Manual:
@@ -430,13 +470,14 @@ Manual:
 - Open `/jumbotron?debug=1` and click TOP3 Entry Inspect.
 - Open `/jumbotron?track=city-hairpin&debug=1` and verify the second profile.
 - Open `/jumbotron/calibrator`, edit at least one point/lane/checkpoint/zone and show Validate / Export.
-- Upload final voiceover video and replace `VIDEO_URL_PLACEHOLDER`.
+- Upload the captioned video and replace `VIDEO_URL_PLACEHOLDER` only if an external link is required.
 
 ## Recording Preparation
 
 - Use `docs/grs002-demo-storyboard.md` as the scene-by-scene guide.
-- Use `docs/jumbotron-demo-video-script.md` as the talk track.
-- Use `outputs/grs002-jumbotron-silent-demo.webm` as optional raw footage.
+- Use `docs/jumbotron-demo-video-script.md` as the caption narrative.
+- Use `outputs/grs002-jumbotron-captioned-demo.webm` as the primary no-audio subtitle video.
+- Use `outputs/grs002-jumbotron-silent-demo.webm` as optional short smoke footage.
 - Keep `.env`, terminal secrets and private session logs out of frame.
 
 ## Human Retrospective Placeholder
@@ -472,5 +513,5 @@ Browser checks:
 - The Calibrator exports JSON / debug SVG locally; it does not persist profiles to the database.
 - The app uses mock fallback when local Prisma data is unavailable.
 - The runtime is 2D SVG, not full physics or 3D simulation.
-- Actual GRS-002 video recording and manual live demonstration are intentionally deferred by user instruction.
+- Manual live demonstration is intentionally deferred by user instruction; the no-audio captioned video has been generated for repository submission.
 - PR creation can be automated only after `gh auth login` or `GH_TOKEN` is available.

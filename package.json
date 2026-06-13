@@ -14,6 +14,7 @@
     "db:seed": "prisma db seed",
     "grs002:check": "node scripts/grs002-rehearsal-check.mjs",
     "grs002:record": "node scripts/record-grs002-demo.mjs",
+    "grs002:record:captioned": "node scripts/record-grs002-captioned-demo.mjs",
     "vercel-build": "npm run db:generate && npm run db:deploy && npm run db:seed && next build"
   },
   "prisma": {

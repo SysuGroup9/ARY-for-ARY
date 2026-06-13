@@ -1,0 +1,55 @@
+1
+00:00:00,000 --> 00:00:12,000
+ARY for ARY / GRS-002 Jumbotron：本视频展示 ARY 平台 PoC、GRS-002 Jumbotron、Calibrator、runtime 架构和 Agent Riding 证据。
+
+2
+00:00:12,000 --> 00:00:26,000
+ARY 平台边界：ARY 的核心边界是 Public Yard, Private Race Source：数据主权属于 Organizer，ARY 不中心化保存完整 Race 源数据。
+
+3
+00:00:26,000 --> 00:00:40,000
+GRS-001 PoC 链路：GRS-001 PoC 已证明赛事创建、报名、提交、私有 Runner 评分和公开榜单展示链路可以运行。
+
+4
+00:00:40,000 --> 00:01:02,000
+Race Live View：这是 GRS-002 的 Race Live View。观众能看到 LIVE 状态、TOP3、KPI、主赛道、消息气泡和风险 ticker。
+
+5
+00:01:02,000 --> 00:01:22,000
+可信几何 Debug：Debug 模式展示 centerline、sampled points、lane offsets、risk zones 和 collision boxes，证明赛马位置不是写死在图片里。
+
+6
+00:01:22,000 --> 00:01:40,000
+第二条赛道资产：切换到 city-hairpin 后，同一套 runtime 会根据新的 track.profile.json 重新计算 horse pose，证明赛道资产可复用。
+
+7
+00:01:40,000 --> 00:02:04,000
+Track Profile Calibrator：Calibrator 把视觉底图变成语义赛道资产：可以编辑 centerline、start / finish、lanes、checkpoints 和 zones。
+
+8
+00:02:04,000 --> 00:02:20,000
+track.profile.json 的作用：导出的 track.profile.json 是运行时事实来源。背景图不是定位来源，马匹、排名、消息和风险都由数据驱动。
+
+9
+00:02:20,000 --> 00:02:38,000
+Runtime Architecture：数据链路从 DCR 公开投影进入 Jumbotron snapshot，再由 track-runtime 计算位置、旋转、状态和碰撞框。
+
+10
+00:02:38,000 --> 00:02:54,000
+Data Story：seed 数据不是单一静态 mock，而是半真实 DCR 故事：队伍、提交、Runner task、反馈、通知共同驱动大屏。
+
+11
+00:02:54,000 --> 00:03:12,000
+Agent Riding Process：Agent Riding 的重点是人持续观察、质疑和纠偏，而不是让 Agent 一次性生成一个漂亮但不可解释的大屏。
+
+12
+00:03:12,000 --> 00:03:26,000
+Verification：最终验收包含单元测试、lint、build、四个关键页面彩排和字幕版无声浏览器录制。
+
+13
+00:03:26,000 --> 00:03:42,000
+PoC Boundaries：PoC 边界是诚实提交的一部分：我们证明可信大屏和赛道校准流程成立，但没有声称完成完整生产级赛事平台。
+
+14
+00:03:42,000 --> 00:03:54,000
+Submission Summary：这套提交证明：Jumbotron 可以由可信数据和可信几何驱动，形成可运行、可解释、可复用的赛事现场大屏。

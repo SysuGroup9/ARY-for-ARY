@@ -4,7 +4,7 @@
 
 This PR completes the GRS-002 Jumbotron subsystem submission pack on branch `xiaoyi24/jumbotron-subsystem`.
 
-It adds a profile-driven Race Live View, a more complete Track Profile Calibrator workflow, semi-real DCR seed data, rubric-aligned documentation, and demo/rehearsal materials. Actual voiceover/video upload remains an external submission step.
+It adds a profile-driven Race Live View, a more complete Track Profile Calibrator workflow, semi-real DCR seed data, rubric-aligned documentation, rehearsal materials, and a committed no-audio captioned demo video.
 
 ## Demo Entrypoints
 
@@ -29,7 +29,7 @@ npm run dev
 | Jumbotron / Race Live View | `/jumbotron`, TOP3, KPI strip, Race Live track, ticker, risk items, Entry Inspect panel |
 | Calibrator and track assets | `/jumbotron/calibrator`, `assets/tracks/*/track.profile.json`, `assets/tracks/*/preview.png`, `assets/tracks/*/notes.md` |
 | Runtime/data contracts | `src/lib/jumbotron/contracts.ts`, `track-profile.ts`, `track-runtime.ts`, `adapter.ts`, `mock-racing-data.ts` |
-| Demo/video expression | `docs/jumbotron-demo-video-script.md`, `docs/grs002-demo-storyboard.md`, `scripts/record-grs002-demo.mjs` |
+| Demo/video expression | `docs/jumbotron-demo-video-script.md`, `docs/grs002-demo-storyboard.md`, `docs/grs002-captioned-demo.zh.srt`, `scripts/record-grs002-captioned-demo.mjs`, `outputs/grs002-jumbotron-captioned-demo.webm` |
 | Agent Riding Skill | `riding_record/agent_riding_jumbotron_grs002.md`, `ROADMAP.md` |
 | Engineering deliverability | `docs/grs002-submission-checklist.md`, `docs/grs002-rehearsal-report.md` |
 
@@ -40,7 +40,7 @@ npm run dev
 - Added semi-real `race_sort_demo` seed story with multiple teams, submissions, Runner tasks, feedback threads, notifications, harness entries and highlights.
 - Preserved terminal horse states so finished/blocked/pit-stop entries do not become stale during demos.
 - Added GRS-002 submission checklist, final submission guide, storyboard, voiceover/subtitle material and rehearsal report.
-- Added scripts for local rehearsal checks and optional silent browser recording.
+- Added scripts for local rehearsal checks, short smoke recording and primary no-audio captioned browser recording.
 
 ## Verification
 
@@ -58,17 +58,23 @@ Additional local rehearsal:
 node scripts/grs002-rehearsal-check.mjs
 ```
 
-Optional silent demo recording:
+Optional short smoke recording:
 
 ```bash
 node scripts/record-grs002-demo.mjs
 ```
 
-Generated videos should stay in `outputs/` and be uploaded separately.
+Primary captioned recording:
+
+```bash
+node scripts/record-grs002-captioned-demo.mjs
+```
+
+The primary generated video is committed at `outputs/grs002-jumbotron-captioned-demo.webm`; the subtitle timing is committed at `docs/grs002-captioned-demo.zh.srt`.
 
 ## Known Boundaries
 
-- Final spoken video upload URL is not committed yet.
+- External upload URL is not committed yet; the Git repository already contains the no-audio captioned `.webm` required by the team.
 - Calibrator exports local JSON/SVG only; it does not persist profile edits to the database.
 - Remote Racing Cockpit authorization remains outside this PoC.
 - The runtime is a 2D SVG race renderer, not a full physics engine.

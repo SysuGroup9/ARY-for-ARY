@@ -2,6 +2,15 @@
 
 Target length: 3-5 minutes.
 
+Current committed delivery is a no-audio captioned video:
+
+```text
+outputs/grs002-jumbotron-captioned-demo.webm
+docs/grs002-captioned-demo.zh.srt
+```
+
+The subtitle text replaces voiceover in the automated recording.
+
 ## 0:00-0:30 Problem Framing
 
 Show `/jumbotron?debug=1`.
@@ -58,7 +67,7 @@ Show:
 - Run validation by showing the validation panel.
 - Show JSON diff preview.
 - Export JSON and Export Debug SVG.
-- Mention the optional silent browser recording at `outputs/grs002-jumbotron-silent-demo.webm`.
+- Mention the committed captioned browser recording at `outputs/grs002-jumbotron-captioned-demo.webm` and the short smoke demo at `outputs/grs002-jumbotron-silent-demo.webm`.
 
 Talk track:
 

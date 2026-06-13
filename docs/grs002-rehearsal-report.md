@@ -35,14 +35,23 @@ ok http://127.0.0.1:3000/jumbotron?track=city-hairpin&debug=1
 ok http://127.0.0.1:3000/jumbotron/calibrator
 ```
 
-Silent recording:
+Primary captioned no-audio recording:
+
+```text
+outputs/grs002-jumbotron-captioned-demo.webm
+size: 17,425,594 bytes
+docs/grs002-captioned-demo.zh.srt
+size: 2,599 bytes
+```
+
+Short smoke recording:
 
 ```text
 outputs/grs002-jumbotron-silent-demo.webm
 size: 1,469,042 bytes
 ```
 
-The video file is committed with `git add -f` because the team explicitly requires the silent demo artifact in the branch.
+The video files are committed with `git add -f` because the team explicitly requires video artifacts in the branch. The captioned video is the primary evidence; the short silent recording is retained as a quick smoke demo.
 
 ## Manual Rehearsal Checklist
 
@@ -67,6 +76,7 @@ Append final recording observations here:
 Date:
 Recorder:
 Video URL:
+Captioned local artifact: `outputs/grs002-jumbotron-captioned-demo.webm`
 Issues found:
 Fixes made:
 Final decision:

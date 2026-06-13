@@ -10,8 +10,8 @@
 | Calibrator demo | Done | Agent | `/jumbotron/calibrator` |
 | Seed data story | Done | Agent | `prisma/seed.ts`, `race_sort_demo` |
 | Riding Record | Done; final human notes pending | Owen + Agent | `riding_record/agent_riding_jumbotron_grs002.md` |
-| Short video | Pending upload | Owen | `VIDEO_URL_PLACEHOLDER` |
-| Silent browser recording | Generated locally | Agent | `outputs/grs002-jumbotron-silent-demo.webm` |
+| Captioned no-audio video | Done; committed | Agent | `outputs/grs002-jumbotron-captioned-demo.webm`, `docs/grs002-captioned-demo.zh.srt` |
+| Short smoke video | Done; committed | Agent | `outputs/grs002-jumbotron-silent-demo.webm` |
 
 ## Final Runbook
 
@@ -35,24 +35,32 @@ Optional automated rehearsal:
 node scripts/grs002-rehearsal-check.mjs
 ```
 
-Optional silent recording:
+Optional short smoke recording:
 
 ```bash
 node scripts/record-grs002-demo.mjs
 ```
 
-Latest local recording artifact:
+Primary no-audio captioned recording:
+
+```bash
+node scripts/record-grs002-captioned-demo.mjs
+```
+
+Latest local recording artifacts:
 
 ```text
+outputs/grs002-jumbotron-captioned-demo.webm
+docs/grs002-captioned-demo.zh.srt
 outputs/grs002-jumbotron-silent-demo.webm
 ```
 
 ## Video Link Placeholder
 
-Replace this before final submission:
+If the course platform requires an external video URL, upload the committed captioned `.webm` and replace this placeholder:
 
 ```text
-GRS-002 Video URL: VIDEO_URL_PLACEHOLDER
+GRS-002 Captioned Video URL: VIDEO_URL_PLACEHOLDER
 ```
 
 Recommended upload targets:
@@ -75,8 +83,8 @@ Recommended upload targets:
 
 ## Final Human Checklist
 
-- [ ] Record 3-5 minute voiceover or screen narration.
-- [ ] Upload video and replace `VIDEO_URL_PLACEHOLDER`.
+- [x] Generate and commit a 3-5 minute no-audio captioned browser recording.
+- [ ] Upload `outputs/grs002-jumbotron-captioned-demo.webm` and replace `VIDEO_URL_PLACEHOLDER` if an external link is required.
 - [ ] Add final human rehearsal notes to Riding Record.
 - [ ] Open or update the PR using `docs/grs002-pr-description.md`.
 - [ ] Submit branch/PR/video links to the course platform.

@@ -2,14 +2,14 @@
 
 ## Current Submission State
 
-本清单用于对照 `ARY GRS 002 Jumbotron 评审标准` 准备最终提交。当前仓库已经包含代码、文档、彩排脚本和无声录制脚本；最终仍需要把真人讲解或正式视频链接替换到提交材料中。
+本清单用于对照 `ARY GRS 002 Jumbotron 评审标准` 准备最终提交。当前仓库已经包含代码、文档、彩排脚本、无声录制脚本和主提交用无声字幕版视频；如果课程平台要求外链，只需要上传已提交的 `.webm` 并替换链接占位。
 
 | Gate | Status | Evidence |
 |---|---|---|
 | 可运行 Jumbotron / Race Live View | Done | `/jumbotron`, `/jumbotron?debug=1`, `/jumbotron?track=city-hairpin&debug=1` |
 | Calibrator / 赛道校准流程 | Done | `/jumbotron/calibrator` |
 | 非写死位置与数据驱动 | Done | `src/lib/jumbotron/track-runtime.ts`, `src/lib/jumbotron/track-profile.ts`, `src/lib/jumbotron/adapter.ts` |
-| 短视频 | Pending upload | `docs/jumbotron-demo-video-script.md`, `docs/grs002-demo-storyboard.md`, `scripts/record-grs002-demo.mjs` |
+| 短视频 | Done; committed | `outputs/grs002-jumbotron-captioned-demo.webm`, `docs/grs002-captioned-demo.zh.srt`, `scripts/record-grs002-captioned-demo.mjs` |
 | Riding Record | Done | `riding_record/agent_riding_jumbotron_grs002.md` |
 
 ## Runtime Demo Entrypoints
@@ -41,7 +41,7 @@ npm run grs002:check
 npm run grs002:record
 ```
 
-录制产物默认输出到 `outputs/grs002-jumbotron-silent-demo.webm`，该目录被 `.gitignore` 忽略。
+短版录制产物默认输出到 `outputs/grs002-jumbotron-silent-demo.webm`，主提交字幕版输出到 `outputs/grs002-jumbotron-captioned-demo.webm`。`outputs/` 被 `.gitignore` 忽略，视频需要用 `git add -f` 显式提交。
 
 ## Rubric Evidence Map
 
@@ -51,7 +51,7 @@ npm run grs002:record
 | Race Live View 运行体验 | `/jumbotron`, TOP3 cards, KPI strip, main track, mini map, ticker, Entry Inspect panel |
 | Calibrator 与赛道资产生产 | `/jumbotron/calibrator`, `assets/tracks/*/track.profile.json`, `assets/tracks/*/preview.png`, `assets/tracks/*/notes.md` |
 | track-runtime / 数据契约 | `src/lib/jumbotron/contracts.ts`, `track-profile.ts`, `track-runtime.ts`, `adapter.ts`, `mock-racing-data.ts` |
-| Demo 与短视频表达 | `docs/jumbotron-demo-video-script.md`, `docs/grs002-demo-storyboard.md`, `scripts/record-grs002-demo.mjs`; final video URL remains external |
+| Demo 与短视频表达 | `docs/jumbotron-demo-video-script.md`, `docs/grs002-demo-storyboard.md`, `docs/grs002-captioned-demo.zh.srt`, `scripts/record-grs002-captioned-demo.mjs`, `outputs/grs002-jumbotron-captioned-demo.webm`; external video URL remains optional |
 | Agent Riding Skill | `riding_record/agent_riding_jumbotron_grs002.md`, `ROADMAP.md` iteration log |
 | 文档与工程交付性 | `docs/jumbotron-mvp.md`, `docs/grs002-final-submission.md`, `docs/grs002-pr-description.md`, this checklist, README Jumbotron section |
 
@@ -85,7 +85,7 @@ If local Prisma cannot load, `buildJumbotronSnapshotFromRace(null, track)` falls
 
 ## Known PoC Boundaries
 
-- Actual video recording remains to be done.
+- No-audio captioned video has been generated and committed.
 - Replace `VIDEO_URL_PLACEHOLDER` in `docs/grs002-final-submission.md` after upload.
 - The Calibrator exports local JSON / SVG; it does not persist edits to the database.
 - Remote Racing Cockpit is represented by the race URL exposed in seed data; full cockpit authorization is outside this PoC.
