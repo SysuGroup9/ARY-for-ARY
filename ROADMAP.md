@@ -46,11 +46,10 @@ ARY 不持久化：
 - 真实注册 / 登录
 - Organizer 创建赛事
 - Rider 报名参赛
-- Rider 提交代码与 Riding Record
+- Rider 比赛中提交代码，赛后提交最终代码与 Riding Record
 - Rider 与 Organizer 的反馈线程
-- Runner 拉取任务与回传评分
-- Organizer 同步公开榜单
-- Organizer 发布赛后展示
+- Runner 拉取任务并回传包含评分分项的 JSON，由 ARY 按比赛权重计算总分
+- Organizer 发起进度评测 / Harness 评测
 - Audience 无登录浏览公开页面
 
 ## 临时部署策略
@@ -126,6 +125,7 @@ ARY 不持久化：
 4. **Jumbotron 位置改为真实进度值驱动**
    - 删除 adapter 中按 rank/time 伪造 `roundProgress` 的逻辑
    - 改为消费企业 Runner 返回的真实 progress 值
+   - live 赛事首帧直接使用 snapshot 中的真实进度，不再把所有马重置到起点
 
 5. **活跃骑手排名按主动提交次数计算**
    - 基于 `Submission` 表统计每队主动提交次数

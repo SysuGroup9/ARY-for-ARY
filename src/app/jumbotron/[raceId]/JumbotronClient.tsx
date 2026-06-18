@@ -36,19 +36,16 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
   }, [sorted]);
 
   // 初始化 displayS
-  const isLive = snapshot.competition.liveStatus === "live";
   useEffect(() => {
     setDisplayS((prev) => {
-      if (Object.keys(prev).length > 0) return prev;
       const next: Record<string, number> = {};
       for (const e of sorted) {
-        // 进行中的赛事：所有马从起跑线出发，营造起跑效果
-        // 非 live 赛事（报名中/已结束）：直接跳到目标位置
-        next[e.entryId] = isLive ? 0 : (targetS[e.entryId] ?? 0.5);
+        const previous = prev[e.entryId];
+        next[e.entryId] = previous ?? (targetS[e.entryId] ?? 0.5);
       }
       return next;
     });
-  }, [sorted, isLive, targetS]);
+  }, [sorted, targetS]);
 
   // s-axis 补间动画循环 —— 每匹马速度略有差异
   const animateRef = useRef<() => void>(() => {});

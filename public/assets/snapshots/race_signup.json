@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-18T07:45:10.138Z",
+  "generatedAt": "2026-06-18T09:00:40.688Z",
   "raceId": "race_signup",
-  "trackId": "circuit-track",
+  "trackId": "oval-track",
   "competition": {
     "competitionId": "race_signup",
     "title": "📋 API 设计大赛",
@@ -13,7 +13,7 @@
     "currentRound": 1,
     "nextPhase": "比赛中",
     "elapsedTime": 0,
-    "systemTime": "2026-06-18T07:45:10.138Z"
+    "systemTime": "2026-06-18T09:00:40.688Z"
   },
   "entries": [
     {
@@ -32,7 +32,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-18T07:45:10.138Z"
+      "updatedAt": "2026-06-18T09:00:40.688Z"
     },
     {
       "entryId": "team_signup_1",
@@ -50,7 +50,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-18T07:45:10.138Z"
+      "updatedAt": "2026-06-18T09:00:40.688Z"
     },
     {
       "entryId": "team_signup_2",
@@ -68,7 +68,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-18T07:45:10.138Z"
+      "updatedAt": "2026-06-18T09:00:40.688Z"
     }
   ],
   "kpis": {
@@ -92,8 +92,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "接口艺术家: 优化 Token 消耗策略",
-      "createdAt": "2026-06-18T07:40:25.420Z",
+      "summary": "接口艺术家: 提交通过所有测试用例 ✓",
+      "createdAt": "2026-06-18T08:59:38.939Z",
       "displayMode": "bubble"
     },
     {
@@ -102,8 +102,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "REST 大师: 正在进行代码实现",
-      "createdAt": "2026-06-18T07:39:52.509Z",
+      "summary": "REST 大师: 提交通过所有测试用例 ✓",
+      "createdAt": "2026-06-18T08:50:55.639Z",
       "displayMode": "bubble"
     },
     {
@@ -112,8 +112,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "API 工匠: 已完成需求分析阶段",
-      "createdAt": "2026-06-18T07:39:51.130Z",
+      "summary": "API 工匠: 正在进行代码实现",
+      "createdAt": "2026-06-18T08:59:03.883Z",
       "displayMode": "bubble"
     }
   ],
@@ -125,7 +125,7 @@
       "severity": "low",
       "summary": "接口艺术家: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-18T07:45:10.138Z"
+      "createdAt": "2026-06-18T09:00:40.688Z"
     },
     {
       "itemId": "risk-mock-team_signup_1",
@@ -134,7 +134,7 @@
       "severity": "low",
       "summary": "REST 大师: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-18T07:45:10.138Z"
+      "createdAt": "2026-06-18T09:00:40.688Z"
     }
   ]
 }

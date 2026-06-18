@@ -23,8 +23,7 @@ const SNAPSHOT_DIR = path.join(process.cwd(), "public", "assets", "snapshots");
  *   3. 写入 public/assets/snapshots/<raceId>.json
  *   4. 返回生成的快照对象
  */
-export async function generateRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
-  // 1. 查询赛事全量数据
+export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
   const race = await prisma.race.findUnique({
     where: { id: raceId },
     include: {
@@ -57,7 +56,6 @@ export async function generateRaceSnapshot(raceId: string): Promise<RaceSnapshot
     throw new Error(`赛事 ${raceId} 不存在`);
   }
 
-  // 2. 构造 AryRaceData
   const raceData: AryRaceData = {
     id: race.id,
     title: race.title,
@@ -104,7 +102,6 @@ export async function generateRaceSnapshot(raceId: string): Promise<RaceSnapshot
     })),
   };
 
-  // 3. 通过 Adapter 映射
   const provider = new AryDerivedDataProvider(raceData);
   const now = new Date();
 
@@ -117,15 +114,13 @@ export async function generateRaceSnapshot(raceId: string): Promise<RaceSnapshot
 
   const competition = mapToCompetition(raceData, now);
 
-  // 4. 修正 KPIs：在线数 = 总数 - stale 数
   const staleCount = entries.filter((e) => e.status === "stale").length;
   kpis.onlineRiders = entries.length - staleCount;
   kpis.activeRiders = entries.filter((e) => e.status !== "stale" && e.status !== "idle").length;
 
-  // 5. 组装快照
   const trackConfig = parseRaceTrackConfigJson(race.trackConfigJson);
 
-  const snapshot: RaceSnapshot = {
+  return {
     generatedAt: now.toISOString(),
     raceId,
     trackId: normalizeTrackId(race.trackId),
@@ -136,8 +131,11 @@ export async function generateRaceSnapshot(raceId: string): Promise<RaceSnapshot
     messages,
     attentionItems,
   };
+}
 
-  // 5. 写入文件
+export async function generateRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
+  const snapshot = await buildRaceSnapshot(raceId);
+
   ensureSnapshotDir();
   const filePath = path.join(SNAPSHOT_DIR, `${raceId}.json`);
   fs.writeFileSync(filePath, JSON.stringify(snapshot, null, 2), "utf-8");

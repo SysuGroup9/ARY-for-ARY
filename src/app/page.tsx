@@ -9,6 +9,7 @@ import {
   replyFeedbackAction,
   sendFeedbackAction,
   submitEntryAction,
+  submitFinalEntryAction,
   updateDisplayOptionsAction,
   updateOrganizerCommentAction,
   updateRaceAction,
@@ -23,6 +24,7 @@ import {
   RunnerApiPanel,
   aryStyles,
 } from "@/app/_components/ary-shared";
+import FinalSubmissionFormClient from "@/app/_components/final-submission-form-client";
 import SubmissionFormClient from "@/app/_components/submission-form-client";
 import { RiderCodeVisibilityCheckbox } from "@/app/_components/rider-code-visibility-checkbox";
 import { loadDatabaseUser } from "@/lib/auth";
@@ -39,7 +41,7 @@ import { getTeamForCaptain } from "@/lib/services/teams";
 import { getRoleCapabilities } from "@/lib/viewer-access";
 import JumbotronInline from "@/app/JumbotronInline";
 import JumbotronBanner from "@/app/JumbotronBanner";
-import { loadRaceSnapshot } from "@/lib/services/race-snapshot";
+import { buildRaceSnapshot } from "@/lib/services/race-snapshot";
 import { getEffectiveTrackProfileFromSnapshot } from "@/lib/jumbotron/track-config";
 
 type RiderTeamMap = Map<string, Awaited<ReturnType<typeof getTeamForCaptain>>>;
@@ -54,13 +56,15 @@ export default async function HomePage() {
   const { canManage, canRide } = getRoleCapabilities(sessionUser?.role ?? null);
 
   // 加载各赛事的 Jumbotron 快照（如果已生成）
-  const jumbotronMap = new Map(
-    races.map((race) => {
-      const snapshot = loadRaceSnapshot(race.id);
-      const trackProfile = snapshot ? getEffectiveTrackProfileFromSnapshot(snapshot) : null;
+  const jumbotronEntries = await Promise.all(
+    races.map(async (race) => {
+      const snapshot = await buildRaceSnapshot(race.id);
+      const trackProfile = getEffectiveTrackProfileFromSnapshot(snapshot);
       return [race.id, { snapshot, trackProfile }] as const;
     }),
   );
+
+  const jumbotronMap = new Map(jumbotronEntries);
 
   const riderTeams = canRide
     ? await Promise.all(
@@ -113,11 +117,11 @@ export default async function HomePage() {
               </div>
             ) : (
               <div className="stack">
-                <strong>报名、提交代码、管理赛事都需要先登录。</strong>
-                <p className="muted">
+                <strong style={{ fontSize: "1.1rem" }}>报名、提交代码、管理赛事都需要先登录。</strong>
+                <p className="muted" style={{ fontSize: "1rem", lineHeight: 1.8 }}>
                   当前首页只负责公开展示；如果你要作为 Organizer 或 Rider 操作比赛，请直接进入登录页。
                 </p>
-                <a className="button" href="/login">
+                <a className="button button-cta-large" href="/login">
                   立即前往登录
                 </a>
               </div>
@@ -190,12 +194,23 @@ export default async function HomePage() {
                       )}
                     </Panel>
 
-                    <Panel
-                      title="提交代码与 Riding Record"
-                      eyebrow="Submission"
-                    >
-                      <SubmissionFormClient action={submitEntryAction} raceId={race.id} />
-                    </Panel>
+                    {race.phase === "active" || race.phase === "frozen" ? (
+                      <Panel title="比赛中提交代码" eyebrow="Submission">
+                        <SubmissionFormClient action={submitEntryAction} raceId={race.id} />
+                      </Panel>
+                    ) : race.phase === "finished" ? (
+                      <Panel title="赛后提交代码与 Riding Record" eyebrow="Final Submission">
+                        <FinalSubmissionFormClient action={submitFinalEntryAction} raceId={race.id} />
+                      </Panel>
+                    ) : (
+                      <Panel title="提交通道说明" eyebrow="Submission">
+                        <div className="stack">
+                          <p className="muted">
+                            比赛开始后，选手在比赛中只提交代码；比赛结束后，再单独提交最终代码与 Riding Record 用于赛后 Harness 评测和展示。
+                          </p>
+                        </div>
+                      </Panel>
+                    )}
                   </section>
                 ) : null}
 

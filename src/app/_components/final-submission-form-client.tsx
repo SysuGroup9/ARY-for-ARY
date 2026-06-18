@@ -9,11 +9,16 @@ interface Props {
 
 const defaultCode =
   "export function solve(input: number[]) {\n  return [...input].sort((a, b) => a - b);\n}";
+const defaultRecord =
+  "先澄清输入边界，再回顾关键决策，最后总结验证结果与遗留问题。";
 
-export default function SubmissionFormClient({ action, raceId }: Props) {
+export default function FinalSubmissionFormClient({ action, raceId }: Props) {
   const [codeLabel, setCodeLabel] = useState("solution.ts");
   const [codeContent, setCodeContent] = useState(defaultCode);
+  const [recordLabel, setRecordLabel] = useState("riding-record.txt");
+  const [ridingRecord, setRidingRecord] = useState(defaultRecord);
   const codeInputRef = useRef<HTMLInputElement>(null);
+  const recordInputRef = useRef<HTMLInputElement>(null);
 
   async function loadTextFile(
     event: ChangeEvent<HTMLInputElement>,
@@ -32,8 +37,8 @@ export default function SubmissionFormClient({ action, raceId }: Props) {
       <input name="raceId" type="hidden" value={raceId} />
       <div className="full local-picker-grid">
         <div className="picker-card">
-          <strong>本地代码文件</strong>
-          <p className="muted">比赛中的主动提交只提交代码；Rider 赛后 Riding Record 不走这里。</p>
+          <strong>赛后代码文件</strong>
+          <p className="muted">赛后提交需要重新附带最终代码版本，供 Harness 和赛后展示使用。</p>
           <input
             ref={codeInputRef}
             accept=".js,.jsx,.ts,.tsx,.mjs,.cjs"
@@ -43,9 +48,26 @@ export default function SubmissionFormClient({ action, raceId }: Props) {
           />
           <div className="button-row-inline">
             <button type="button" className="button-secondary" onClick={() => codeInputRef.current?.click()}>
-              选择本地代码
+              选择赛后代码
             </button>
             <span className="file-chip">{codeLabel}</span>
+          </div>
+        </div>
+        <div className="picker-card">
+          <strong>赛后 Riding Record</strong>
+          <p className="muted">赛后必须同时提交 Riding Record，Harness 评测和 Top Highlight 都依赖它。</p>
+          <input
+            ref={recordInputRef}
+            accept=".txt,.md,.json"
+            className="sr-only"
+            type="file"
+            onChange={(event) => loadTextFile(event, setRecordLabel, setRidingRecord)}
+          />
+          <div className="button-row-inline">
+            <button type="button" className="button-secondary" onClick={() => recordInputRef.current?.click()}>
+              选择 Riding Record
+            </button>
+            <span className="file-chip">{recordLabel}</span>
           </div>
         </div>
       </div>
@@ -53,6 +75,10 @@ export default function SubmissionFormClient({ action, raceId }: Props) {
       <label>
         代码文件名
         <input name="codeLabel" required value={codeLabel} onChange={(event) => setCodeLabel(event.target.value)} />
+      </label>
+      <label>
+        Record 文件名
+        <input name="recordLabel" required value={recordLabel} onChange={(event) => setRecordLabel(event.target.value)} />
       </label>
       <label>
         Agent 类型
@@ -73,7 +99,11 @@ export default function SubmissionFormClient({ action, raceId }: Props) {
         代码内容
         <textarea name="codeContent" required rows={8} value={codeContent} onChange={(event) => setCodeContent(event.target.value)} />
       </label>
-      <button type="submit">提交代码并进入待评测队列</button>
+      <label className="full">
+        Riding Record
+        <textarea name="ridingRecord" required rows={6} value={ridingRecord} onChange={(event) => setRidingRecord(event.target.value)} />
+      </label>
+      <button type="submit">提交赛后代码与 Riding Record</button>
     </form>
   );
 }

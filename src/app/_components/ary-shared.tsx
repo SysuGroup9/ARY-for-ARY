@@ -43,7 +43,7 @@ export function HeroSection({
         "当前版本已经从前端 localStorage PoC 重构为真实全栈应用。账号、赛事、队伍、提交、反馈和榜单落在 SQLite，但 Organizer 的私有评测代码仍然不进入 ARY。",
       items: [
         "Organizer 可创建赛事并配置赛后披露边界。",
-        "Rider 可真实注册、报名、提交代码和 Riding Record。",
+        "Rider 可真实注册、报名，并按阶段分别提交代码或赛后代码 + Riding Record。",
         "Runner 可通过 API 拉取任务并回传评分。",
         "Audience 可直接在首页查看公开赛事与榜单。",
       ],
@@ -53,7 +53,7 @@ export function HeroSection({
         "登录页现在只承担身份进入。Organizer 和 Rider 登录后进入完整工作区；公开观众浏览统一在首页完成，不再保留单独观众入口。",
       items: [
         "Organizer 登录后可进入赛事创建与管理区。",
-        "Rider 登录后可报名、提交代码和发送反馈。",
+        "Rider 登录后可报名、比赛中提交代码、赛后提交代码与 Riding Record，并发送反馈。",
         "公开赛事浏览统一收敛到首页。",
         "Runner API 仍独立使用 bearer token，不受网页登录门禁影响。",
       ],
@@ -370,6 +370,9 @@ export function PublicRaceSections({ race }: { race: RaceListItem }) {
               </p>
               <p>
                 如果你是参赛者，请在比赛开始前完成组队、环境准备和题目理解。
+              </p>
+              <p>
+                提交流程说明：比赛中主动提交只交代码；比赛结束后需要补交最终代码与 Riding Record，供 Harness 评测和赛后展示使用。
               </p>
             </div>
           </Panel>
@@ -784,6 +787,19 @@ export const aryStyles = `
   .button-row {
     grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
     align-items: center;
+  }
+
+  .button-cta-large {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
+    padding: 0 22px;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    box-shadow: 0 10px 24px rgba(195, 78, 54, 0.18);
   }
 
   .weights-grid {

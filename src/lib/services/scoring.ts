@@ -14,8 +14,8 @@ export interface ScoreWeights {
 export interface SubmissionArtifactInput {
   codeLabel: string;
   codeContent: string;
-  recordLabel: string;
-  ridingRecord: string;
+  recordLabel: null | string;
+  ridingRecord: null | string;
   tokenUsed: number;
   agentType: AgentType;
 }
@@ -24,6 +24,7 @@ export interface RunnerScoreInput {
   passRate: number;
   codeReviewScore: number;
   reasoningScore: number;
+  keywordScore: number;
   runnerComment: string;
   status: "success" | "failed";
 }
@@ -84,7 +85,7 @@ export function buildScoreResult(input: {
   runner: RunnerScoreInput;
 }): ScoreResult {
   const weights = normalizeWeights(input.weights);
-  const keywordScore = getKeywordScore(input.artifact.ridingRecord, input.keywords);
+  const keywordScore = input.runner.keywordScore;
   const tokenScore = getTokenScore(input.artifact.tokenUsed, input.tokenLimit);
   const taskScore =
     input.runner.passRate * weights.taskPassRate +
@@ -114,6 +115,18 @@ export function buildScoreResult(input: {
   };
 }
 
+export function computeHarnessScore(
+  reasoningScore: number,
+  keywordScore: number,
+  weightReasoning: number,
+  weightKeyword: number,
+): number {
+  const safeR = weightReasoning > 0 ? weightReasoning : 1;
+  const safeK = weightKeyword > 0 ? weightKeyword : 1;
+  const total = safeR + safeK;
+  return roundScore(reasoningScore * (safeR / total) + keywordScore * (safeK / total));
+}
+
 export function extractHighlight(record: string): string {
   const lines = record
     .split(/\r?\n/)
@@ -128,15 +141,6 @@ export function extractCodeSnippet(code: string): string {
     .split(/\r?\n/)
     .slice(0, 8)
     .join("\n");
-}
-
-function getKeywordScore(text: string, keywords: string[]): number {
-  if (keywords.length === 0) {
-    return 100;
-  }
-
-  const matched = keywords.filter((keyword) => text.includes(keyword)).length;
-  return (matched / keywords.length) * 100;
 }
 
 function getTokenScore(tokenUsed: number, tokenLimit: number): number {

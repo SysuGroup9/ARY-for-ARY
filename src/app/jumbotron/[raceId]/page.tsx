@@ -1,4 +1,4 @@
-import { loadRaceSnapshot } from "@/lib/services/race-snapshot";
+import { buildRaceSnapshot } from "@/lib/services/race-snapshot";
 import { getEffectiveTrackProfileFromSnapshot } from "@/lib/jumbotron/track-config";
 import JumbotronClient from "./JumbotronClient";
 
@@ -11,16 +11,7 @@ interface Props {
 export default async function JumbotronPage({ params }: Props) {
   const { raceId } = await params;
 
-  const snapshot = loadRaceSnapshot(raceId);
-  if (!snapshot) {
-    return (
-      <div style={emptyStyles}>
-        <h1>ARY Jumbotron</h1>
-        <p>赛事 {raceId} 尚未生成快照。</p>
-        <p>请 Organizer 先在首页点击「生成 Jumbotron 快照」。</p>
-      </div>
-    );
-  }
+  const snapshot = await buildRaceSnapshot(raceId);
 
   const trackProfile = getEffectiveTrackProfileFromSnapshot(snapshot);
   if (!trackProfile) {

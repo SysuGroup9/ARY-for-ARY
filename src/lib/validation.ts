@@ -108,7 +108,7 @@ export const registerTeamSchema = z.object({
   membersText: z.string().trim().min(1, "至少填写 1 名组员"),
 });
 
-export const createSubmissionSchema = z.object({
+const codeSubmissionBaseSchema = z.object({
   raceId: z.string().min(1),
   codeLabel: z
     .string()
@@ -120,21 +120,16 @@ export const createSubmissionSchema = z.object({
       "Only JavaScript / TypeScript submission files are supported in this PoC",
     ),
   codeContent: z.string().trim().min(1, "代码内容不能为空"),
-  recordLabel: z.string().trim().max(120).optional(),
-  ridingRecord: z.string().trim().optional(),
   tokenUsed: z.coerce.number().int().min(0),
   agentType: agentEnum,
-}).transform((data) => {
-  const ridingRecord = data.ridingRecord?.trim() || null;
-  const recordLabel = ridingRecord ? data.recordLabel?.trim() || null : null;
-
-  return {
-    ...data,
-    recordLabel,
-    ridingRecord,
-  };
 });
 
+export const createSubmissionSchema = codeSubmissionBaseSchema;
+
+export const createFinalSubmissionSchema = codeSubmissionBaseSchema.extend({
+  recordLabel: z.string().trim().min(1, "Riding Record 文件名不能为空").max(120),
+  ridingRecord: z.string().trim().min(1, "Riding Record 内容不能为空"),
+});
 export const feedbackSchema = z.object({
   raceId: z.string().min(1),
   content: z.string().trim().min(1, "反馈内容不能为空"),
@@ -154,8 +149,9 @@ export const runnerResultSchema = z.object({
   taskId: z.string().min(1),
   submissionId: z.string().min(1),
   status: z.enum(["succeeded", "failed"]),
-  score: z.coerce.number().min(0).default(0),
   progress: z.coerce.number().min(0).max(1).optional(),
+  passRate: z.coerce.number().min(0).max(100).optional(),
+  codeReviewScore: z.coerce.number().min(0).max(100).optional(),
   reasoningScore: z.coerce.number().min(0).max(100).optional(),
   keywordScore: z.coerce.number().min(0).max(100).optional(),
   runnerComment: z.string().trim().max(2000).default(""),
