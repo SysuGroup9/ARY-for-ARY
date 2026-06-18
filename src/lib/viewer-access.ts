@@ -42,3 +42,7 @@ export function getCreateRacePageAccess(role: UserRole | null): {
 export function getCreateRaceBackTarget(): "/" {
   return "/";
 }
+
+export function getConsoleEntryTarget(hasSession: boolean): "/console" | "/login" {
+  return hasSession ? "/console" : "/login";
+}

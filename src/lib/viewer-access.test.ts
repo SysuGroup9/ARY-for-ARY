@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  getConsoleEntryTarget,
   getCreateRaceBackTarget,
   getCreateRacePageAccess,
   getHomeRedirectTarget,
@@ -54,4 +55,9 @@ test("allows only organizers to access the dedicated create-race page", () => {
 
 test("uses the home page as the back target for create-race flow", () => {
   assert.equal(getCreateRaceBackTarget(), "/");
+});
+
+test("uses a dedicated console entry target based on session state", () => {
+  assert.equal(getConsoleEntryTarget(false), "/login");
+  assert.equal(getConsoleEntryTarget(true), "/console");
 });

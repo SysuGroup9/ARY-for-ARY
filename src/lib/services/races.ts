@@ -13,6 +13,12 @@ export async function listRaces() {
       teams: {
         include: {
           members: true,
+          captain: {
+            select: {
+              id: true,
+              username: true,
+            },
+          },
         },
       },
       leaderboardEntries: {

@@ -76,6 +76,47 @@
 - `docs/grs002/Jumbotron子系统定义.md`
 - `docs/grs002/Jumbotron-PRD.md`
 
+## GRS003 Public IA 当前进度
+
+- 第 1 片区 `Public Information Architecture` 已启动并进入可运行骨架阶段。
+- 首页已经开始从单页混合仪表盘收口为 `Race Gallery` 入口层。
+- 公开端路由骨架已落地：
+  - `/`
+  - `/races/[raceSlug]`
+  - `/races/[raceSlug]/live`
+  - `/races/[raceSlug]/works`
+  - `/races/[raceSlug]/results`
+  - `/races/[raceSlug]/review`
+  - `/works/[workSlug]`
+  - `/riders/[riderSlug]`
+  - `/cooperation`
+- 顶层 `Public Header` 已对齐为：
+  - `Races`
+  - `Works`
+  - `Riders`
+  - `Cooperation`
+  - `Login / Console Entry`
+- `Console Entry` 已从公开首页主内容中剥离，并使用独立 `/console` 入口页承接登录用户后续工作台入口。
+- `/races` 已从首页中拆成独立的 `All Races` 列表页，而不是继续复用首页完整内容。
+- `/races` 已补入按阶段分组的公开赛事列表（进行中 / 封榜中、报名中 / 准备中、已结束赛事）。
+- `Race Page` 已补入 `Overview / Public Entry / Riders / Works-Results-Review` 的最小公开分区。
+- `Race Page` 已进一步补入 `Rules / Schedule / Next Step` 分区。
+- `Results` 已补入 `Award Leaderboard / Winning Works / Review Entry` 分区。
+- `Results` 已补入 `Riding Skill Highlights` 分区。
+- `Works` 已补入最小排序语义，并展示作者和作品卡片的公开信息。
+- `/works` 已补入 `Race Context / Filter / Sort / Work Cards` 的最小页面分区。
+- `/works` 已补入 `Featured Works` 分区，并显示作者、所属赛事和评审结果摘要。
+- `Rider Profile` 已补入代表赛事、代表作品和公开能力概览。
+- `/riders` 已补入更明确的公开骑手资产列表，展示代表赛事、代表作品和公开作品数量。
+- 首页已补入 `Past Races` 与 `报名 / 办赛 / 赞助 / 合作` CTA 分区。
+- 首页 `Hero / Featured Races` 已补入当前状态、赛事时间、参赛人数、作品数量和主 CTA。
+- 首页已去掉独立 `JumbotronBanner` 主视觉，当前首屏主结构已收口为 `Public Header + Hero / Featured Races`。
+- `Review` 已补入 `Review Summary / Featured Cases / Award Rationale / Judge Comments / Next Race Suggestion` 分区。
+- `Rider Profile` 已补入 `Agent Riding Skill` 摘要，以及 `Race Records / Judge Comments / Evidence` 分区。
+- `Race Page` 已补入按赛事状态变化的主 CTA（如报名中显示 `立即报名`）。
+- `Works` 已补入最小筛选/排序语义提示（当前按分数降序、仅显示公开作品）。
+- 当前这些页面仍主要复用现有 read model / highlight / leaderboard 数据，属于“公开端结构先到位，数据语义后续继续收口”的阶段。
+
 ## 下一步默认检查项
 
 后续 Agent 在做 Jumbotron 任务收尾时，默认复核：
