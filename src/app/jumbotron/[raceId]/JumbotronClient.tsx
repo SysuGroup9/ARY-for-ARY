@@ -19,6 +19,10 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
   const [kpiDetail, setKpiDetail] = useState<string | null>(null);
   const [detailEntry, setDetailEntry] = useState<string | null>(null); // drill-down 面板
   const [systemTime, setSystemTime] = useState(snapshot.competition.systemTime);
+  const isRunningPhase =
+    snapshot.competition.currentPhase === "active" ||
+    snapshot.competition.currentPhase === "frozen";
+  const showClock = isRunningPhase;
 
   // -- s-axis 动画状态 --
   const [displayS, setDisplayS] = useState<Record<string, number>>({});
@@ -100,16 +104,24 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
 
   // timer
   useEffect(() => {
-    if (snapshot.competition.liveStatus !== "live") return;
-    const i = setInterval(() => setElapsed((t) => t + 1), 1000);
-    return () => clearInterval(i);
-  }, [snapshot.competition.liveStatus]);
+    setElapsed(snapshot.competition.elapsedTime);
+  }, [snapshot.competition.elapsedTime, snapshot.competition.currentPhase]);
 
   useEffect(() => {
-    if (snapshot.competition.liveStatus !== "live") return;
+    setSystemTime(snapshot.competition.systemTime);
+  }, [snapshot.competition.systemTime, snapshot.competition.currentPhase]);
+
+  useEffect(() => {
+    if (!isRunningPhase) return;
+    const i = setInterval(() => setElapsed((t) => t + 1), 1000);
+    return () => clearInterval(i);
+  }, [isRunningPhase]);
+
+  useEffect(() => {
+    if (!isRunningPhase) return;
     const i = setInterval(() => setSystemTime(new Date().toISOString()), 1000);
     return () => clearInterval(i);
-  }, [snapshot.competition.liveStatus]);
+  }, [isRunningPhase]);
 
   const { competition, entries, kpis, messages, attentionItems } = snapshot;
   const path = useMemo(
@@ -156,7 +168,7 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
           <span className="jt-hdr__live">{competition.liveStatus === "live" ? "● LIVE" : competition.liveStatus === "finished" ? "FINISHED" : "即将开始"}</span>
         </div>
         <div className="jt-hdr__right">
-          <span>⏱ {formatTime(elapsed)}</span>
+          {showClock ? <span>⏱ {formatTime(elapsed)}</span> : null}
           <span className="jt-hdr__online">在线 {kpis.onlineRiders}/{entries.length}</span>
         </div>
       </header>
@@ -353,7 +365,8 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
       {/* ====== Footer ====== */}
       <footer className="jt-ft">
         <span>{competition.theme}</span><span>|</span><span>{competition.organizer}</span><span>|</span>
-        <span>{competition.nextPhase}</span><span>|</span><span>{new Date(systemTime).toLocaleTimeString()}</span>
+        <span>{competition.nextPhase}</span>
+        {showClock ? <><span>|</span><span>{new Date(systemTime).toLocaleTimeString()}</span></> : null}
         {debug && <span style={{color:"#c34e36",marginLeft:12}}>DEBUG</span>}
       </footer>
 

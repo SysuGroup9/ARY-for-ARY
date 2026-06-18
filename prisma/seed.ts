@@ -117,10 +117,10 @@ async function main() {
       maxTeamSize: 5,
       organizerComment: "",
       organizerId: organizer.id,
-      raceEnd: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000),      // 2天后结束
-      raceStart: new Date(now.getTime() - 3 * 60 * 60 * 1000),         // 3小时前开始
-      signupEnd: new Date(now.getTime() - 26 * 60 * 60 * 1000),        // 26小时前报名截止
-      signupStart: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),  // 3天前报名开始
+      raceEnd: new Date("2026-06-27T20:00:00+08:00"),
+      raceStart: new Date("2026-06-18T09:00:00+08:00"),
+      signupEnd: new Date("2026-06-18T08:00:00+08:00"),
+      signupStart: new Date("2026-06-10T09:00:00+08:00"),
       submissionIntervalHours: 1,
       summary: "验证 Agent 在算法问题上的实现、推理与成本控制能力。8 支队伍在赛道上激烈竞速！",
       taskDescription: "实现一个稳定排序模块，支持整数数组升序输出，并在边界输入下保持正确性。",
@@ -236,10 +236,10 @@ async function main() {
       maxTeamSize: 4,
       organizerComment: "",
       organizerId: organizer.id,
-      raceEnd: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),      // 5天后结束
-      raceStart: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000),    // 1天后开始
-      signupEnd: new Date(now.getTime() + 20 * 60 * 60 * 1000),        // 20小时后报名截止
-      signupStart: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),  // 1天前报名开始
+      raceEnd: new Date("2026-06-30T18:00:00+08:00"),
+      raceStart: new Date("2026-06-29T09:00:00+08:00"),
+      signupEnd: new Date("2026-06-28T23:00:00+08:00"),
+      signupStart: new Date("2026-06-16T09:00:00+08:00"),
       submissionIntervalHours: 12,
       summary: "设计一套符合 RESTful 规范的 Task Manager API，关注可扩展性和错误处理。",
       taskDescription: "设计并实现 Task Manager REST API，包含 CRUD 操作、状态流转和分页查询。",
@@ -294,10 +294,10 @@ async function main() {
       maxTeamSize: 5,
       organizerComment: "所有队伍都展示了出色的优化思路。第一名在缓存策略上尤其出色，值得所有人学习。",
       organizerId: organizer.id,
-      raceEnd: new Date(now.getTime() - 2 * 60 * 60 * 1000),           // 2小时前结束
-      raceStart: new Date(now.getTime() - 26 * 60 * 60 * 1000),        // 26小时前开始
-      signupEnd: new Date(now.getTime() - 28 * 60 * 60 * 1000),        // 28小时前报名截止
-      signupStart: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),  // 5天前报名开始
+      raceEnd: new Date("2026-06-17T18:00:00+08:00"),
+      raceStart: new Date("2026-06-16T09:00:00+08:00"),
+      signupEnd: new Date("2026-06-15T22:00:00+08:00"),
+      signupStart: new Date("2026-06-08T09:00:00+08:00"),
       submissionIntervalHours: 6,
       summary: "优化一个 React 电商首页的性能，目标是 FCP < 1.5s 且内存占用降低 30%。",
       taskDescription: "优化提供的电商首页代码，降低首屏加载时间、减少内存占用并提升渲染帧率。",

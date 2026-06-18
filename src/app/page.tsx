@@ -117,8 +117,8 @@ export default async function HomePage() {
               </div>
             ) : (
               <div className="stack">
-                <strong style={{ fontSize: "1.1rem" }}>报名、提交代码、管理赛事都需要先登录。</strong>
-                <p className="muted" style={{ fontSize: "1rem", lineHeight: 1.8 }}>
+                <strong style={{ fontSize: "1.24rem", lineHeight: 1.6 }}>报名、提交代码、管理赛事都需要先登录。</strong>
+                <p className="muted" style={{ fontSize: "1.05rem", lineHeight: 1.9 }}>
                   当前首页只负责公开展示；如果你要作为 Organizer 或 Rider 操作比赛，请直接进入登录页。
                 </p>
                 <a className="button button-cta-large" href="/login">
@@ -213,7 +213,7 @@ export default async function HomePage() {
                       <Panel title="提交通道说明" eyebrow="Submission">
                         <div className="stack">
                           <p className="muted">
-                            比赛开始后，选手在比赛中只提交代码；比赛结束后，再单独提交最终代码与 Riding Record 用于赛后 Harness 评测和展示。
+                            当前还未到比赛提交阶段；比赛开始后，选手就可以主动提交代码。比赛结束后，还需要再补交最终代码与 Riding Record 用于 Harness 评测和赛后展示。
                           </p>
                         </div>
                       </Panel>

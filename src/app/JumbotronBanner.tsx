@@ -17,21 +17,25 @@ interface Props {
 
 export default function JumbotronBanner({ items }: Props) {
   const [current, setCurrent] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   const next = useCallback(() => {
     setCurrent((c) => (c + 1) % items.length);
+    setIsPaused(true);
   }, [items.length]);
 
   const prev = useCallback(() => {
     setCurrent((c) => (c - 1 + items.length) % items.length);
+    setIsPaused(true);
   }, [items.length]);
 
-  // 自动轮播
   useEffect(() => {
-    if (items.length <= 1) return;
-    const timer = setInterval(next, 8000);
+    if (items.length <= 1 || isPaused) return;
+    const timer = setInterval(() => {
+      setCurrent((c) => (c + 1) % items.length);
+    }, 8000);
     return () => clearInterval(timer);
-  }, [items.length, next]);
+  }, [items.length, isPaused]);
 
   if (items.length === 0) return null;
 
@@ -47,7 +51,10 @@ export default function JumbotronBanner({ items }: Props) {
             <button
               key={it.raceId}
               className={`jt-banner-tab ${i === current ? "active" : ""}`}
-              onClick={() => setCurrent(i)}
+              onClick={() => {
+                setCurrent(i);
+                setIsPaused(true);
+              }}
             >
               {it.raceTitle}
             </button>
@@ -55,8 +62,11 @@ export default function JumbotronBanner({ items }: Props) {
         </div>
         <div className="jt-banner-controls">
           <button onClick={prev} title="上一个">◀</button>
+          <button onClick={() => setIsPaused((value) => !value)} title={isPaused ? "恢复自动轮播" : "暂停并锁定当前比赛"}>
+            {isPaused ? "▶ 自动" : "⏸ 暂停"}
+          </button>
           <button onClick={next} title="下一个">▶</button>
-          <span className="jt-banner-counter">{current + 1}/{items.length}</span>
+          <span className="jt-banner-counter">{isPaused ? "已锁定" : "自动轮播"} · {current + 1}/{items.length}</span>
           <a href={`/jumbotron/${item.raceId}`} target="_blank" style={{color:"#c34e36",fontSize:12,textDecoration:"none",marginLeft:8,fontWeight:600}}>🔲 全屏</a>
         </div>
       </div>

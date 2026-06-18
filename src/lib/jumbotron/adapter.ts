@@ -2,6 +2,7 @@
 // MVVP 阶段从 ARY 现有数据推导 + mock 补全缺失字段
 // 预留 DCRaceDataProvider 接口供未来 DC 真实数据接入
 
+import { getRacePhase, type RacePhase } from "@/lib/race-phase";
 import type {
   RacingEntrySnapshot,
   RidingMessageSnapshot,
@@ -104,7 +105,7 @@ export class AryDerivedDataProvider implements DCRaceDataProvider {
 export function mapToCompetition(race: AryRaceData, now: Date = new Date()): Competition {
   const phase = getRaceLivePhase(race, now);
   const liveStatus: Competition["liveStatus"] =
-    phase === "finished" ? "finished" : now >= race.raceStart ? "live" : "not_started";
+    phase === "finished" ? "finished" : phase === "active" || phase === "frozen" ? "live" : "not_started";
 
   return {
     competitionId: race.id,
@@ -115,8 +116,20 @@ export function mapToCompetition(race: AryRaceData, now: Date = new Date()): Com
     liveStatus,
     currentPhase: phase,
     currentRound: 1,
-    nextPhase: phase === "active" ? "封榜中" : phase === "registration" ? "比赛中" : "比赛结束",
-    elapsedTime: Math.max(0, Math.floor((now.getTime() - race.raceStart.getTime()) / 1000)),
+    nextPhase:
+      phase === "registration"
+        ? "比赛中"
+        : phase === "preparation"
+          ? "比赛中"
+          : phase === "active"
+            ? "封榜中"
+            : phase === "frozen"
+              ? "比赛结束"
+              : "已结束",
+    elapsedTime:
+      phase === "active" || phase === "frozen"
+        ? Math.max(0, Math.floor((now.getTime() - race.raceStart.getTime()) / 1000))
+        : 0,
     systemTime: now.toISOString(),
   };
 }
@@ -368,12 +381,16 @@ function deriveStatus(
   return "idle";
 }
 
-function getRaceLivePhase(
-  race: AryRaceData,
-  now: Date,
-): "registration" | "preparation" | "active" | "frozen" | "finished" {
-  if (now >= race.raceEnd) return "finished";
-  if (now >= race.raceStart) return "active";
-  if (now > race.signupEnd || now < race.signupStart) return "preparation";
-  return "registration";
+function getRaceLivePhase(race: AryRaceData, now: Date): RacePhase {
+  return getRacePhase(
+    {
+      signupStart: race.signupStart,
+      signupEnd: race.signupEnd,
+      raceStart: race.raceStart,
+      raceEnd: race.raceEnd,
+      enableFreeze: false,
+      freezeMinutesBeforeEnd: 0,
+    },
+    now,
+  );
 }

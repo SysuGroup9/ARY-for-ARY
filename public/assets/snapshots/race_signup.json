@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-18T09:00:40.688Z",
+  "generatedAt": "2026-06-18T14:51:06.124Z",
   "raceId": "race_signup",
   "trackId": "oval-track",
   "competition": {
@@ -13,7 +13,7 @@
     "currentRound": 1,
     "nextPhase": "比赛中",
     "elapsedTime": 0,
-    "systemTime": "2026-06-18T09:00:40.688Z"
+    "systemTime": "2026-06-18T14:51:06.124Z"
   },
   "entries": [
     {
@@ -32,7 +32,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-18T09:00:40.688Z"
+      "updatedAt": "2026-06-18T14:51:06.124Z"
     },
     {
       "entryId": "team_signup_1",
@@ -50,7 +50,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-18T09:00:40.688Z"
+      "updatedAt": "2026-06-18T14:51:06.124Z"
     },
     {
       "entryId": "team_signup_2",
@@ -68,7 +68,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-18T09:00:40.688Z"
+      "updatedAt": "2026-06-18T14:51:06.124Z"
     }
   ],
   "kpis": {
@@ -92,8 +92,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "接口艺术家: 提交通过所有测试用例 ✓",
-      "createdAt": "2026-06-18T08:59:38.939Z",
+      "summary": "接口艺术家: 已完成需求分析阶段",
+      "createdAt": "2026-06-18T14:49:05.090Z",
       "displayMode": "bubble"
     },
     {
@@ -103,7 +103,7 @@
       "type": "milestone",
       "severity": "info",
       "summary": "REST 大师: 提交通过所有测试用例 ✓",
-      "createdAt": "2026-06-18T08:50:55.639Z",
+      "createdAt": "2026-06-18T14:41:13.108Z",
       "displayMode": "bubble"
     },
     {
@@ -112,8 +112,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "API 工匠: 正在进行代码实现",
-      "createdAt": "2026-06-18T08:59:03.883Z",
+      "summary": "API 工匠: 开始测试验证",
+      "createdAt": "2026-06-18T14:48:47.286Z",
       "displayMode": "bubble"
     }
   ],
@@ -125,7 +125,7 @@
       "severity": "low",
       "summary": "接口艺术家: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-18T09:00:40.688Z"
+      "createdAt": "2026-06-18T14:51:06.124Z"
     },
     {
       "itemId": "risk-mock-team_signup_1",
@@ -134,7 +134,7 @@
       "severity": "low",
       "summary": "REST 大师: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-18T09:00:40.688Z"
+      "createdAt": "2026-06-18T14:51:06.124Z"
     }
   ]
 }

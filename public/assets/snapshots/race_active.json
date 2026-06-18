@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-18T09:00:40.681Z",
+  "generatedAt": "2026-06-18T14:51:06.114Z",
   "raceId": "race_active",
   "trackId": "oval-track",
   "competition": {
@@ -13,7 +13,7 @@
     "currentRound": 1,
     "nextPhase": "封榜中",
     "elapsedTime": 10800,
-    "systemTime": "2026-06-18T09:00:40.681Z"
+    "systemTime": "2026-06-18T14:51:06.114Z"
   },
   "entries": [
     {
@@ -24,8 +24,8 @@
       "rank": 1,
       "score": 92.5,
       "overallProgress": 1,
-      "roundProgress": 0,
-      "phaseProgress": 0,
+      "roundProgress": 1,
+      "phaseProgress": 1,
       "currentPhase": "PRD",
       "costTokens": 1320,
       "submissionCount": 0,
@@ -33,7 +33,7 @@
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "idle",
+      "status": "sprinting",
       "lastMessage": {
         "messageId": "msg-team_active_0",
         "entryId": "team_active_0",
@@ -41,10 +41,10 @@
         "type": "progress_update",
         "severity": "info",
         "summary": "已在题面补充了空数组和重复元素的处理要求。",
-        "createdAt": "2026-06-18T09:00:40.338Z",
+        "createdAt": "2026-06-18T14:51:05.737Z",
         "displayMode": "ticker"
       },
-      "updatedAt": "2026-06-18T09:00:40.321Z"
+      "updatedAt": "2026-06-18T14:51:05.724Z"
     },
     {
       "entryId": "team_active_1",
@@ -54,8 +54,8 @@
       "rank": 2,
       "score": 87.3,
       "overallProgress": 0.9437837837837838,
-      "roundProgress": 0,
-      "phaseProgress": 0,
+      "roundProgress": 0.9437837837837838,
+      "phaseProgress": 0.9437837837837838,
       "currentPhase": "PRD",
       "costTokens": 2150,
       "submissionCount": 0,
@@ -63,7 +63,7 @@
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "idle",
+      "status": "running",
       "lastMessage": {
         "messageId": "msg-team_active_1",
         "entryId": "team_active_1",
@@ -71,10 +71,10 @@
         "type": "progress_update",
         "severity": "info",
         "summary": "[奶茶码农] 题目第3段描述有歧义，请补充边界条件。",
-        "createdAt": "2026-06-18T09:00:40.366Z",
+        "createdAt": "2026-06-18T14:51:05.765Z",
         "displayMode": "ticker"
       },
-      "updatedAt": "2026-06-18T09:00:40.356Z"
+      "updatedAt": "2026-06-18T14:51:05.755Z"
     },
     {
       "entryId": "team_active_2",
@@ -84,8 +84,8 @@
       "rank": 3,
       "score": 81,
       "overallProgress": 0.8756756756756757,
-      "roundProgress": 0,
-      "phaseProgress": 0,
+      "roundProgress": 0.8756756756756757,
+      "phaseProgress": 0.8756756756756757,
       "currentPhase": "PRD",
       "costTokens": 1800,
       "submissionCount": 0,
@@ -93,7 +93,7 @@
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "idle",
+      "status": "running",
       "lastMessage": {
         "messageId": "msg-team_active_2",
         "entryId": "team_active_2",
@@ -101,10 +101,10 @@
         "type": "progress_update",
         "severity": "info",
         "summary": "[Bug 粉碎机] 题目第4段描述有歧义，请补充边界条件。",
-        "createdAt": "2026-06-18T09:00:40.394Z",
+        "createdAt": "2026-06-18T14:51:05.793Z",
         "displayMode": "ticker"
       },
-      "updatedAt": "2026-06-18T09:00:40.384Z"
+      "updatedAt": "2026-06-18T14:51:05.784Z"
     },
     {
       "entryId": "team_active_3",
@@ -114,8 +114,8 @@
       "rank": 4,
       "score": 75.8,
       "overallProgress": 0.8194594594594594,
-      "roundProgress": 0,
-      "phaseProgress": 0,
+      "roundProgress": 0.8194594594594594,
+      "phaseProgress": 0.8194594594594594,
       "currentPhase": "PRD",
       "costTokens": 2900,
       "submissionCount": 0,
@@ -123,8 +123,8 @@
       "riskLevel": "medium",
       "obstacleCount": 0,
       "violationCount": 1,
-      "status": "idle",
-      "updatedAt": "2026-06-18T09:00:40.413Z"
+      "status": "running",
+      "updatedAt": "2026-06-18T14:51:05.808Z"
     },
     {
       "entryId": "team_active_4",
@@ -134,8 +134,8 @@
       "rank": 5,
       "score": 68.2,
       "overallProgress": 0.7372972972972973,
-      "roundProgress": 0,
-      "phaseProgress": 0,
+      "roundProgress": 0.7372972972972973,
+      "phaseProgress": 0.7372972972972973,
       "currentPhase": "PRD",
       "costTokens": 3500,
       "submissionCount": 0,
@@ -143,8 +143,8 @@
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "idle",
-      "updatedAt": "2026-06-18T09:00:40.433Z"
+      "status": "running",
+      "updatedAt": "2026-06-18T14:51:05.825Z"
     },
     {
       "entryId": "team_active_5",
@@ -154,8 +154,8 @@
       "rank": 6,
       "score": 60.4,
       "overallProgress": 0.652972972972973,
-      "roundProgress": 0,
-      "phaseProgress": 0,
+      "roundProgress": 0.652972972972973,
+      "phaseProgress": 0.652972972972973,
       "currentPhase": "PRD",
       "costTokens": 4200,
       "submissionCount": 0,
@@ -163,8 +163,8 @@
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "idle",
-      "updatedAt": "2026-06-18T09:00:40.452Z"
+      "status": "running",
+      "updatedAt": "2026-06-18T14:51:05.838Z"
     },
     {
       "entryId": "team_active_6",
@@ -174,8 +174,8 @@
       "rank": 7,
       "score": 52.1,
       "overallProgress": 0.5632432432432433,
-      "roundProgress": 0,
-      "phaseProgress": 0,
+      "roundProgress": 0.5632432432432433,
+      "phaseProgress": 0.5632432432432433,
       "currentPhase": "PRD",
       "costTokens": 1680,
       "submissionCount": 0,
@@ -183,8 +183,8 @@
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "idle",
-      "updatedAt": "2026-06-18T09:00:40.471Z"
+      "status": "running",
+      "updatedAt": "2026-06-18T14:51:05.853Z"
     },
     {
       "entryId": "team_active_7",
@@ -194,8 +194,8 @@
       "rank": 8,
       "score": 38.9,
       "overallProgress": 0.4205405405405405,
-      "roundProgress": 0,
-      "phaseProgress": 0,
+      "roundProgress": 0.4205405405405405,
+      "phaseProgress": 0.4205405405405405,
       "currentPhase": "PRD",
       "costTokens": 5100,
       "submissionCount": 0,
@@ -203,14 +203,14 @@
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "idle",
-      "updatedAt": "2026-06-18T09:00:40.488Z"
+      "status": "running",
+      "updatedAt": "2026-06-18T14:51:05.871Z"
     }
   ],
   "kpis": {
     "completionRate": 100,
     "totalTokens": 22650,
-    "activeRiders": 0,
+    "activeRiders": 8,
     "onlineRiders": 8,
     "activeCockpits": 8,
     "codexTokens": 3480,
@@ -223,43 +223,43 @@
   },
   "messages": [
     {
-      "messageId": "msg-team_active_0-1781773240682-0.8946971524063964",
+      "messageId": "msg-team_active_0-1781794266115-0.45094407191341224",
       "entryId": "team_active_0",
       "source": "feedback",
       "type": "progress_update",
       "severity": "info",
       "summary": "[极速排序队] 题目第2段描述有歧义，请补充边界条件。",
-      "createdAt": "2026-06-18T09:00:40.333Z",
+      "createdAt": "2026-06-18T14:51:05.733Z",
       "displayMode": "ticker"
     },
     {
-      "messageId": "msg-team_active_0-1781773240682-0.8506342208259101",
+      "messageId": "msg-team_active_0-1781794266115-0.6273031828833999",
       "entryId": "team_active_0",
       "source": "feedback",
       "type": "progress_update",
       "severity": "info",
       "summary": "已在题面补充了空数组和重复元素的处理要求。",
-      "createdAt": "2026-06-18T09:00:40.338Z",
+      "createdAt": "2026-06-18T14:51:05.737Z",
       "displayMode": "ticker"
     },
     {
-      "messageId": "msg-team_active_1-1781773240682-0.7214788815385603",
+      "messageId": "msg-team_active_1-1781794266115-0.6359324982257978",
       "entryId": "team_active_1",
       "source": "feedback",
       "type": "progress_update",
       "severity": "info",
       "summary": "[奶茶码农] 题目第3段描述有歧义，请补充边界条件。",
-      "createdAt": "2026-06-18T09:00:40.366Z",
+      "createdAt": "2026-06-18T14:51:05.765Z",
       "displayMode": "ticker"
     },
     {
-      "messageId": "msg-team_active_2-1781773240682-0.9123485726274829",
+      "messageId": "msg-team_active_2-1781794266115-0.6528536851908648",
       "entryId": "team_active_2",
       "source": "feedback",
       "type": "progress_update",
       "severity": "info",
       "summary": "[Bug 粉碎机] 题目第4段描述有歧义，请补充边界条件。",
-      "createdAt": "2026-06-18T09:00:40.394Z",
+      "createdAt": "2026-06-18T14:51:05.793Z",
       "displayMode": "ticker"
     },
     {
@@ -268,8 +268,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "极速排序队: 已完成需求分析阶段",
-      "createdAt": "2026-06-18T08:51:31.919Z",
+      "summary": "极速排序队: 提交通过所有测试用例 ✓",
+      "createdAt": "2026-06-18T14:41:37.754Z",
       "displayMode": "bubble"
     },
     {
@@ -278,8 +278,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "奶茶码农: 正在进行代码实现",
-      "createdAt": "2026-06-18T08:51:15.124Z",
+      "summary": "奶茶码农: 开始测试验证",
+      "createdAt": "2026-06-18T14:43:34.563Z",
       "displayMode": "bubble"
     },
     {
@@ -288,8 +288,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "Bug 粉碎机: 开始测试验证",
-      "createdAt": "2026-06-18T08:52:25.641Z",
+      "summary": "Bug 粉碎机: 已完成需求分析阶段",
+      "createdAt": "2026-06-18T14:42:44.961Z",
       "displayMode": "bubble"
     }
   ],
@@ -301,7 +301,7 @@
       "severity": "medium",
       "summary": "深夜提交组: 检测到诱导词，扣 10 分",
       "status": "active",
-      "createdAt": "2026-06-18T09:00:40.682Z"
+      "createdAt": "2026-06-18T14:51:06.115Z"
     },
     {
       "itemId": "risk-mock-team_active_0",
@@ -310,7 +310,7 @@
       "severity": "low",
       "summary": "极速排序队: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-18T09:00:40.682Z"
+      "createdAt": "2026-06-18T14:51:06.115Z"
     },
     {
       "itemId": "risk-mock-team_active_1",
@@ -319,7 +319,7 @@
       "severity": "low",
       "summary": "奶茶码农: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-18T09:00:40.682Z"
+      "createdAt": "2026-06-18T14:51:06.115Z"
     }
   ]
 }

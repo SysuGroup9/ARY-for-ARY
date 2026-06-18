@@ -372,7 +372,7 @@ export function PublicRaceSections({ race }: { race: RaceListItem }) {
                 如果你是参赛者，请在比赛开始前完成组队、环境准备和题目理解。
               </p>
               <p>
-                提交流程说明：比赛中主动提交只交代码；比赛结束后需要补交最终代码与 Riding Record，供 Harness 评测和赛后展示使用。
+                提交流程说明：比赛开始后即可主动提交代码；比赛结束后还需要补交最终代码与 Riding Record，供 Harness 评测和赛后展示使用。
               </p>
             </div>
           </Panel>
@@ -793,13 +793,13 @@ export const aryStyles = `
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 56px;
-    padding: 0 22px;
-    border-radius: 14px;
-    font-size: 1rem;
-    font-weight: 800;
+    min-height: 68px;
+    padding: 0 30px;
+    border-radius: 18px;
+    font-size: 1.12rem;
+    font-weight: 900;
     letter-spacing: 0.01em;
-    box-shadow: 0 10px 24px rgba(195, 78, 54, 0.18);
+    box-shadow: 0 14px 30px rgba(195, 78, 54, 0.24);
   }
 
   .weights-grid {

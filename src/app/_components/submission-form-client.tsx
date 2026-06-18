@@ -33,7 +33,7 @@ export default function SubmissionFormClient({ action, raceId }: Props) {
       <div className="full local-picker-grid">
         <div className="picker-card">
           <strong>本地代码文件</strong>
-          <p className="muted">比赛中的主动提交只提交代码；Rider 赛后 Riding Record 不走这里。</p>
+          <p className="muted">现在就可以主动提交代码；Riding Record 只在比赛结束后的最终提交里单独补交。</p>
           <input
             ref={codeInputRef}
             accept=".js,.jsx,.ts,.tsx,.mjs,.cjs"
