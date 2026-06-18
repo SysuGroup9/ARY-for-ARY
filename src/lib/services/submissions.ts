@@ -4,16 +4,20 @@ import {
 } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { getRacePhase } from "@/lib/race-phase";
-import { enqueueSubmissionTestTask } from "@/lib/services/runner";
-import { createSubmissionSchema } from "@/lib/validation";
+import {
+  enqueueHarnessEvalTaskForArtifact,
+  enqueueSubmissionTestTask,
+} from "@/lib/services/runner";
+import {
+  createFinalSubmissionSchema,
+  createSubmissionSchema,
+} from "@/lib/validation";
 
 export async function createSubmission(riderId: string, formData: FormData) {
   const parsed = createSubmissionSchema.parse({
     raceId: formData.get("raceId"),
     codeLabel: formData.get("codeLabel"),
     codeContent: formData.get("codeContent"),
-    recordLabel: formData.get("recordLabel"),
-    ridingRecord: formData.get("ridingRecord"),
     tokenUsed: formData.get("tokenUsed"),
     agentType: formData.get("agentType"),
   });
@@ -69,6 +73,83 @@ export async function createSubmission(riderId: string, formData: FormData) {
         codeContent: parsed.codeContent,
         codeLabel: parsed.codeLabel,
         raceId: parsed.raceId,
+        recordLabel: null,
+        ridingRecord: null,
+        status: SubmissionStatus.QUEUED,
+        teamId: team.id,
+        tokenUsed: parsed.tokenUsed,
+      },
+    });
+
+    const artifact = await tx.submissionArtifact.create({
+      data: {
+        agentType: parsed.agentType,
+        codeContent: parsed.codeContent,
+        codeLabel: parsed.codeLabel,
+        raceId: parsed.raceId,
+        recordLabel: null,
+        ridingRecord: null,
+        submissionId: submission.id,
+        teamId: team.id,
+        tokenUsed: parsed.tokenUsed,
+      },
+    });
+
+    await enqueueSubmissionTestTask({
+      artifactId: artifact.id,
+      raceId: parsed.raceId,
+      submissionId: submission.id,
+      teamId: team.id,
+      tx,
+    });
+
+    return submission;
+  });
+}
+
+export async function createFinalSubmission(riderId: string, formData: FormData) {
+  const parsed = createFinalSubmissionSchema.parse({
+    raceId: formData.get("raceId"),
+    codeLabel: formData.get("codeLabel"),
+    codeContent: formData.get("codeContent"),
+    recordLabel: formData.get("recordLabel"),
+    ridingRecord: formData.get("ridingRecord"),
+    tokenUsed: formData.get("tokenUsed"),
+    agentType: formData.get("agentType"),
+  });
+
+  const team = await prisma.team.findFirst({
+    where: {
+      captainId: riderId,
+      raceId: parsed.raceId,
+    },
+  });
+
+  if (!team) {
+    throw new Error("请先报名参赛");
+  }
+
+  const race = await prisma.race.findUnique({
+    where: {
+      id: parsed.raceId,
+    },
+  });
+
+  if (!race) {
+    throw new Error("赛事不存在");
+  }
+
+  if (getRacePhase(race) !== "finished") {
+    throw new Error("只有比赛结束后才能提交赛后代码与 Riding Record");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const submission = await tx.submission.create({
+      data: {
+        agentType: parsed.agentType,
+        codeContent: parsed.codeContent,
+        codeLabel: parsed.codeLabel,
+        raceId: parsed.raceId,
         recordLabel: parsed.recordLabel,
         ridingRecord: parsed.ridingRecord,
         status: SubmissionStatus.QUEUED,
@@ -91,12 +172,18 @@ export async function createSubmission(riderId: string, formData: FormData) {
       },
     });
 
-    await enqueueSubmissionTestTask({
-      artifactId: artifact.id,
+    await enqueueHarnessEvalTaskForArtifact(tx, {
+      id: artifact.id,
       raceId: parsed.raceId,
-      submissionId: submission.id,
       teamId: team.id,
-      tx,
+      submissionId: submission.id,
+      codeLabel: parsed.codeLabel,
+      codeContent: parsed.codeContent,
+      recordLabel: parsed.recordLabel,
+      ridingRecord: parsed.ridingRecord,
+      tokenUsed: parsed.tokenUsed,
+      agentType: parsed.agentType,
+      createdAt: artifact.createdAt,
     });
 
     return submission;

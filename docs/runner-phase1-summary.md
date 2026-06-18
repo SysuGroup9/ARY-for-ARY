@@ -17,8 +17,8 @@
 
 这轮改动的核心目标是把当前项目里的 runner 流程，从“ARY 直接围绕 `Submission` 做评分”重构成“以独立任务为中心的 runner 主链路”，并且把分数计算边界改成：
 
-- 分数全部由 organizer 侧 runner 计算
-- ARY 只接收最终分数和结果摘要
+- organizer 侧 runner 回传包含评分分项的 JSON
+- ARY 根据创建比赛时配置的权重自行计算总分、分项投影与最终展示
 
 同时保留以下约束：
 
@@ -106,12 +106,14 @@
 
 当前落地的行为是：
 
-- `submitEntryAction` 创建提交后自动生成一条 `SUBMISSION_TEST` 任务
-- Organizer 点“发起进度评测”会按队伍最新 artifact 生成 `PROGRESS_EVAL`
-- Organizer 点“发起 Harness 评测”会按有 `Riding Record` 的队伍最新 artifact 生成 `HARNESS_EVAL`
+- 比赛中 `submitEntryAction` 只允许提交代码，并自动生成一条 `SUBMISSION_TEST` 任务
+- 比赛结束后 `submitFinalEntryAction` 要求同时提交最终代码与 `Riding Record`
+- 赛后提交会自动生成对应的 `HARNESS_EVAL` 任务，Organizer 仍可按需手动再次发起
+- Organizer 点“发起进度评测”会按队伍最新代码 artifact 生成 `PROGRESS_EVAL`
+- Organizer 点“发起 Harness 评测”会按有 `Riding Record` 的赛后 artifact 生成 `HARNESS_EVAL`
 - 同一队伍同一类型的未完成旧任务会被标记为 `STALE`
 - runner 从 `RunnerTask` 拉任务，不再直接从 `Submission` 拉
-- runner 回传结果时，只以最终分数为主，不再要求分项评分输入
+- runner 回传结果时提交评分分项 JSON，ARY 依据比赛权重计算总分
 
 ### 4.3 结果投影规则
 
@@ -132,8 +134,8 @@
 
 这里的重要变化是：
 
-- ARY 不再根据 `passRate / codeReviewScore / reasoningScore` 自己算总分
-- runner 直接回最终 `score`
+- ARY 会根据 `passRate / codeReviewScore / reasoningScore / keywordScore` 和比赛权重自行计算总分
+- runner 不再直接回最终 `score`
 
 ## 5. 已完成的接口改动
 
@@ -158,23 +160,28 @@
 
 ### 5.2 `result`
 
-[src/app/api/runner/tasks/result/route.ts](D:/Desktop/ARY-for-ARY/src/app/api/runner/tasks/result/route.ts) 已改为接收最终分数模式。
+[src/app/api/runner/tasks/result/route.ts](D:/Desktop/ARY-for-ARY/src/app/api/runner/tasks/result/route.ts) 已改为接收评分分项 JSON。
 
 当前接收：
 
 - `taskId`
 - `submissionId`
 - `status`
-- `score`
+- `progress`（进行中评测时可选）
+- `passRate`
+- `codeReviewScore`
+- `reasoningScore`
+- `keywordScore`
 - `runnerComment`
 - `resultHash`
 - `finishedAt`
 
-它不再接收：
+ARY 收到这些字段后，会结合比赛创建时配置的权重计算：
 
-- `passRate`
-- `codeReviewScore`
-- `reasoningScore`
+- `taskScore`
+- `dialogueScore`
+- `tokenScore`
+- `totalScore`
 
 ## 6. 已完成的校验与测试改动
 
@@ -182,10 +189,10 @@
 
 [src/lib/validation.ts](D:/Desktop/ARY-for-ARY/src/lib/validation.ts) 已修改：
 
-- `Riding Record` 在普通提交时变为可选
-- `recordLabel` 在没有 `Riding Record` 时自动归空
+- 比赛中普通提交只校验代码字段，不再接收 `Riding Record`
+- 赛后最终提交必须同时提供代码与 `Riding Record`
 - 新增 `runnerResultSchema`
-  - 只要求最终分数主字段
+  - 面向 runner 回传的评分分项 JSON 做校验
 
 ### 6.2 新增测试
 
@@ -202,7 +209,7 @@
 
 - `submission_test` 不带 `Riding Record`
 - `harness_eval` 会带 `Riding Record`
-- runner 结果可以只提交最终分数
+- runner 结果可以提交评分分项 JSON 并通过校验
 - 普通提交在没有 `Riding Record` 时也能通过校验
 
 ## 7. 已完成的页面与交互改动
@@ -218,10 +225,10 @@
 
 ### 7.2 提交表单变化
 
-提交表单中的：
+提交表单中的规则现在分成两条：
 
-- `Record 文件名` 不再强制必填
-- `Riding Record` 不再强制必填
+- 比赛中主动提交：只提交代码，不出现 `Riding Record` 字段
+- 赛后最终提交：必须同时提交最终代码和 `Riding Record`
 
 ### 7.3 `Runner Queue` 变化
 
@@ -243,7 +250,7 @@
 - 榜单里的 `taskScore / tokenScore / dialogueScore` 为空时显示 `-`
 - Harness 展示里的 `reasoningScore / keywordScore` 为空时显示 `-`
 
-这样即使当前只回总分，页面仍能继续工作。
+这样在分项分数尚未齐全时页面仍能继续工作；一旦 runner 回传分项，榜单与赛后页会显示计算后的结果。
 
 ## 8. seed 数据已同步
 
@@ -254,7 +261,7 @@
   - `SUBMISSION_TEST`
   - `PROGRESS_EVAL`
   - `HARNESS_EVAL`
-- 榜单和 Harness 演示数据改成与“最终分数为主”的模式兼容
+- 榜单和 Harness 演示数据改成与“runner 回传分项、ARY 计算总分”的模式兼容
 
 ## 9. 已完成的验证
 
@@ -278,7 +285,7 @@
    - 提交代码
    - 发起进度评测
    - runner 拉任务
-   - runner 回传最终分数
+   - runner 回传评分分项 JSON
    - 观察首页队列表和榜单变化
 5. 当前 `build` 通过，但这轮改动还没有单独 commit
 
@@ -303,7 +310,7 @@
 当前 runner 第一期已经完成到这样一个状态：
 
 - 代码结构上已经从“Submission 直接评分”切到“任务驱动 runner”
-- 分数边界已经切成“Organizer 算分，ARY 只收最终分数”
+- 分数边界已经切成“Runner 回传分项，ARY 依据比赛权重算总分”
 - 页面、接口、schema、seed、基础测试已经同步到新模型
 - 编译和测试通过
 - 还差实机流程回归和控制面第二阶段实现

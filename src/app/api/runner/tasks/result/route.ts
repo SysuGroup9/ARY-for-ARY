@@ -17,7 +17,10 @@ export async function POST(request: Request) {
     taskId: String(body.taskId ?? ""),
     submissionId: String(body.submissionId ?? ""),
     status: String(body.status ?? "") as "failed" | "succeeded",
-    score: Number(body.score ?? 0),
+    progress: typeof body.progress === "number" ? body.progress : undefined,
+    passRate: typeof body.passRate === "number" ? body.passRate : undefined,
+    codeReviewScore:
+      typeof body.codeReviewScore === "number" ? body.codeReviewScore : undefined,
     reasoningScore: typeof body.reasoningScore === "number" ? body.reasoningScore : undefined,
     keywordScore: typeof body.keywordScore === "number" ? body.keywordScore : undefined,
     runnerComment: String(body.runnerComment ?? ""),

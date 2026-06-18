@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-18T07:45:10.145Z",
+  "generatedAt": "2026-06-18T09:00:40.696Z",
   "raceId": "race_finished",
   "trackId": "oval-track",
   "competition": {
@@ -13,7 +13,7 @@
     "currentRound": 1,
     "nextPhase": "比赛结束",
     "elapsedTime": 93600,
-    "systemTime": "2026-06-18T07:45:10.145Z"
+    "systemTime": "2026-06-18T09:00:40.696Z"
   },
   "entries": [
     {
@@ -34,7 +34,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "updatedAt": "2026-06-18T07:45:09.976Z"
+      "updatedAt": "2026-06-18T09:00:40.548Z"
     },
     {
       "entryId": "team_finished_1",
@@ -54,7 +54,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "updatedAt": "2026-06-18T07:45:09.998Z"
+      "updatedAt": "2026-06-18T09:00:40.571Z"
     },
     {
       "entryId": "team_finished_2",
@@ -74,7 +74,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "updatedAt": "2026-06-18T07:45:10.021Z"
+      "updatedAt": "2026-06-18T09:00:40.593Z"
     },
     {
       "entryId": "team_finished_3",
@@ -94,7 +94,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "updatedAt": "2026-06-18T07:45:10.047Z"
+      "updatedAt": "2026-06-18T09:00:40.616Z"
     },
     {
       "entryId": "team_finished_4",
@@ -114,7 +114,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "updatedAt": "2026-06-18T07:45:10.065Z"
+      "updatedAt": "2026-06-18T09:00:40.634Z"
     },
     {
       "entryId": "team_finished_5",
@@ -134,7 +134,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "updatedAt": "2026-06-18T07:45:10.088Z"
+      "updatedAt": "2026-06-18T09:00:40.653Z"
     }
   ],
   "kpis": {
@@ -158,8 +158,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "渲染超快队: 优化 Token 消耗策略",
-      "createdAt": "2026-06-18T07:37:12.914Z",
+      "summary": "渲染超快队: 开始测试验证",
+      "createdAt": "2026-06-18T08:59:36.388Z",
       "displayMode": "bubble"
     },
     {
@@ -168,8 +168,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "内存优化组: 优化 Token 消耗策略",
-      "createdAt": "2026-06-18T07:35:58.115Z",
+      "summary": "内存优化组: 开始测试验证",
+      "createdAt": "2026-06-18T08:54:29.725Z",
       "displayMode": "bubble"
     },
     {
@@ -178,8 +178,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "懒加载专家: 已完成需求分析阶段",
-      "createdAt": "2026-06-18T07:38:31.533Z",
+      "summary": "懒加载专家: 开始测试验证",
+      "createdAt": "2026-06-18T08:53:41.049Z",
       "displayMode": "bubble"
     }
   ],
@@ -191,7 +191,7 @@
       "severity": "low",
       "summary": "渲染超快队: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-18T07:45:10.145Z"
+      "createdAt": "2026-06-18T09:00:40.696Z"
     },
     {
       "itemId": "risk-mock-team_finished_1",
@@ -200,7 +200,7 @@
       "severity": "low",
       "summary": "内存优化组: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-18T07:45:10.145Z"
+      "createdAt": "2026-06-18T09:00:40.696Z"
     }
   ]
 }

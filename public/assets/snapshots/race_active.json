@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-18T07:45:10.128Z",
+  "generatedAt": "2026-06-18T09:00:40.681Z",
   "raceId": "race_active",
   "trackId": "oval-track",
   "competition": {
@@ -13,7 +13,7 @@
     "currentRound": 1,
     "nextPhase": "封榜中",
     "elapsedTime": 10800,
-    "systemTime": "2026-06-18T07:45:10.128Z"
+    "systemTime": "2026-06-18T09:00:40.681Z"
   },
   "entries": [
     {
@@ -41,10 +41,10 @@
         "type": "progress_update",
         "severity": "info",
         "summary": "已在题面补充了空数组和重复元素的处理要求。",
-        "createdAt": "2026-06-18T07:45:09.781Z",
+        "createdAt": "2026-06-18T09:00:40.338Z",
         "displayMode": "ticker"
       },
-      "updatedAt": "2026-06-18T07:45:09.763Z"
+      "updatedAt": "2026-06-18T09:00:40.321Z"
     },
     {
       "entryId": "team_active_1",
@@ -71,10 +71,10 @@
         "type": "progress_update",
         "severity": "info",
         "summary": "[奶茶码农] 题目第3段描述有歧义，请补充边界条件。",
-        "createdAt": "2026-06-18T07:45:09.813Z",
+        "createdAt": "2026-06-18T09:00:40.366Z",
         "displayMode": "ticker"
       },
-      "updatedAt": "2026-06-18T07:45:09.802Z"
+      "updatedAt": "2026-06-18T09:00:40.356Z"
     },
     {
       "entryId": "team_active_2",
@@ -101,10 +101,10 @@
         "type": "progress_update",
         "severity": "info",
         "summary": "[Bug 粉碎机] 题目第4段描述有歧义，请补充边界条件。",
-        "createdAt": "2026-06-18T07:45:09.842Z",
+        "createdAt": "2026-06-18T09:00:40.394Z",
         "displayMode": "ticker"
       },
-      "updatedAt": "2026-06-18T07:45:09.830Z"
+      "updatedAt": "2026-06-18T09:00:40.384Z"
     },
     {
       "entryId": "team_active_3",
@@ -124,7 +124,7 @@
       "obstacleCount": 0,
       "violationCount": 1,
       "status": "idle",
-      "updatedAt": "2026-06-18T07:45:09.859Z"
+      "updatedAt": "2026-06-18T09:00:40.413Z"
     },
     {
       "entryId": "team_active_4",
@@ -144,7 +144,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-18T07:45:09.875Z"
+      "updatedAt": "2026-06-18T09:00:40.433Z"
     },
     {
       "entryId": "team_active_5",
@@ -164,7 +164,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-18T07:45:09.892Z"
+      "updatedAt": "2026-06-18T09:00:40.452Z"
     },
     {
       "entryId": "team_active_6",
@@ -184,7 +184,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-18T07:45:09.909Z"
+      "updatedAt": "2026-06-18T09:00:40.471Z"
     },
     {
       "entryId": "team_active_7",
@@ -204,7 +204,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-18T07:45:09.924Z"
+      "updatedAt": "2026-06-18T09:00:40.488Z"
     }
   ],
   "kpis": {
@@ -223,43 +223,43 @@
   },
   "messages": [
     {
-      "messageId": "msg-team_active_0-1781768710130-0.807929797821276",
+      "messageId": "msg-team_active_0-1781773240682-0.8946971524063964",
       "entryId": "team_active_0",
       "source": "feedback",
       "type": "progress_update",
       "severity": "info",
       "summary": "[极速排序队] 题目第2段描述有歧义，请补充边界条件。",
-      "createdAt": "2026-06-18T07:45:09.775Z",
+      "createdAt": "2026-06-18T09:00:40.333Z",
       "displayMode": "ticker"
     },
     {
-      "messageId": "msg-team_active_0-1781768710130-0.9271361687413161",
+      "messageId": "msg-team_active_0-1781773240682-0.8506342208259101",
       "entryId": "team_active_0",
       "source": "feedback",
       "type": "progress_update",
       "severity": "info",
       "summary": "已在题面补充了空数组和重复元素的处理要求。",
-      "createdAt": "2026-06-18T07:45:09.781Z",
+      "createdAt": "2026-06-18T09:00:40.338Z",
       "displayMode": "ticker"
     },
     {
-      "messageId": "msg-team_active_1-1781768710130-0.45801774728897837",
+      "messageId": "msg-team_active_1-1781773240682-0.7214788815385603",
       "entryId": "team_active_1",
       "source": "feedback",
       "type": "progress_update",
       "severity": "info",
       "summary": "[奶茶码农] 题目第3段描述有歧义，请补充边界条件。",
-      "createdAt": "2026-06-18T07:45:09.813Z",
+      "createdAt": "2026-06-18T09:00:40.366Z",
       "displayMode": "ticker"
     },
     {
-      "messageId": "msg-team_active_2-1781768710130-0.5161214006232716",
+      "messageId": "msg-team_active_2-1781773240682-0.9123485726274829",
       "entryId": "team_active_2",
       "source": "feedback",
       "type": "progress_update",
       "severity": "info",
       "summary": "[Bug 粉碎机] 题目第4段描述有歧义，请补充边界条件。",
-      "createdAt": "2026-06-18T07:45:09.842Z",
+      "createdAt": "2026-06-18T09:00:40.394Z",
       "displayMode": "ticker"
     },
     {
@@ -269,7 +269,7 @@
       "type": "milestone",
       "severity": "info",
       "summary": "极速排序队: 已完成需求分析阶段",
-      "createdAt": "2026-06-18T07:39:56.175Z",
+      "createdAt": "2026-06-18T08:51:31.919Z",
       "displayMode": "bubble"
     },
     {
@@ -278,8 +278,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "奶茶码农: 开始测试验证",
-      "createdAt": "2026-06-18T07:39:01.823Z",
+      "summary": "奶茶码农: 正在进行代码实现",
+      "createdAt": "2026-06-18T08:51:15.124Z",
       "displayMode": "bubble"
     },
     {
@@ -288,8 +288,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "Bug 粉碎机: 正在进行代码实现",
-      "createdAt": "2026-06-18T07:39:48.649Z",
+      "summary": "Bug 粉碎机: 开始测试验证",
+      "createdAt": "2026-06-18T08:52:25.641Z",
       "displayMode": "bubble"
     }
   ],
@@ -301,7 +301,7 @@
       "severity": "medium",
       "summary": "深夜提交组: 检测到诱导词，扣 10 分",
       "status": "active",
-      "createdAt": "2026-06-18T07:45:10.130Z"
+      "createdAt": "2026-06-18T09:00:40.682Z"
     },
     {
       "itemId": "risk-mock-team_active_0",
@@ -310,7 +310,7 @@
       "severity": "low",
       "summary": "极速排序队: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-18T07:45:10.130Z"
+      "createdAt": "2026-06-18T09:00:40.682Z"
     },
     {
       "itemId": "risk-mock-team_active_1",
@@ -319,7 +319,7 @@
       "severity": "low",
       "summary": "奶茶码农: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-18T07:45:10.130Z"
+      "createdAt": "2026-06-18T09:00:40.682Z"
     }
   ]
 }

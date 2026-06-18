@@ -9,7 +9,11 @@ import {
   buildRunnerTaskPayload,
   type RunnerTaskTypeValue,
 } from "@/lib/runner-task-helpers";
-import { parseKeywords } from "@/lib/services/scoring";
+import {
+  buildScoreResult,
+  computeHarnessScore,
+  parseKeywords,
+} from "@/lib/services/scoring";
 import { runnerPullSchema, runnerResultSchema } from "@/lib/validation";
 
 type RunnerResultInput = ReturnType<typeof runnerResultSchema.parse>;
@@ -110,17 +114,24 @@ export async function enqueueHarnessEvalTasks(raceId: string) {
 
   await prisma.$transaction(async (tx) => {
     for (const artifact of harnessArtifacts) {
-      await staleActiveRunnerTasks(tx, artifact.teamId, ["HARNESS_EVAL"]);
-      await tx.runnerTask.create({
-        data: {
-          artifactId: artifact.id,
-          raceId,
-          submissionId: artifact.submissionId,
-          taskType: "HARNESS_EVAL",
-          teamId: artifact.teamId,
-        },
-      });
+      await enqueueHarnessEvalTaskForArtifact(tx, artifact);
     }
+  });
+}
+
+export async function enqueueHarnessEvalTaskForArtifact(
+  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  artifact: LatestArtifactRecord,
+) {
+  await staleActiveRunnerTasks(tx, artifact.teamId, ["HARNESS_EVAL"]);
+  return tx.runnerTask.create({
+    data: {
+      artifactId: artifact.id,
+      raceId: artifact.raceId,
+      submissionId: artifact.submissionId,
+      taskType: "HARNESS_EVAL",
+      teamId: artifact.teamId,
+    },
   });
 }
 
@@ -236,7 +247,7 @@ export async function completeRunnerTask(input: RunnerResultInput) {
         finishedAt: input.finishedAt ? new Date(input.finishedAt) : new Date(),
         resultHash: input.resultHash ?? null,
         runnerComment: input.runnerComment || null,
-        score: input.score,
+        score: 0,
         status: input.status === "succeeded" ? "SUCCEEDED" : "FAILED",
       },
     });
@@ -274,22 +285,71 @@ async function projectSubmissionTestSuccess(
   tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
   task: Awaited<ReturnType<typeof prisma.runnerTask.findUnique>> & {
     artifact: LatestArtifactRecord;
-    race: { id: string };
+    race: {
+      id: string;
+      tokenLimit: number;
+      keywordsJson: string;
+      weightTaskPassRate: number;
+      weightCodeReview: number;
+      weightReasoning: number;
+      weightKeywords: number;
+      weightTotalTask: number;
+      weightTotalToken: number;
+      weightTotalDialogue: number;
+    };
     submission: { id: string };
     team: { id: string };
   },
   input: RunnerResultInput,
 ) {
+  const scoreResult = buildScoreResult({
+    weights: {
+      taskPassRate: task.race.weightTaskPassRate,
+      codeReview: task.race.weightCodeReview,
+      reasoning: task.race.weightReasoning,
+      keywords: task.race.weightKeywords,
+      totalTask: task.race.weightTotalTask,
+      totalToken: task.race.weightTotalToken,
+      totalDialogue: task.race.weightTotalDialogue,
+    },
+    tokenLimit: task.race.tokenLimit,
+    keywords: parseKeywords(task.race.keywordsJson),
+    artifact: task.artifact,
+    runner: {
+      passRate: input.passRate ?? 0,
+      codeReviewScore: input.codeReviewScore ?? 0,
+      reasoningScore: input.reasoningScore ?? 0,
+      keywordScore: input.keywordScore ?? 0,
+      runnerComment: input.runnerComment || "",
+      status: "success",
+    },
+  });
+
+  await tx.runnerTask.update({
+    where: { id: task.id },
+    data: {
+      score: scoreResult.totalScore,
+    },
+  });
+
   await tx.submission.update({
     where: { id: task.submissionId },
     data: {
       codeContent: null,
       ridingRecord: null,
-      runnerComment: input.runnerComment || null,
-      runnerStatus: "succeeded",
+      runnerComment: scoreResult.runnerComment || null,
+      runnerStatus: scoreResult.runnerStatus,
       scoredAt: new Date(),
       status: SubmissionStatus.SCORED,
-      totalScore: input.score,
+      passRate: scoreResult.passRate,
+      codeReviewScore: scoreResult.codeReviewScore,
+      reasoningScore: scoreResult.reasoningScore,
+      keywordScore: scoreResult.keywordScore,
+      tokenScore: scoreResult.tokenScore,
+      taskScore: scoreResult.taskScore,
+      dialogueScore: scoreResult.dialogueScore,
+      totalScore: scoreResult.totalScore,
+      antiCheatPenalty: scoreResult.antiCheatPenalty,
       progress: input.progress ?? null,
     },
   });
@@ -299,12 +359,53 @@ async function projectProgressEvalSuccess(
   tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
   task: Awaited<ReturnType<typeof prisma.runnerTask.findUnique>> & {
     artifact: LatestArtifactRecord;
-    race: { id: string };
+    race: {
+      id: string;
+      tokenLimit: number;
+      keywordsJson: string;
+      weightTaskPassRate: number;
+      weightCodeReview: number;
+      weightReasoning: number;
+      weightKeywords: number;
+      weightTotalTask: number;
+      weightTotalToken: number;
+      weightTotalDialogue: number;
+    };
     submission: { id: string; agentType: AgentType };
     team: { id: string };
   },
   input: RunnerResultInput,
 ) {
+  const scoreResult = buildScoreResult({
+    weights: {
+      taskPassRate: task.race.weightTaskPassRate,
+      codeReview: task.race.weightCodeReview,
+      reasoning: task.race.weightReasoning,
+      keywords: task.race.weightKeywords,
+      totalTask: task.race.weightTotalTask,
+      totalToken: task.race.weightTotalToken,
+      totalDialogue: task.race.weightTotalDialogue,
+    },
+    tokenLimit: task.race.tokenLimit,
+    keywords: parseKeywords(task.race.keywordsJson),
+    artifact: task.artifact,
+    runner: {
+      passRate: input.passRate ?? 0,
+      codeReviewScore: input.codeReviewScore ?? 0,
+      reasoningScore: input.reasoningScore ?? 0,
+      keywordScore: input.keywordScore ?? 0,
+      runnerComment: input.runnerComment || "",
+      status: "success",
+    },
+  });
+
+  await tx.runnerTask.update({
+    where: { id: task.id },
+    data: {
+      score: scoreResult.totalScore,
+    },
+  });
+
   await tx.teamArchive.upsert({
     where: {
       raceId_teamId: {
@@ -313,38 +414,38 @@ async function projectProgressEvalSuccess(
       },
     },
     update: {
-      antiCheatPenalty: 0,
+      antiCheatPenalty: scoreResult.antiCheatPenalty,
       codeContent: task.artifact.codeContent,
       codeLabel: task.artifact.codeLabel,
-      dialogueScore: null,
-      keywordScore: null,
-      reasoningScore: null,
+      dialogueScore: scoreResult.dialogueScore,
+      keywordScore: scoreResult.keywordScore,
+      reasoningScore: scoreResult.reasoningScore,
       recordLabel: task.artifact.recordLabel,
       ridingRecord: task.artifact.ridingRecord,
       submissionId: task.submissionId,
-      taskScore: null,
-      tokenScore: null,
+      taskScore: scoreResult.taskScore,
+      tokenScore: scoreResult.tokenScore,
       tokenUsed: task.artifact.tokenUsed,
-      totalScore: input.score,
+      totalScore: scoreResult.totalScore,
       progress: input.progress ?? null,
     },
     create: {
       agentType: task.artifact.agentType,
-      antiCheatPenalty: 0,
+      antiCheatPenalty: scoreResult.antiCheatPenalty,
       codeContent: task.artifact.codeContent,
       codeLabel: task.artifact.codeLabel,
-      dialogueScore: null,
-      keywordScore: null,
+      dialogueScore: scoreResult.dialogueScore,
+      keywordScore: scoreResult.keywordScore,
       raceId: task.raceId,
-      reasoningScore: null,
+      reasoningScore: scoreResult.reasoningScore,
       recordLabel: task.artifact.recordLabel,
       ridingRecord: task.artifact.ridingRecord,
       submissionId: task.submissionId,
-      taskScore: null,
+      taskScore: scoreResult.taskScore,
       teamId: task.teamId,
-      tokenScore: null,
+      tokenScore: scoreResult.tokenScore,
       tokenUsed: task.artifact.tokenUsed,
-      totalScore: input.score,
+      totalScore: scoreResult.totalScore,
       progress: input.progress ?? null,
     },
   });
@@ -358,22 +459,22 @@ async function projectProgressEvalSuccess(
     },
     update: {
       agentType: task.artifact.agentType,
-      dialogueScore: null,
+      dialogueScore: scoreResult.dialogueScore,
       submissionId: task.submissionId,
-      taskScore: null,
-      tokenScore: null,
-      totalScore: input.score,
+      taskScore: scoreResult.taskScore,
+      tokenScore: scoreResult.tokenScore,
+      totalScore: scoreResult.totalScore,
       progress: input.progress ?? null,
     },
     create: {
       agentType: task.artifact.agentType,
-      dialogueScore: null,
+      dialogueScore: scoreResult.dialogueScore,
       raceId: task.raceId,
       submissionId: task.submissionId,
-      taskScore: null,
+      taskScore: scoreResult.taskScore,
       teamId: task.teamId,
-      tokenScore: null,
-      totalScore: input.score,
+      tokenScore: scoreResult.tokenScore,
+      totalScore: scoreResult.totalScore,
       progress: input.progress ?? null,
     },
   });
@@ -396,16 +497,21 @@ async function projectHarnessEvalSuccess(
   },
   input: RunnerResultInput,
 ) {
-  const { reasoningScore, keywordScore } = input;
-  const harnessScore =
-    reasoningScore != null && keywordScore != null
-      ? computeHarnessScore(
-          reasoningScore,
-          keywordScore,
-          task.race.harnessWeightReasoning,
-          task.race.harnessWeightKeyword,
-        )
-      : input.score;
+  const reasoningScore = input.reasoningScore ?? 0;
+  const keywordScore = input.keywordScore ?? 0;
+  const harnessScore = computeHarnessScore(
+    reasoningScore,
+    keywordScore,
+    task.race.harnessWeightReasoning,
+    task.race.harnessWeightKeyword,
+  );
+
+  await tx.runnerTask.update({
+    where: { id: task.id },
+    data: {
+      score: harnessScore,
+    },
+  });
 
   await tx.harnessEntry.upsert({
     where: {
@@ -416,13 +522,13 @@ async function projectHarnessEvalSuccess(
     },
     update: {
       harnessScore,
-      reasoningScore: reasoningScore ?? null,
-      keywordScore: keywordScore ?? null,
+      reasoningScore,
+      keywordScore,
     },
     create: {
       harnessScore,
-      reasoningScore: reasoningScore ?? null,
-      keywordScore: keywordScore ?? null,
+      reasoningScore,
+      keywordScore,
       raceId: task.raceId,
       teamId: task.teamId,
     },
@@ -546,14 +652,3 @@ function extractCodeSnippetSafe(code: string): string {
     .join("\n");
 }
 
-function computeHarnessScore(
-  reasoningScore: number,
-  keywordScore: number,
-  weightReasoning: number,
-  weightKeyword: number,
-): number {
-  const safeR = weightReasoning > 0 ? weightReasoning : 1;
-  const safeK = weightKeyword > 0 ? weightKeyword : 1;
-  const total = safeR + safeK;
-  return Math.round((reasoningScore * (safeR / total) + keywordScore * (safeK / total)) * 10) / 10;
-}

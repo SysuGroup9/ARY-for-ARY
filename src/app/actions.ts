@@ -12,6 +12,7 @@ import {
   updateRaceDisplayOptions,
 } from "@/lib/services/races";
 import {
+  createFinalSubmission,
   createSubmission,
 } from "@/lib/services/submissions";
 import { generateRaceSnapshot } from "@/lib/services/race-snapshot";
@@ -105,6 +106,12 @@ export async function submitEntryAction(formData: FormData) {
   revalidatePath("/");
 }
 
+export async function submitFinalEntryAction(formData: FormData) {
+  const user = await requireRole("RIDER");
+  await createFinalSubmission(user.id, formData);
+  revalidatePath("/");
+}
+
 export async function sendFeedbackAction(formData: FormData) {
   const user = await requireRole("RIDER");
   await sendFeedback(user.id, formData);
@@ -158,7 +165,11 @@ export async function scoreRunnerTaskAction(formData: FormData) {
     taskId: String(formData.get("taskId") ?? ""),
     submissionId: String(formData.get("submissionId") ?? ""),
     status: String(formData.get("status") ?? "") as "failed" | "succeeded",
-    score: Number(formData.get("score") ?? 0),
+    progress: Number(formData.get("progress") ?? "") || undefined,
+    passRate: Number(formData.get("passRate") ?? "") || undefined,
+    codeReviewScore: Number(formData.get("codeReviewScore") ?? "") || undefined,
+    reasoningScore: Number(formData.get("reasoningScore") ?? "") || undefined,
+    keywordScore: Number(formData.get("keywordScore") ?? "") || undefined,
     runnerComment: String(formData.get("runnerComment") ?? ""),
     resultHash: String(formData.get("resultHash") ?? "") || undefined,
     finishedAt: String(formData.get("finishedAt") ?? "") || undefined,
