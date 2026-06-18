@@ -38,6 +38,12 @@ outputs/
 
 .vercel
 
+# Next.js generated type stub
+next-env.d.ts
+
+# Generated Jumbotron snapshots
+public/assets/snapshots/*.json
+
 /src/generated/prisma
 
 # TypeScript build info
