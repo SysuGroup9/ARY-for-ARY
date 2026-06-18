@@ -135,32 +135,47 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
     map.set(submission.teamId, (map.get(submission.teamId) ?? 0) + 1);
     return map;
   }, new Map<string, number>());
+  const now = new Date();
+  const allRankedProgressZero =
+    ranked.length > 0 &&
+    ranked.every((entry) => typeof entry.progress === "number" && entry.progress === 0);
 
   return teams.map((team) => {
     const rank = ranked.findIndex((e) => e.teamId === team.id);
     const entry = ranked[rank];
     const archive = archiveMap.get(team.id);
     const feedback = feedbackMap.get(team.id);
-
-    const now = new Date();
-    const totalTeams = teams.length || 1;
-    const rawProgress = entry?.progress ?? null;
-    let roundProgress: number;
-    if (typeof rawProgress === "number") {
-      roundProgress = Math.max(0, Math.min(rawProgress, 1));
-    } else if (now >= race.raceEnd) {
-      roundProgress = 1;
-    } else if (now < race.raceStart) {
-      roundProgress = 0;
-    } else {
-      roundProgress = 0;
-    }
-
     const submissionCount = submissionCountMap.get(team.id) ?? 0;
 
     // overallProgress：分数相对最高分的比例
     const overallProgress =
       entry && maxScore > 0 ? Math.min(entry.totalScore / maxScore, 1) : 0.5;
+
+    const rawProgress = entry?.progress ?? null;
+    let roundProgress: number;
+    const shouldIgnoreZeroProgressPlaceholder =
+      !!entry &&
+      allRankedProgressZero &&
+      overallProgress > 0 &&
+      ranked.length > 1;
+
+    if (typeof rawProgress === "number" && !shouldIgnoreZeroProgressPlaceholder) {
+      roundProgress = Math.max(0, Math.min(rawProgress, 1));
+    } else if (shouldIgnoreZeroProgressPlaceholder) {
+      // 当排行榜已有明显分布，但整批 progress 都被写成占位 0 时，
+      // 退回到 overallProgress，避免所有马被压到同一个起点/终点位置。
+      roundProgress = overallProgress;
+    } else if (now >= race.raceEnd) {
+      roundProgress = 1;
+    } else if (now < race.raceStart) {
+      roundProgress = 0;
+    } else if (entry) {
+      // Jumbotron 子系统要求在缺失 roundProgress 时显式退回到 overallProgress，
+      // 而不是把所有正在比赛的队伍压回起点。
+      roundProgress = overallProgress;
+    } else {
+      roundProgress = 0;
+    }
 
     const status = deriveStatus(entry, race, roundProgress);
 

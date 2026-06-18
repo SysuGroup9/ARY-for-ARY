@@ -18,6 +18,7 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
   const [elapsed, setElapsed] = useState(snapshot.competition.elapsedTime);
   const [kpiDetail, setKpiDetail] = useState<string | null>(null);
   const [detailEntry, setDetailEntry] = useState<string | null>(null); // drill-down 面板
+  const [systemTime, setSystemTime] = useState(snapshot.competition.systemTime);
 
   // -- s-axis 动画状态 --
   const [displayS, setDisplayS] = useState<Record<string, number>>({});
@@ -101,6 +102,12 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
   useEffect(() => {
     if (snapshot.competition.liveStatus !== "live") return;
     const i = setInterval(() => setElapsed((t) => t + 1), 1000);
+    return () => clearInterval(i);
+  }, [snapshot.competition.liveStatus]);
+
+  useEffect(() => {
+    if (snapshot.competition.liveStatus !== "live") return;
+    const i = setInterval(() => setSystemTime(new Date().toISOString()), 1000);
     return () => clearInterval(i);
   }, [snapshot.competition.liveStatus]);
 
@@ -346,7 +353,7 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
       {/* ====== Footer ====== */}
       <footer className="jt-ft">
         <span>{competition.theme}</span><span>|</span><span>{competition.organizer}</span><span>|</span>
-        <span>{competition.nextPhase}</span><span>|</span><span>{new Date().toLocaleTimeString()}</span>
+        <span>{competition.nextPhase}</span><span>|</span><span>{new Date(systemTime).toLocaleTimeString()}</span>
         {debug && <span style={{color:"#c34e36",marginLeft:12}}>DEBUG</span>}
       </footer>
 

@@ -134,8 +134,15 @@ export default async function HomePage() {
 
         <section className="content">
           {canManage ? (
-            <Panel title="创建赛事" eyebrow="Organizer Studio">
-              <CreateRaceForm action={createRaceAction} />
+            <Panel title="Organizer Studio" eyebrow="Organizer Entry">
+              <div className="stack">
+                <p className="muted">
+                  创建赛事已经拆分到独立页面，避免首页和公开赛事信息混在一起。
+                </p>
+                <a className="button" href="/races/new">
+                  进入创建赛事页面
+                </a>
+              </div>
             </Panel>
           ) : null}
 
