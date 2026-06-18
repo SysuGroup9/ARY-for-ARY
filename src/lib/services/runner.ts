@@ -290,6 +290,7 @@ async function projectSubmissionTestSuccess(
       scoredAt: new Date(),
       status: SubmissionStatus.SCORED,
       totalScore: input.score,
+      progress: input.progress ?? null,
     },
   });
 }
@@ -325,6 +326,7 @@ async function projectProgressEvalSuccess(
       tokenScore: null,
       tokenUsed: task.artifact.tokenUsed,
       totalScore: input.score,
+      progress: input.progress ?? null,
     },
     create: {
       agentType: task.artifact.agentType,
@@ -343,6 +345,7 @@ async function projectProgressEvalSuccess(
       tokenScore: null,
       tokenUsed: task.artifact.tokenUsed,
       totalScore: input.score,
+      progress: input.progress ?? null,
     },
   });
 
@@ -360,6 +363,7 @@ async function projectProgressEvalSuccess(
       taskScore: null,
       tokenScore: null,
       totalScore: input.score,
+      progress: input.progress ?? null,
     },
     create: {
       agentType: task.artifact.agentType,
@@ -370,6 +374,7 @@ async function projectProgressEvalSuccess(
       teamId: task.teamId,
       tokenScore: null,
       totalScore: input.score,
+      progress: input.progress ?? null,
     },
   });
 

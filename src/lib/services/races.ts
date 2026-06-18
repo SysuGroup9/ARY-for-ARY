@@ -1,6 +1,8 @@
 import { buildRankedLeaderboardEntries } from "@/lib/leaderboard";
 import { prisma } from "@/lib/prisma";
 import { getRacePhase } from "@/lib/race-phase";
+import { normalizeTrackId, parseRaceTrackConfigJson, serializeRaceTrackConfig } from "@/lib/jumbotron/track-config";
+import { deleteRaceSnapshot } from "@/lib/services/race-snapshot";
 import { normalizeWeights, parseKeywords } from "@/lib/services/scoring";
 import { createRaceSchema } from "@/lib/validation";
 
@@ -94,6 +96,8 @@ export async function listRaces() {
 
   return races.map((race) => ({
     ...race,
+    trackId: normalizeTrackId(race.trackId),
+    trackConfig: parseRaceTrackConfigJson(race.trackConfigJson),
     leaderboardEntries: buildRankedLeaderboardEntries(race.leaderboardEntries),
     phase: getRacePhase(race),
     keywords: parseKeywords(race.keywordsJson),
@@ -126,6 +130,9 @@ export async function createRace(organizerId: string, formData: FormData) {
     maxTeamSize: formData.get("maxTeamSize"),
     submissionIntervalHours: formData.get("submissionIntervalHours"),
     cloudStudioUrl: formData.get("cloudStudioUrl"),
+    trackId: formData.get("trackId"),
+    trackStartFinishS: formData.get("trackStartFinishS"),
+    trackCheckpointsJson: String(formData.get("trackCheckpointsJson") ?? "[]"),
     displayShowTrainingData: formData.get("displayShowTrainingData") === "on",
     displayShowOrganizerComment: formData.get("displayShowOrganizerComment") === "on",
     displayShowTopHighlights: formData.get("displayShowTopHighlights") === "on",
@@ -152,6 +159,13 @@ export async function createRace(organizerId: string, formData: FormData) {
     totalDialogue: parsed.weightTotalDialogue,
   });
 
+  const trackConfig = parseRaceTrackConfigJson(
+    JSON.stringify({
+      startFinish: { s: parsed.trackStartFinishS },
+      checkpoints: JSON.parse(parsed.trackCheckpointsJson),
+    }),
+  );
+
   return prisma.race.create({
     data: {
       organizerId,
@@ -176,6 +190,8 @@ export async function createRace(organizerId: string, formData: FormData) {
       maxTeamSize: parsed.maxTeamSize,
       submissionIntervalHours: parsed.submissionIntervalHours,
       cloudStudioUrl: parsed.cloudStudioUrl,
+      trackId: normalizeTrackId(parsed.trackId),
+      trackConfigJson: serializeRaceTrackConfig(trackConfig),
       displayShowTrainingData: parsed.displayShowTrainingData,
       displayShowOrganizerComment: parsed.displayShowOrganizerComment,
       displayShowTopHighlights: parsed.displayShowTopHighlights,
@@ -214,28 +230,41 @@ export async function updateRaceContent(input: {
     throw new Error("比赛结束后不能再修改题目与训练数据");
   }
 
-  return prisma.$transaction(async (tx) => {
-    const updated = await tx.race.update({
+  const updated = await prisma.$transaction(async (tx) => {
+    const updatedRace = await tx.race.update({
       where: {
         id: input.raceId,
       },
       data: {
         taskDescription: input.taskDescription.trim(),
         trainingDataSummary: input.trainingDataSummary.trim(),
+        lastLeaderboardSyncAt: null,
+        lastShowcaseSyncAt: null,
       },
+    });
+
+    await tx.leaderboardEntry.deleteMany({
+      where: { raceId: input.raceId },
+    });
+
+    await tx.runnerTask.deleteMany({
+      where: { raceId: input.raceId, taskType: "PROGRESS_EVAL" },
     });
 
     await tx.notification.create({
       data: {
         raceId: input.raceId,
         title: "题目已更新",
-        content: `Organizer 更新了 ${updated.title} 的题目描述或训练数据说明`,
+        content: `Organizer 更新了 ${updatedRace.title} 的题目描述或训练数据说明，原进度投影已清空`,
         target: "ALL",
       },
     });
 
-    return updated;
+    return updatedRace;
   });
+
+  deleteRaceSnapshot(input.raceId);
+  return updated;
 }
 
 export async function updateOrganizerComment(input: {

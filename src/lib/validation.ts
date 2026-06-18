@@ -9,6 +9,12 @@ const agentEnum = z.enum([
   "OPENAI",
   "CUSTOM",
 ]);
+const trackEnum = z.enum(["oval-track", "circuit-track"]);
+const checkpointSchema = z.object({
+  id: z.string().trim().min(1).max(64),
+  name: z.string().trim().min(1).max(64),
+  s: z.coerce.number().min(0).max(1),
+});
 
 export const registerSchema = z.object({
   username: z.string().trim().min(3, "用户名至少 3 个字符").max(32),
@@ -41,6 +47,9 @@ const raceBaseSchema = z.object({
   maxTeamSize: z.coerce.number().int().positive().max(20),
   submissionIntervalHours: z.coerce.number().int().positive().max(168),
   cloudStudioUrl: z.string().trim().url("CloudStudio 地址格式不正确").or(z.literal("")),
+  trackId: trackEnum,
+  trackStartFinishS: z.coerce.number().min(0).max(1),
+  trackCheckpointsJson: z.string().trim().min(2, "检查点配置不能为空"),
   displayShowTrainingData: z.boolean(),
   displayShowOrganizerComment: z.boolean(),
   displayShowTopHighlights: z.boolean(),
@@ -68,6 +77,27 @@ export const createRaceSchema = raceBaseSchema.superRefine((data, ctx) => {
       code: z.ZodIssueCode.custom,
       message: "时间线必须满足报名开始 <= 报名结束 <= 比赛开始 <= 比赛结束",
       path: ["raceEnd"],
+    });
+  }
+
+  let parsedCheckpoints: unknown;
+  try {
+    parsedCheckpoints = JSON.parse(data.trackCheckpointsJson);
+  } catch {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "检查点配置必须是合法 JSON",
+      path: ["trackCheckpointsJson"],
+    });
+    return;
+  }
+
+  const checkpointParse = z.array(checkpointSchema).safeParse(parsedCheckpoints);
+  if (!checkpointParse.success) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "检查点配置里的每一项都要包含 id / name / s",
+      path: ["trackCheckpointsJson"],
     });
   }
 });
@@ -125,6 +155,7 @@ export const runnerResultSchema = z.object({
   submissionId: z.string().min(1),
   status: z.enum(["succeeded", "failed"]),
   score: z.coerce.number().min(0).default(0),
+  progress: z.coerce.number().min(0).max(1).optional(),
   reasoningScore: z.coerce.number().min(0).max(100).optional(),
   keywordScore: z.coerce.number().min(0).max(100).optional(),
   runnerComment: z.string().trim().max(2000).default(""),

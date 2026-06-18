@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-12T14:17:06.760Z",
+  "generatedAt": "2026-06-18T07:45:10.145Z",
   "raceId": "race_finished",
   "trackId": "oval-track",
   "competition": {
@@ -13,7 +13,7 @@
     "currentRound": 1,
     "nextPhase": "比赛结束",
     "elapsedTime": 93600,
-    "systemTime": "2026-06-12T14:17:06.760Z"
+    "systemTime": "2026-06-18T07:45:10.145Z"
   },
   "entries": [
     {
@@ -22,29 +22,19 @@
       "projectName": "渲染超快队",
       "caProvider": "claude",
       "rank": 1,
-      "rankDelta": 1,
       "score": 94.1,
       "overallProgress": 1,
-      "roundProgress": 0.9685714285714286,
-      "phaseProgress": 0.9685714285714286,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 2100,
+      "submissionCount": 0,
       "costUsd": 0.21000000000000002,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "lastMessage": {
-        "messageId": "msg-mock-team_finished_0",
-        "entryId": "team_finished_0",
-        "source": "dc",
-        "type": "progress_update",
-        "severity": "info",
-        "summary": "正在优化边界条件处理",
-        "createdAt": "2026-06-12T14:17:06.760Z",
-        "displayMode": "bubble"
-      },
-      "updatedAt": "2026-06-12T14:17:06.696Z"
+      "updatedAt": "2026-06-18T07:45:09.976Z"
     },
     {
       "entryId": "team_finished_1",
@@ -52,29 +42,19 @@
       "projectName": "内存优化组",
       "caProvider": "other",
       "rank": 2,
-      "rankDelta": 1,
       "score": 89.7,
       "overallProgress": 0.9532412327311371,
-      "roundProgress": 0.9571428571428572,
-      "phaseProgress": 0.9571428571428572,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 3400,
+      "submissionCount": 0,
       "costUsd": 0.34,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "lastMessage": {
-        "messageId": "msg-mock-team_finished_1",
-        "entryId": "team_finished_1",
-        "source": "dc",
-        "type": "progress_update",
-        "severity": "info",
-        "summary": "已完成需求分析阶段",
-        "createdAt": "2026-06-12T14:17:06.760Z",
-        "displayMode": "bubble"
-      },
-      "updatedAt": "2026-06-12T14:17:06.706Z"
+      "updatedAt": "2026-06-18T07:45:09.998Z"
     },
     {
       "entryId": "team_finished_2",
@@ -82,29 +62,19 @@
       "projectName": "懒加载专家",
       "caProvider": "codex",
       "rank": 3,
-      "rankDelta": 1,
       "score": 85.2,
       "overallProgress": 0.9054197662061637,
-      "roundProgress": 0.9457142857142857,
-      "phaseProgress": 0.9457142857142857,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 2800,
+      "submissionCount": 0,
       "costUsd": 0.28,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "lastMessage": {
-        "messageId": "msg-mock-team_finished_2",
-        "entryId": "team_finished_2",
-        "source": "dc",
-        "type": "progress_update",
-        "severity": "info",
-        "summary": "开始编写核心算法",
-        "createdAt": "2026-06-12T14:17:06.760Z",
-        "displayMode": "bubble"
-      },
-      "updatedAt": "2026-06-12T14:17:06.715Z"
+      "updatedAt": "2026-06-18T07:45:10.021Z"
     },
     {
       "entryId": "team_finished_3",
@@ -112,29 +82,19 @@
       "projectName": "缓存大师",
       "caProvider": "other",
       "rank": 4,
-      "rankDelta": 0,
       "score": 78.3,
       "overallProgress": 0.8320935175345378,
-      "roundProgress": 0.9342857142857143,
-      "phaseProgress": 0.9342857142857143,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 4600,
+      "submissionCount": 0,
       "costUsd": 0.46,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "lastMessage": {
-        "messageId": "msg-mock-team_finished_3",
-        "entryId": "team_finished_3",
-        "source": "dc",
-        "type": "progress_update",
-        "severity": "info",
-        "summary": "Token 消耗优化中",
-        "createdAt": "2026-06-12T14:17:06.760Z",
-        "displayMode": "bubble"
-      },
-      "updatedAt": "2026-06-12T14:17:06.725Z"
+      "updatedAt": "2026-06-18T07:45:10.047Z"
     },
     {
       "entryId": "team_finished_4",
@@ -142,29 +102,19 @@
       "projectName": "帧率狂魔",
       "caProvider": "claude",
       "rank": 5,
-      "rankDelta": 0,
       "score": 71.6,
       "overallProgress": 0.7608926673751328,
-      "roundProgress": 0.9228571428571429,
-      "phaseProgress": 0.9228571428571429,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 5200,
+      "submissionCount": 0,
       "costUsd": 0.52,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "lastMessage": {
-        "messageId": "msg-mock-team_finished_4",
-        "entryId": "team_finished_4",
-        "source": "dc",
-        "type": "progress_update",
-        "severity": "info",
-        "summary": "准备提交下一版方案",
-        "createdAt": "2026-06-12T14:17:06.760Z",
-        "displayMode": "bubble"
-      },
-      "updatedAt": "2026-06-12T14:17:06.732Z"
+      "updatedAt": "2026-06-18T07:45:10.065Z"
     },
     {
       "entryId": "team_finished_5",
@@ -172,29 +122,19 @@
       "projectName": "重构小分队",
       "caProvider": "other",
       "rank": 6,
-      "rankDelta": 0,
       "score": 64,
       "overallProgress": 0.6801275239107333,
-      "roundProgress": 0.9114285714285715,
-      "phaseProgress": 0.9114285714285715,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 6100,
+      "submissionCount": 0,
       "costUsd": 0.61,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "lastMessage": {
-        "messageId": "msg-mock-team_finished_5",
-        "entryId": "team_finished_5",
-        "source": "dc",
-        "type": "progress_update",
-        "severity": "info",
-        "summary": "测试用例通过率提升中",
-        "createdAt": "2026-06-12T14:17:06.760Z",
-        "displayMode": "bubble"
-      },
-      "updatedAt": "2026-06-12T14:17:06.741Z"
+      "updatedAt": "2026-06-18T07:45:10.088Z"
     }
   ],
   "kpis": {
@@ -218,8 +158,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "渲染超快队: 开始测试验证",
-      "createdAt": "2026-06-12T14:12:59.204Z",
+      "summary": "渲染超快队: 优化 Token 消耗策略",
+      "createdAt": "2026-06-18T07:37:12.914Z",
       "displayMode": "bubble"
     },
     {
@@ -228,8 +168,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "内存优化组: 开始测试验证",
-      "createdAt": "2026-06-12T14:08:23.041Z",
+      "summary": "内存优化组: 优化 Token 消耗策略",
+      "createdAt": "2026-06-18T07:35:58.115Z",
       "displayMode": "bubble"
     },
     {
@@ -238,8 +178,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "懒加载专家: 开始测试验证",
-      "createdAt": "2026-06-12T14:07:51.019Z",
+      "summary": "懒加载专家: 已完成需求分析阶段",
+      "createdAt": "2026-06-18T07:38:31.533Z",
       "displayMode": "bubble"
     }
   ],
@@ -251,7 +191,7 @@
       "severity": "low",
       "summary": "渲染超快队: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-12T14:17:06.760Z"
+      "createdAt": "2026-06-18T07:45:10.145Z"
     },
     {
       "itemId": "risk-mock-team_finished_1",
@@ -260,7 +200,7 @@
       "severity": "low",
       "summary": "内存优化组: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-12T14:17:06.760Z"
+      "createdAt": "2026-06-18T07:45:10.145Z"
     }
   ]
 }

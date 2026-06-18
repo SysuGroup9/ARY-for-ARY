@@ -87,6 +87,8 @@ model Race {
   maxTeamSize                Int      @default(5)
   submissionIntervalHours    Int      @default(24)
   cloudStudioUrl             String
+  trackId                    String   @default("oval-track")
+  trackConfigJson            String   @default("")
   displayShowTrainingData    Boolean  @default(false)
   displayShowOrganizerComment Boolean @default(false)
   displayShowTopHighlights   Boolean  @default(false)
@@ -174,6 +176,7 @@ model Submission {
   taskScore        Float?
   dialogueScore    Float?
   totalScore       Float?
+  progress         Float?
   antiCheatPenalty Float?
   runnerComment    String?
   runnerStatus     String?
@@ -248,6 +251,7 @@ model TeamArchive {
   reasoningScore   Float?
   keywordScore     Float?
   totalScore       Float
+  progress         Float?   @default(0)
   antiCheatPenalty Float
   createdAt        DateTime @default(now())
 
@@ -299,6 +303,7 @@ model LeaderboardEntry {
   teamId         String
   submissionId   String
   totalScore     Float
+  progress       Float?   @default(0)
   taskScore      Float?
   tokenScore     Float?
   dialogueScore  Float?

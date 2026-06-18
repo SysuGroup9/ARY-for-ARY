@@ -32,6 +32,7 @@ export interface AryRaceData {
   organizer: { id: string; username: string };
   teams: AryTeamData[];
   leaderboardEntries: AryLeaderboardEntryData[];
+  submissions: ArySubmissionData[];
   teamArchives: AryTeamArchiveData[];
   feedbackThreads: AryFeedbackThreadData[];
 }
@@ -46,10 +47,17 @@ export interface AryLeaderboardEntryData {
   id: string;
   teamId: string;
   totalScore: number;
+  progress?: number | null;
   taskScore: number | null;
   tokenScore: number | null;
   dialogueScore: number | null;
   agentType: string;
+  createdAt: Date;
+}
+
+export interface ArySubmissionData {
+  id: string;
+  teamId: string;
   createdAt: Date;
 }
 
@@ -117,13 +125,16 @@ export function mapToCompetition(race: AryRaceData, now: Date = new Date()): Com
  * ARY 数据 → RacingEntrySnapshot[]
  */
 export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
-  const { teams, leaderboardEntries, teamArchives, feedbackThreads } = race;
+  const { teams, leaderboardEntries, submissions, teamArchives, feedbackThreads } = race;
 
-  // 按排名排序的榜单
   const ranked = [...leaderboardEntries].sort((a, b) => b.totalScore - a.totalScore);
   const maxScore = ranked[0]?.totalScore ?? 100;
   const archiveMap = new Map(teamArchives.map((a) => [a.teamId, a]));
   const feedbackMap = new Map(feedbackThreads.map((f) => [f.teamId, f]));
+  const submissionCountMap = submissions.reduce((map, submission) => {
+    map.set(submission.teamId, (map.get(submission.teamId) ?? 0) + 1);
+    return map;
+  }, new Map<string, number>());
 
   return teams.map((team) => {
     const rank = ranked.findIndex((e) => e.teamId === team.id);
@@ -131,46 +142,30 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
     const archive = archiveMap.get(team.id);
     const feedback = feedbackMap.get(team.id);
 
-    // roundProgress：按赛事阶段决定
     const now = new Date();
     const totalTeams = teams.length || 1;
+    const rawProgress = entry?.progress ?? null;
     let roundProgress: number;
-    if (now >= race.raceEnd) {
-      // 已结束：所有马在赛道末端 0.90~0.98，形成"冲线"画面
-      roundProgress = 0.90 + (1 - (rank + 1) / (totalTeams + 1)) * 0.08;
+    if (typeof rawProgress === "number") {
+      roundProgress = Math.max(0, Math.min(rawProgress, 1));
+    } else if (now >= race.raceEnd) {
+      roundProgress = 1;
     } else if (now < race.raceStart) {
-      // 未开赛：所有马在起跑线附近 0~0.08
-      roundProgress = ((rank) / (totalTeams + 1)) * 0.08;
+      roundProgress = 0;
     } else {
-      // 比赛中：按排名分布
-      roundProgress = entry && totalTeams > 1
-        ? 0.85 - (rank / (totalTeams - 1)) * 0.65
-        : 0.5;
+      roundProgress = 0;
     }
+
+    const submissionCount = submissionCountMap.get(team.id) ?? 0;
 
     // overallProgress：分数相对最高分的比例
     const overallProgress =
       entry && maxScore > 0 ? Math.min(entry.totalScore / maxScore, 1) : 0.5;
 
-    // status
-    let status = deriveStatus(entry, race);
-    // 比赛中最后一个为 stale（模拟离线）
-    if (now >= race.raceStart && now < race.raceEnd && rank === totalTeams - 1) {
-      status = "stale";
-    }
+    const status = deriveStatus(entry, race, roundProgress);
 
-    // lastMessage — 优先真实反馈，否则 mock
+    // lastMessage — 优先真实反馈，否则不显示
     const lastMsg = feedback?.messages?.slice(-1)[0];
-    const mockMessages = [
-      "正在优化边界条件处理",
-      "已完成需求分析阶段",
-      "开始编写核心算法",
-      "Token 消耗优化中",
-      "准备提交下一版方案",
-      "测试用例通过率提升中",
-      "正在 review 代码质量",
-      "调试内存占用问题",
-    ];
     const lastMessage: RidingMessageSnapshot | undefined = lastMsg
       ? {
           messageId: `msg-${team.id}`,
@@ -182,16 +177,7 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
           createdAt: lastMsg.createdAt.toISOString(),
           displayMode: "ticker",
         }
-      : {
-          messageId: `msg-mock-${team.id}`,
-          entryId: team.id,
-          source: "dc",
-          type: "progress_update",
-          severity: "info",
-          summary: mockMessages[rank >= 0 ? rank % mockMessages.length : 0],
-          createdAt: new Date().toISOString(),
-          displayMode: "bubble",
-        };
+      : undefined;
 
     return {
       entryId: team.id,
@@ -200,14 +186,15 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
       cockpitId: undefined,
       caProvider: mapAgentType(archive?.agentType),
       rank: rank >= 0 ? rank + 1 : undefined,
-      rankDelta: rank >= 0 ? (rank < 3 ? 1 : rank > 5 ? -1 : 0) : undefined, // mock: 前列上升，后列下降
+      rankDelta: undefined,
       score: entry?.totalScore,
       overallProgress,
       roundProgress,
-      phaseProgress: roundProgress, // mock：临时等同 roundProgress
-      currentPhase: "DEV",          // mock
+      phaseProgress: roundProgress,
+      currentPhase: submissionCount > 2 ? "REL" : submissionCount > 0 ? "DEV" : "PRD",
       costTokens: archive?.tokenUsed ?? 0,
-      costUsd: (archive?.tokenUsed ?? 0) * 0.0001, // mock 费率
+      submissionCount,
+      costUsd: (archive?.tokenUsed ?? 0) * 0.0001,
       riskLevel: (archive?.antiCheatPenalty ?? 0) > 0 ? "medium" : "low",
       obstacleCount: 0,             // mock
       violationCount: (archive?.antiCheatPenalty ?? 0) > 0 ? 1 : 0,
@@ -356,13 +343,14 @@ function mapAgentType(agentType?: string): "codex" | "claude" | "other" {
 function deriveStatus(
   entry: AryLeaderboardEntryData | undefined,
   race: AryRaceData,
+  roundProgress: number,
 ): RacingEntrySnapshot["status"] {
   const now = new Date();
   if (now >= race.raceEnd) return "finished";
   if (!entry) return "idle";
-  if (entry.totalScore >= 80) return "sprinting";
-  if (entry.totalScore >= 50) return "running";
-  return "running";
+  if (roundProgress >= 0.95) return "sprinting";
+  if (roundProgress > 0) return "running";
+  return "idle";
 }
 
 function getRaceLivePhase(

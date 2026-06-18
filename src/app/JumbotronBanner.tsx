@@ -17,7 +17,6 @@ interface Props {
 
 export default function JumbotronBanner({ items }: Props) {
   const [current, setCurrent] = useState(0);
-  const [paused, setPaused] = useState(false);
 
   const next = useCallback(() => {
     setCurrent((c) => (c + 1) % items.length);
@@ -29,21 +28,17 @@ export default function JumbotronBanner({ items }: Props) {
 
   // 自动轮播
   useEffect(() => {
-    if (paused || items.length <= 1) return;
+    if (items.length <= 1) return;
     const timer = setInterval(next, 8000);
     return () => clearInterval(timer);
-  }, [paused, items.length, next]);
+  }, [items.length, next]);
 
   if (items.length === 0) return null;
 
   const item = items[current];
 
   return (
-    <div
-      className="jt-banner"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
+    <div className="jt-banner">
       {/* 导航 */}
       <div className="jt-banner-nav">
         <span className="jt-banner-label">🏇 ARY 实时赛况</span>
@@ -60,9 +55,6 @@ export default function JumbotronBanner({ items }: Props) {
         </div>
         <div className="jt-banner-controls">
           <button onClick={prev} title="上一个">◀</button>
-          <button onClick={() => setPaused(!paused)} title={paused ? "播放" : "暂停"}>
-            {paused ? "▶" : "⏸"}
-          </button>
           <button onClick={next} title="下一个">▶</button>
           <span className="jt-banner-counter">{current + 1}/{items.length}</span>
           <a href={`/jumbotron/${item.raceId}`} target="_blank" style={{color:"#c34e36",fontSize:12,textDecoration:"none",marginLeft:8,fontWeight:600}}>🔲 全屏</a>

@@ -7,6 +7,7 @@ import {
   mapToCompetition,
   type AryRaceData,
 } from "@/lib/jumbotron/adapter";
+import { normalizeTrackId, parseRaceTrackConfigJson } from "@/lib/jumbotron/track-config";
 import type { RaceSnapshot } from "@/lib/jumbotron/track-runtime/types";
 import fs from "node:fs";
 import path from "node:path";
@@ -35,6 +36,9 @@ export async function generateRaceSnapshot(raceId: string): Promise<RaceSnapshot
       },
       leaderboardEntries: {
         orderBy: [{ totalScore: "desc" }, { createdAt: "asc" }],
+      },
+      submissions: {
+        orderBy: { createdAt: "desc" },
       },
       teamArchives: {
         orderBy: { totalScore: "desc" },
@@ -72,11 +76,17 @@ export async function generateRaceSnapshot(raceId: string): Promise<RaceSnapshot
       id: e.id,
       teamId: e.teamId,
       totalScore: e.totalScore,
+      progress: e.progress,
       taskScore: e.taskScore,
       tokenScore: e.tokenScore,
       dialogueScore: e.dialogueScore,
       agentType: e.agentType,
       createdAt: e.createdAt,
+    })),
+    submissions: race.submissions.map((s) => ({
+      id: s.id,
+      teamId: s.teamId,
+      createdAt: s.createdAt,
     })),
     teamArchives: race.teamArchives.map((a) => ({
       teamId: a.teamId,
@@ -113,10 +123,13 @@ export async function generateRaceSnapshot(raceId: string): Promise<RaceSnapshot
   kpis.activeRiders = entries.filter((e) => e.status !== "stale" && e.status !== "idle").length;
 
   // 5. 组装快照
+  const trackConfig = parseRaceTrackConfigJson(race.trackConfigJson);
+
   const snapshot: RaceSnapshot = {
     generatedAt: now.toISOString(),
     raceId,
-    trackId: "oval-track", // 默认赛道，可由 Organizer 配置
+    trackId: normalizeTrackId(race.trackId),
+    trackConfig: trackConfig ?? undefined,
     competition,
     entries,
     kpis,
@@ -152,6 +165,13 @@ export function listSnapshotIds(): string[] {
     .readdirSync(SNAPSHOT_DIR)
     .filter((f) => f.endsWith(".json"))
     .map((f) => f.replace(".json", ""));
+}
+
+export function deleteRaceSnapshot(raceId: string): void {
+  const filePath = path.join(SNAPSHOT_DIR, `${raceId}.json`);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
 }
 
 function ensureSnapshotDir(): void {

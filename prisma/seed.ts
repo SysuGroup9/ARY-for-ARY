@@ -48,6 +48,45 @@ async function main() {
     ),
   );
 
+  const activeAssistants = await Promise.all(
+    Array.from({ length: 8 }, (_, i) =>
+      prisma.user.create({
+        data: {
+          id: `rider_active_assistant_${String(i + 1).padStart(2, "0")}`,
+          username: `rider_active_assistant_${String(i + 1).padStart(2, "0")}`,
+          passwordHash: riderPw,
+          role: "RIDER",
+        },
+      }),
+    ),
+  );
+
+  const signupMembers = await Promise.all(
+    Array.from({ length: 3 }, (_, i) =>
+      prisma.user.create({
+        data: {
+          id: `rider_signup_member_${String(i + 1).padStart(2, "0")}`,
+          username: `rider_signup_member_${String(i + 1).padStart(2, "0")}`,
+          passwordHash: riderPw,
+          role: "RIDER",
+        },
+      }),
+    ),
+  );
+
+  const finishedMembers = await Promise.all(
+    Array.from({ length: 6 }, (_, i) =>
+      prisma.user.create({
+        data: {
+          id: `rider_finished_member_${String(i + 1).padStart(2, "0")}`,
+          username: `rider_finished_member_${String(i + 1).padStart(2, "0")}`,
+          passwordHash: riderPw,
+          role: "RIDER",
+        },
+      }),
+    ),
+  );
+
   // ---- 队伍名称池 ----
   const teamNames = [
     "极速排序队", "奶茶码农", "Bug 粉碎机",
@@ -64,6 +103,7 @@ async function main() {
     data: {
       id: "race_active",
       cloudStudioUrl: "https://cloudstudio.net/",
+      trackId: "oval-track",
       displayHighlightCount: 3,
       displayShowOrganizerComment: true,
       displayShowRiderCode: true,
@@ -110,7 +150,7 @@ async function main() {
         members: {
           create: [
             { displayName: riders[i].username, userId: riders[i].id },
-            { displayName: `${teamNames[i]}助理` },
+            { displayName: activeAssistants[i].username, userId: activeAssistants[i].id },
           ],
         },
       },
@@ -182,6 +222,7 @@ async function main() {
     data: {
       id: "race_signup",
       cloudStudioUrl: "https://cloudstudio.net/",
+      trackId: "oval-track",
       displayHighlightCount: 3,
       displayShowOrganizerComment: true,
       displayShowRiderCode: false,
@@ -225,7 +266,7 @@ async function main() {
         members: {
           create: [
             { displayName: riders[i + 8].username, userId: riders[i + 8].id },
-            { displayName: `${signupTeamNames[i]}组员` },
+            { displayName: signupMembers[i].username, userId: signupMembers[i].id },
           ],
         },
       },
@@ -239,6 +280,7 @@ async function main() {
     data: {
       id: "race_finished",
       cloudStudioUrl: "",
+      trackId: "oval-track",
       displayHighlightCount: 3,
       displayShowOrganizerComment: true,
       displayShowRiderCode: true,
@@ -288,7 +330,7 @@ async function main() {
         members: {
           create: [
             { displayName: riders[riderIdx].username, userId: riders[riderIdx].id },
-            { displayName: `${finishedTeamNames[i]}成员` },
+            { displayName: finishedMembers[i].username, userId: finishedMembers[i].id },
           ],
         },
       },

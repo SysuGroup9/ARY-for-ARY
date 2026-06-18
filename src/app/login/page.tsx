@@ -1,6 +1,5 @@
 import { loginAction, registerAction } from "@/app/actions";
 import {
-  AudienceEntryPanel,
   AuthTabsPanel,
   HeroSection,
   Panel,
@@ -34,7 +33,17 @@ export default async function LoginPage() {
         </Panel>
 
         <div className="sidebar">
-          <AudienceEntryPanel />
+          <Panel title="登录说明" eyebrow="Entry">
+            <div className="stack">
+              <strong>这里是唯一的身份进入入口。</strong>
+              <p className="muted">
+                公开观众浏览统一在首页完成；如果你要报名、提交代码或管理比赛，请先在这里登录或注册。
+              </p>
+              <a className="button" href="/">
+                返回公开首页
+              </a>
+            </div>
+          </Panel>
           <SeedAccountsPanel />
         </div>
       </section>

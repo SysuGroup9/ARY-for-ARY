@@ -23,6 +23,7 @@ import {
   RunnerApiPanel,
   aryStyles,
 } from "@/app/_components/ary-shared";
+import SubmissionFormClient from "@/app/_components/submission-form-client";
 import { RiderCodeVisibilityCheckbox } from "@/app/_components/rider-code-visibility-checkbox";
 import { loadDatabaseUser } from "@/lib/auth";
 import { formatDateTime, formatRelativeRole } from "@/lib/format";
@@ -36,13 +37,10 @@ import {
 } from "@/lib/runner-task-helpers";
 import { getTeamForCaptain } from "@/lib/services/teams";
 import { getRoleCapabilities } from "@/lib/viewer-access";
-import { redirect } from "next/navigation";
 import JumbotronInline from "@/app/JumbotronInline";
 import JumbotronBanner from "@/app/JumbotronBanner";
 import { loadRaceSnapshot } from "@/lib/services/race-snapshot";
-import fs from "node:fs";
-import path from "node:path";
-import type { TrackProfile } from "@/lib/jumbotron/track-runtime/types";
+import { getEffectiveTrackProfileFromSnapshot } from "@/lib/jumbotron/track-config";
 
 type RiderTeamMap = Map<string, Awaited<ReturnType<typeof getTeamForCaptain>>>;
 
@@ -50,25 +48,16 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const sessionUser = await loadDatabaseUser();
-  if (!sessionUser) {
-    redirect("/login");
-  }
 
   const races = await listRaces();
   const grouped = groupRacesByPhase(races);
-  const { canManage, canRide } = getRoleCapabilities(sessionUser.role);
+  const { canManage, canRide } = getRoleCapabilities(sessionUser?.role ?? null);
 
   // 加载各赛事的 Jumbotron 快照（如果已生成）
   const jumbotronMap = new Map(
     races.map((race) => {
       const snapshot = loadRaceSnapshot(race.id);
-      let trackProfile: TrackProfile | null = null;
-      if (snapshot) {
-        const tpPath = path.join(process.cwd(), "public", "assets", "tracks", snapshot.trackId, "track.profile.json");
-        if (fs.existsSync(tpPath)) {
-          trackProfile = JSON.parse(fs.readFileSync(tpPath, "utf-8")) as TrackProfile;
-        }
-      }
+      const trackProfile = snapshot ? getEffectiveTrackProfileFromSnapshot(snapshot) : null;
       return [race.id, { snapshot, trackProfile }] as const;
     }),
   );
@@ -77,7 +66,7 @@ export default async function HomePage() {
     ? await Promise.all(
         races.map(async (race) => ({
           raceId: race.id,
-          team: await getTeamForCaptain(race.id, sessionUser.id),
+          team: sessionUser ? await getTeamForCaptain(race.id, sessionUser.id) : null,
         })),
       )
     : [];
@@ -105,26 +94,38 @@ export default async function HomePage() {
   return (
     <main>
       <JumbotronBanner items={bannerItems} />
-      <HeroSection mode="member" />
+      <HeroSection mode={sessionUser ? "member" : "audience"} />
 
       <section className="shell">
         <aside className="sidebar">
           <Panel title="账户中心" eyebrow="Auth">
-            <div className="stack">
-              <div className="identity-card">
-                <strong>{sessionUser.username}</strong>
-                <span>{formatRelativeRole(sessionUser.role)}</span>
+            {sessionUser ? (
+              <div className="stack">
+                <div className="identity-card">
+                  <strong>{sessionUser.username}</strong>
+                  <span>{formatRelativeRole(sessionUser.role)}</span>
+                </div>
+                <form action={logoutAction}>
+                  <button className="button-secondary" type="submit">
+                    退出登录
+                  </button>
+                </form>
               </div>
-              <form action={logoutAction}>
-                <button className="button-secondary" type="submit">
-                  退出登录
-                </button>
-              </form>
-            </div>
+            ) : (
+              <div className="stack">
+                <strong>报名、提交代码、管理赛事都需要先登录。</strong>
+                <p className="muted">
+                  当前首页只负责公开展示；如果你要作为 Organizer 或 Rider 操作比赛，请直接进入登录页。
+                </p>
+                <a className="button" href="/login">
+                  立即前往登录
+                </a>
+              </div>
+            )}
           </Panel>
 
           <RaceBrowserPanel grouped={grouped} />
-          <RunnerApiPanel />
+          {sessionUser ? <RunnerApiPanel /> : null}
         </aside>
 
         <section className="content">
@@ -142,7 +143,8 @@ export default async function HomePage() {
 
           {races.map((race) => {
             const riderTeam = teamMap.get(race.id) ?? null;
-            const canManageRace = canManage && sessionUser.id === race.organizerId;
+            const canManageRace =
+              canManage && sessionUser ? sessionUser.id === race.organizerId : false;
 
             return (
               <article className="race-panel" key={race.id}>
@@ -192,64 +194,7 @@ export default async function HomePage() {
                       title="提交代码与 Riding Record"
                       eyebrow="Submission"
                     >
-                      <form action={submitEntryAction} className="form-grid">
-                        <input name="raceId" type="hidden" value={race.id} />
-                        <label>
-                          代码文件名
-                          <input
-                            defaultValue="solution.ts"
-                            name="codeLabel"
-                            required
-                          />
-                        </label>
-                        <label>
-                          Record 文件名
-                          <input
-                            defaultValue="riding-record.txt"
-                            name="recordLabel"
-                          />
-                        </label>
-                        <label>
-                          Agent 类型
-                          <select defaultValue="OPENAI" name="agentType">
-                            <option value="CLAUDE">Claude</option>
-                            <option value="COPILOT">Copilot</option>
-                            <option value="DEEPSEEK">DeepSeek</option>
-                            <option value="ZHIPU">Zhipu</option>
-                            <option value="OPENAI">OpenAI</option>
-                            <option value="CUSTOM">Custom</option>
-                          </select>
-                        </label>
-                        <label>
-                          Token 消耗
-                          <input
-                            defaultValue={1200}
-                            min={0}
-                            name="tokenUsed"
-                            type="number"
-                          />
-                        </label>
-                        <label className="full">
-                          代码内容
-                          <textarea
-                            defaultValue={
-                              "export function solve(input: number[]) {\n  return [...input].sort((a, b) => a - b);\n}"
-                            }
-                            name="codeContent"
-                            required
-                            rows={8}
-                          />
-                        </label>
-                        <label className="full">
-                          Riding Record
-                          <textarea
-                            defaultValue="先澄清输入边界，再验证复杂度，最后用正反例检查排序稳定性。"
-                            name="ridingRecord"
-                            rows={6}
-                          />
-                        </label>
-                        <button type="submit">进入待评测队列</button>
-                      </form>
+                      <SubmissionFormClient action={submitEntryAction} raceId={race.id} />
                     </Panel>
                   </section>
                 ) : null}
@@ -273,7 +218,7 @@ export default async function HomePage() {
                     <div className="feedback-list">
                       {race.feedbackThreads
                         .filter(
-                          (thread) => thread.team.captainId === sessionUser.id,
+                          (thread) => sessionUser && thread.team.captainId === sessionUser.id,
                         )
                         .map((thread) => (
                           <div className="feedback-thread" key={thread.id}>
@@ -545,17 +490,18 @@ export default async function HomePage() {
                   )}
                 </Panel>
 
-                {/* Jumbotron 嵌入式大屏 */}
-                {(() => {
-                  const jt = jumbotronMap.get(race.id);
-                  return (
-                    <JumbotronInline
-                      raceId={race.id}
-                      snapshot={jt?.snapshot ?? null}
-                      trackProfile={jt?.trackProfile ?? null}
-                    />
-                  );
-                })()}
+                {race.phase === "active" || race.phase === "frozen" ? (
+                  (() => {
+                    const jt = jumbotronMap.get(race.id);
+                    return (
+                      <JumbotronInline
+                        raceId={race.id}
+                        snapshot={jt?.snapshot ?? null}
+                        trackProfile={jt?.trackProfile ?? null}
+                      />
+                    );
+                  })()
+                ) : null}
               </article>
             );
           })}

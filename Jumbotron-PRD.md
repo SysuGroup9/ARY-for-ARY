@@ -48,7 +48,7 @@ ARY 数据库 (Race / Team / Submission / TeamArchive / LeaderboardEntry)
   │
   ├─→ [Organizer 触发] generateRaceSnapshot()
   │     └─→ Adapter: AryDerivedDataProvider
-  │           ├─→ RacingEntrySnapshot[]  （映射 + mock 补全）
+  │           ├─→ RacingEntrySnapshot[]  （映射 + 真实 progress 投影）
   │           ├─→ Competition + CompetitionKPI
   │           ├─→ RidingMessageSnapshot[]
   │           └─→ AttentionItem[]
@@ -160,8 +160,10 @@ src/
 | 马匹位置：roundProgress → centerline → HorsePose             | track-runtime 全链路计算                    |
 | 每匹马：排名 badge（金/银/铜/灰）+ 队名标签 + 彩色环 + emoji   | SVG `<g>` 分组渲染                        |
 | 12 种队伍颜色 + 12 种 emoji 循环分配                           | `teamColors[]` / `teamEmoji[]`          |
-| TOP3 展示：排名 ↑↓、分数、CA 类型                            | 左侧 150px 面板                             |
-| Entry Legend（颜色/emoji → 队名对应）                         | TOP3 下方图例条                             |
+| TOP3 展示：分数、CA 类型                                       | 左侧 150px 面板                             |
+| 活跃骑手 TOP3（按 submission count）                           | TOP3 下方独立面板                           |
+| Entry Legend（颜色/emoji → 队名对应）                         | 活跃骑手下方图例条                          |
+| 小地图 Minimap                                                | 赛道右下角缩略总览                          |
 | 底部 Ticker：风险/违规/消息滚动                                | CSS `@keyframes scroll` 30s               |
 | Footer：Theme / Organizer / Phase / Time                       | 固定底部                                    |
 | Debug Mode（D 键）：中心线、采样点、s 值                       | SVG overlay 切换                            |
@@ -214,30 +216,34 @@ Track Profile 是赛道的唯一运行时事实来源。它描述画布尺寸、
 
 ### 4.2 ARY → RacingEntrySnapshot 映射
 
-| Jumbotron 字段                                                     | ARY 数据来源                 | 映射方式                       | 数据状态                        |
-| ------------------------------------------------------------------ | ---------------------------- | ------------------------------ | ------------------------------- |
-| entryId / riderName / projectName                                  | Team                         | 直接映射                       | 真实                            |
-| rank / score / rankDelta                                           | LeaderboardEntry             | 排序 + 模拟                    | rank/score 真实，rankDelta mock |
-| roundProgress                                                      | 排名 → 赛道区间             | 见下方分阶段规则               | 推导                            |
-| overallProgress                                                    | score / maxScore             | 线性映射                       | 推导                            |
-| caProvider                                                         | TeamArchive.agentType        | CLAUDE→claude, COPILOT→codex | 真实                            |
-| costTokens                                                         | TeamArchive.tokenUsed        | 直接映射                       | 真实                            |
-| riskLevel / violationCount                                         | antiCheatPenalty             | >0→medium/low, >0→1/0        | 推导                            |
-| status                                                             | LeaderboardEntry + racePhase | 见下方                         | 推导                            |
-| lastMessage                                                        | FeedbackThread               | 截取 50 字，无则 mock          | 真实+mock                       |
-| phaseProgress / currentPhase / costUsd / obstacleCount / cockpitId | —                           | mock                           | **待 DC 接入**            |
+| Jumbotron 字段                                                     | ARY 数据来源                 | 映射方式                                | 数据状态                 |
+| ------------------------------------------------------------------ | ---------------------------- | --------------------------------------- | ------------------------ |
+| entryId / riderName / projectName                                  | Team                         | 直接映射                                | 真实                     |
+| rank / score                                                       | LeaderboardEntry             | 排序                                    | 真实                     |
+| roundProgress                                                      | LeaderboardEntry.progress    | 优先消费 Runner 回传的 0~1 progress      | 真实/缺失时按阶段兜底    |
+| overallProgress                                                    | score / maxScore             | 线性映射                                | 推导                     |
+| submissionCount                                                    | Submission                   | 按 teamId 计数                           | 真实                     |
+| caProvider                                                         | TeamArchive.agentType        | CLAUDE→claude, COPILOT→codex            | 真实                     |
+| costTokens                                                         | TeamArchive.tokenUsed        | 直接映射                                | 真实                     |
+| riskLevel / violationCount                                         | antiCheatPenalty             | >0→medium/low, >0→1/0                   | 推导                     |
+| status                                                             | progress + racePhase         | 见下方                                  | 推导                     |
+| lastMessage                                                        | FeedbackThread               | 截取 50 字，无消息则不展示               | 真实                     |
+| phaseProgress / currentPhase / costUsd / obstacleCount / cockpitId | —                           | currentPhase 由 submissionCount 弱推导等 | 部分推导 / 部分待接入    |
 
-**roundProgress 分阶段规则**:
+**roundProgress 当前规则**:
 
-- 已结束赛事：0.90~0.98（终点附近聚集）
-- 未开赛赛事：0~0.08（起跑线附近）
-- 进行中赛事：0.15~0.85（按排名分散分布）
+- 若 `LeaderboardEntry.progress` 存在：直接裁剪到 `0~1`
+- 已结束赛事且缺失 progress：兜底为 `1`
+- 未开赛赛事：`0`
+- 进行中但暂缺 progress：`0`
 
-**status 分阶段规则**:
+**status 当前规则**:
 
 - `now >= raceEnd` → `"finished"`
-- `now < raceStart` → `"idle"`
-- 比赛中，有高分 → `"sprinting"`，一般 → `"running"`，最后一名 → `"stale"`
+- 无 leaderboard entry → `"idle"`
+- `roundProgress >= 0.95` → `"sprinting"`
+- `roundProgress > 0` → `"running"`
+- 其余 → `"idle"`
 
 ### 4.3 DCRaceDataProvider 预留接口
 
@@ -375,10 +381,13 @@ npm run dev
 
 ### 演示账号
 
-| 角色      | 用户名                     | 密码         |
-| --------- | -------------------------- | ------------ |
-| Organizer | organizer_demo             | organizer123 |
-| Rider     | rider_alice ~ rider_olivia | rider123     |
+| 角色      | 用户名范围                                                | 密码         |
+| --------- | --------------------------------------------------------- | ------------ |
+| Organizer | organizer_demo                                            | organizer123 |
+| Rider     | rider_alice ~ rider_olivia                                | rider123     |
+| Rider     | rider_active_assistant_01 ~ rider_active_assistant_08     | rider123     |
+| Rider     | rider_signup_member_01 ~ rider_signup_member_03           | rider123     |
+| Rider     | rider_finished_member_01 ~ rider_finished_member_06       | rider123     |
 
 ### Debug 操作
 
@@ -398,7 +407,7 @@ npm run dev
 
 | 限制                      | 影响范围                                              | 解决方向                          |
 | ------------------------- | ----------------------------------------------------- | --------------------------------- |
-| DC 侧数据未接入           | phaseProgress、RidingMessage 类型、实时 Token 为 mock | DCRaceDataProvider 接口已预留     |
+| DC 侧数据未接入           | 少量展示字段仍为推导值，未接入企业侧实时源             | DCRaceDataProvider 接口已预留     |
 | 快照为静态 JSON           | 不实时更新                                            | 未来可用 WebSocket 推送或定时轮询 |
 | Calibrator 无消息区域编辑 | no-bubble-zone / message-zone 未实现                  | P1 功能                           |
 | 气泡避让简化              | 多气泡可能重叠                                        | P2 增强                           |
@@ -406,9 +415,9 @@ npm run dev
 
 ### 9.2 诚实声明
 
-- ARY 侧真实数据：entryId / riderName / projectName / rank / score / caProvider / costTokens / riskLevel / violationCount
-- ARY 侧推导数据：roundProgress / overallProgress / status
-- Mock 数据：phaseProgress / currentPhase / costUsd / obstacleCount / cockpitId / 部分 RidingMessage 内容
+- ARY 侧真实数据：entryId / riderName / projectName / rank / score / progress / submissionCount / caProvider / costTokens / riskLevel / violationCount
+- ARY 侧推导数据：overallProgress / status / currentPhase（弱推导）
+- 仍属 PoC 推导或待接入字段：phaseProgress / costUsd / obstacleCount / cockpitId
 - **数据链路已打通的**：ARY DB → Adapter → RaceSnapshot → track-runtime → HorsePose → JumbotronClient
 - **待 DC 接通的**：DCRaceDataProvider 接口替换实现
 

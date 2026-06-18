@@ -1,0 +1,1 @@
+ALTER TABLE "Race" ADD COLUMN "trackConfigJson" TEXT NOT NULL DEFAULT '';

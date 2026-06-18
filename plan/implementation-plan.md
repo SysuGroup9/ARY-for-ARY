@@ -312,3 +312,109 @@
 - 核心页面与 API 实现
 - Runner 协议落地
 - 文档同步
+
+## 11. 第二周修复计划（基于现有 Jumbotron 实现继续收口）
+
+当前仓库已经存在可运行的 Jumbotron 体系，核心链路为：
+
+- `src/app/jumbotron/[raceId]/page.tsx`
+- `src/app/jumbotron/[raceId]/JumbotronClient.tsx`
+- `src/lib/services/race-snapshot.ts`
+- `src/lib/jumbotron/adapter.ts`
+
+第二周不改路线，不重做大屏，而是在这套实现上完成以下修复。
+
+### 11.1 任务顺序
+
+1. 首页公开访问与登录分离
+2. Organizer 创建比赛补齐 Jumbotron / 展示选项
+3. Jumbotron 从 mock 进度切换到真实 progress 数据
+4. 比赛内容修改 / 比赛结束后的进度投影与 snapshot 清理
+
+### 11.2 首页公开访问与登录分离
+
+目标：
+
+- `/` 改为 Audience 可直接访问的公开首页
+- 未登录用户不再被强制跳转到 `/login`
+- `/login` 保持独立登录入口
+- 已登录用户仍可在首页看到各自角色的操作入口
+
+实施约束：
+
+- 复用现有公开浏览组件，不新增第二套首页骨架
+- 不改变 Audience 页面“公开可浏览”的产品结论
+- 登录态只影响 Organizer / Rider 操作区是否展示，不影响公开内容可见性
+- 首页内容按比赛阶段分层：
+  - `registration` / `preparation`：只展示赛事说明、报名信息、任务入口
+  - `active` / `frozen`：增加公开榜单与 Jumbotron 大屏
+  - `finished`：切到最终公开结果和赛后披露内容
+
+### 11.3 Organizer 创建比赛补齐 Jumbotron / 展示选项
+
+目标：
+
+- 延续当前创建比赛表单风格补齐配置，不另外发明新后台
+- 让 Organizer 在创建时就能配置大屏展示和公开资源
+
+至少补齐：
+
+- Jumbotron 是否启用
+- 赛道/底图资源选择
+- Audience 可见性
+- 任务包真实链接或真实资源入口
+
+验收标准：
+
+- 页面中出现真实按钮、真实链接或真实资源选择控件
+- 不再只保留“命名文本”给用户自己脑补后续动作
+
+### 11.4 Jumbotron 切换为真实 progress 驱动
+
+当前问题：
+
+- `src/lib/jumbotron/adapter.ts` 里 `roundProgress` 由 rank 和时间阶段伪造
+- `rankDelta`、`currentPhase: "DEV"`、最后一名强制 `stale`、随机消息等仍带明显 mock 痕迹
+
+修复要求：
+
+- 马匹位置来自企业 Runner 返回的真实 progress 值
+- 活跃骑手排名来自主动提交次数，不与总榜排名混淆
+- 无真实来源的数据项要弱化或移除，不继续伪装成真实数据
+
+验收标准：
+
+- 同一赛事中不同队伍 progress 不再按排名均匀摊开
+- submission 次数更多的队伍在“活跃骑手”维度中靠前
+- mock `rankDelta` / fake message / 强制 stale 等逻辑被删除或停用
+- 首页在不同阶段只出现对应内容块，不再让报名阶段也展示大屏
+
+### 11.5 修改比赛内容和比赛结束时清理投影
+
+目标：
+
+- 当 Organizer 修改题目、训练数据或触发新一轮比赛语义时，旧的 progress 投影不能残留
+- 当比赛结束时，展示来源要切到最终评分榜单，而不是继续沿用 progress leaderboard
+
+至少执行：
+
+- 清空该比赛的 `LeaderboardEntry`
+- 删除 `public/assets/snapshots/<raceId>.json`
+- 明确区分“比赛中进度榜单”与“比赛结束最终榜单”的数据来源
+
+### 11.6 文档同步要求
+
+以下文档必须与代码修复保持一致：
+
+- `ROADMAP.md`
+- `plan/implementation-plan.md`
+- 相关演示/说明文档（若其中写了旧的首页访问方式或旧的大屏数据语义）
+
+同步重点：
+
+- 首页现在是公开 Audience 首页
+- 登录页是独立入口
+- Jumbotron 不再使用 rank-based fake progress
+- 活跃骑手 = 主动提交次数
+- 修改比赛内容后会清空 progress 投影和 snapshot
+- 赛后榜单使用最终评分来源

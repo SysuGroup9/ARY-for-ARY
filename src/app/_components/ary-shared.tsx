@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { getDemoCredentials } from "@/lib/demo-credentials";
+import CreateRaceFormClient from "@/app/_components/create-race-form-client";
 import { formatDateTime } from "@/lib/format";
 import {
   getRacePhaseLabel,
@@ -45,16 +45,16 @@ export function HeroSection({
         "Organizer 可创建赛事并配置赛后披露边界。",
         "Rider 可真实注册、报名、提交代码和 Riding Record。",
         "Runner 可通过 API 拉取任务并回传评分。",
-        "Audience 可通过观众入口查看公开赛事与榜单。",
+        "Audience 可直接在首页查看公开赛事与榜单。",
       ],
     },
     auth: {
       lede:
-        "网站入口已统一收敛到登录页。Organizer 和 Rider 登录后进入完整工作区，Audience 可从这里直接进入公开观众视图。",
+        "登录页现在只承担身份进入。Organizer 和 Rider 登录后进入完整工作区；公开观众浏览统一在首页完成，不再保留单独观众入口。",
       items: [
         "Organizer 登录后可进入赛事创建与管理区。",
         "Rider 登录后可报名、提交代码和发送反馈。",
-        "Audience 无需账号，可直接进入公开观众入口。",
+        "公开赛事浏览统一收敛到首页。",
         "Runner API 仍独立使用 bearer token，不受网页登录门禁影响。",
       ],
     },
@@ -149,21 +149,6 @@ export function AuthTabsPanel({
   );
 }
 
-export function AudienceEntryPanel() {
-  return (
-    <Panel title="观众入口" eyebrow="Audience">
-      <div className="stack">
-        <p className="muted">
-          不需要账号即可进入公开观众视图，查看公开赛事、公开榜单和赛后展示。
-        </p>
-        <Link className="button button-secondary audience-link" href="/audience">
-          以 Audience 进入
-        </Link>
-      </div>
-    </Panel>
-  );
-}
-
 export function SeedAccountsPanel() {
   const credentials = getDemoCredentials();
 
@@ -228,6 +213,9 @@ export function RunnerApiPanel() {
 }
 
 export function PublicRaceSections({ race }: { race: RaceListItem }) {
+  const isRunningPhase = race.phase === "active" || race.phase === "frozen";
+  const isFinishedPhase = race.phase === "finished";
+
   return (
     <>
       <header className="race-panel__header">
@@ -248,7 +236,16 @@ export function PublicRaceSections({ race }: { race: RaceListItem }) {
           <dl className="detail-grid">
             <div>
               <dt>题目包</dt>
-              <dd>{race.taskPackageLabel}</dd>
+              <dd>
+                {race.taskPackageLabel}
+                {race.cloudStudioUrl ? (
+                  <span> · <a href={race.cloudStudioUrl}>打开任务入口</a></span>
+                ) : null}
+              </dd>
+            </div>
+            <div>
+              <dt>赛道</dt>
+              <dd>{race.trackId}</dd>
             </div>
             <div>
               <dt>CloudStudio</dt>
@@ -279,44 +276,108 @@ export function PublicRaceSections({ race }: { race: RaceListItem }) {
           </dl>
         </Panel>
 
-        <Panel title="公开榜单" eyebrow="Leaderboard">
-          {shouldHidePublicLeaderboard(race.phase) ? (
-            <p className="muted">当前处于封榜阶段，公开榜单暂时隐藏。</p>
-          ) : race.leaderboardEntries.length === 0 ? (
-            <p className="muted">尚未同步榜单。</p>
-          ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>排名</th>
-                  <th>队伍</th>
-                  <th>总分</th>
-                  <th>任务</th>
-                  <th>Token</th>
-                  <th>对话</th>
-                  <th>Agent</th>
-                </tr>
-              </thead>
-              <tbody>
-                {race.leaderboardEntries.map((entry) => (
-                  <tr key={entry.id}>
-                    <td>{entry.rank}</td>
-                    <td>{entry.team.name}</td>
-                    <td>{entry.totalScore}</td>
-                    <td>{entry.taskScore ?? "-"}</td>
-                    <td>{entry.tokenScore ?? "-"}</td>
-                    <td>{entry.dialogueScore ?? "-"}</td>
-                    <td>{getAgentLabel(entry.agentType)}</td>
+        {isRunningPhase ? (
+          <Panel title="过程榜单" eyebrow="Leaderboard">
+            {shouldHidePublicLeaderboard(race.phase) ? (
+              <p className="muted">当前处于封榜阶段，公开榜单暂时隐藏。</p>
+            ) : race.leaderboardEntries.length === 0 ? (
+              <p className="muted">尚未同步榜单。</p>
+            ) : (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>排名</th>
+                    <th>队伍</th>
+                    <th>总分</th>
+                    <th>任务</th>
+                    <th>Token</th>
+                    <th>对话</th>
+                    <th>Agent</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Panel>
+                </thead>
+                <tbody>
+                  {race.leaderboardEntries.map((entry) => (
+                    <tr key={entry.id}>
+                      <td>{entry.rank}</td>
+                      <td>{entry.team.name}</td>
+                      <td>{entry.totalScore}</td>
+                      <td>{entry.taskScore ?? "-"}</td>
+                      <td>{entry.tokenScore ?? "-"}</td>
+                      <td>{entry.dialogueScore ?? "-"}</td>
+                      <td>{getAgentLabel(entry.agentType)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </Panel>
+        ) : isFinishedPhase ? (
+          <Panel title="最终公开结果" eyebrow="Final Result">
+            {race.harnessEntries.length > 0 ? (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>队伍</th>
+                    <th>Harness</th>
+                    <th>Reasoning</th>
+                    <th>Keyword</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {race.harnessEntries.map((entry) => (
+                    <tr key={entry.id}>
+                      <td>{entry.team.name}</td>
+                      <td>{entry.harnessScore}</td>
+                      <td>{entry.reasoningScore ?? "-"}</td>
+                      <td>{entry.keywordScore ?? "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : race.leaderboardEntries.length > 0 ? (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>排名</th>
+                    <th>队伍</th>
+                    <th>总分</th>
+                    <th>Agent</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {race.leaderboardEntries.map((entry) => (
+                    <tr key={entry.id}>
+                      <td>{entry.rank}</td>
+                      <td>{entry.team.name}</td>
+                      <td>{entry.totalScore}</td>
+                      <td>{getAgentLabel(entry.agentType)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="muted">最终公开结果尚未发布。</p>
+            )}
+          </Panel>
+        ) : (
+          <Panel title="当前阶段说明" eyebrow="Stage">
+            <div className="stack">
+              <p className="muted">
+                当前阶段主要展示赛事说明、报名时间和任务入口；过程榜单与赛马大屏将在比赛开始后开放。
+              </p>
+              <p>
+                当前默认赛道模板：{race.trackId}。即使比赛尚未开始，也已经绑定了统一底图，不是缺少背景图。
+              </p>
+              <p>
+                如果你是参赛者，请在比赛开始前完成组队、环境准备和题目理解。
+              </p>
+            </div>
+          </Panel>
+        )}
       </section>
 
       <section className="grid">
-        <Panel title="题目与赛后披露" eyebrow="Boundary">
+        <Panel title="题目与披露边界" eyebrow="Boundary">
           <div className="stack">
             <p>{race.taskDescription}</p>
             <p>
@@ -344,336 +405,65 @@ export function PublicRaceSections({ race }: { race: RaceListItem }) {
           </div>
         </Panel>
 
-        <Panel title="赛后展示" eyebrow="Showcase">
-          {race.highlights.length === 0 && race.harnessEntries.length === 0 ? (
-            <p className="muted">尚未发布赛后展示。</p>
-          ) : (
-            <div className="stack">
-              {race.harnessEntries.length > 0 ? (
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>队伍</th>
-                      <th>Harness</th>
-                      <th>Reasoning</th>
-                      <th>Keyword</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {race.harnessEntries.map((entry) => (
-                      <tr key={entry.id}>
-                        <td>{entry.team.name}</td>
-                        <td>{entry.harnessScore}</td>
-                        <td>{entry.reasoningScore ?? "-"}</td>
-                        <td>{entry.keywordScore ?? "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : null}
-
-              {race.highlights.map((highlight) => (
-                <div className="highlight-card" key={highlight.id}>
-                  <div className="highlight-card__top">
-                    <strong>{highlight.team.name}</strong>
-                    <span>
-                      {getAgentLabel(highlight.agentType)} / {highlight.score}
-                    </span>
+        {isFinishedPhase ? (
+          <Panel title="赛后展示" eyebrow="Showcase">
+            {race.highlights.length === 0 && race.harnessEntries.length === 0 ? (
+              <p className="muted">尚未发布赛后展示。</p>
+            ) : (
+              <div className="stack">
+                {race.highlights.map((highlight) => (
+                  <div className="highlight-card" key={highlight.id}>
+                    <div className="highlight-card__top">
+                      <strong>{highlight.team.name}</strong>
+                      <span>
+                        {getAgentLabel(highlight.agentType)} / {highlight.score}
+                      </span>
+                    </div>
+                    <p>{highlight.excerpt}</p>
+                    {race.displayShowRiderCode ? (
+                      <pre>{highlight.codeSnippet}</pre>
+                    ) : null}
                   </div>
-                  <p>{highlight.excerpt}</p>
-                  {race.displayShowRiderCode ? (
-                    <pre>{highlight.codeSnippet}</pre>
-                  ) : null}
-                </div>
-              ))}
+                ))}
 
-              {race.displayShowOrganizerComment && race.organizerComment ? (
-                <blockquote className="comment-card">
-                  {race.organizerComment}
-                </blockquote>
-              ) : null}
+                {race.displayShowOrganizerComment && race.organizerComment ? (
+                  <blockquote className="comment-card">
+                    {race.organizerComment}
+                  </blockquote>
+                ) : null}
+              </div>
+            )}
+          </Panel>
+        ) : isRunningPhase ? (
+          <Panel title="比赛进行提示" eyebrow="Live Race">
+            <div className="stack">
+              <p className="muted">
+                当前比赛处于进行中阶段，首页会展示过程榜单与赛马大屏；赛后披露内容将在比赛结束后按 Organizer 配置公开。
+              </p>
+              <p>
+                若处于封榜阶段，公开榜单会暂时隐藏，但比赛动态仍可通过大屏继续观看。
+              </p>
             </div>
-          )}
-        </Panel>
+          </Panel>
+        ) : (
+          <Panel title="报名与准备提示" eyebrow="Preparation">
+            <div className="stack">
+              <p className="muted">
+                当前仍在报名或准备阶段，首页不展示赛马大屏，避免把尚未开始的比赛误呈现为实时竞速。
+              </p>
+              <p>
+                公开可见的内容以赛事说明、时间安排和任务入口为主。
+              </p>
+            </div>
+          </Panel>
+        )}
       </section>
     </>
   );
 }
 
 export function CreateRaceForm({ action }: { action: FormAction }) {
-  return (
-    <form action={action} className="form-grid">
-      <label>
-        赛事名称
-        <input defaultValue="排序算法挑战赛" name="title" required />
-      </label>
-      <label>
-        赛事简介
-        <input
-          defaultValue="验证 Agent 在算法问题上的实现、推理与成本控制能力。"
-          name="summary"
-          required
-        />
-      </label>
-      <label>
-        题目包标签
-        <input defaultValue="sort-task-v1.zip" name="taskPackageLabel" required />
-      </label>
-      <label>
-        CloudStudio URL
-        <input defaultValue="https://cloudstudio.net/" name="cloudStudioUrl" />
-      </label>
-      <label className="full">
-        题目描述
-        <textarea
-          defaultValue="实现一个稳定排序模块，支持整数数组升序输出，并在边界输入下保持正确性。"
-          name="taskDescription"
-          required
-          rows={4}
-        />
-      </label>
-      <label className="full">
-        训练数据说明
-        <textarea
-          defaultValue="训练数据包含小规模样例、重复元素、逆序输入和空数组。"
-          name="trainingDataSummary"
-          rows={3}
-        />
-      </label>
-      <label className="full">
-        评测说明
-        <textarea
-          defaultValue="Runner 根据通过率、代码质量、推理过程和关键词覆盖度综合评分。"
-          name="evaluationNotes"
-          required
-          rows={3}
-        />
-      </label>
-      <label className="full">
-        关键词
-        <textarea
-          defaultValue="需求分析, 时间复杂度, 边界条件, 稳定性, 测试验证"
-          name="keywordsText"
-          required
-          rows={3}
-        />
-      </label>
-      <label>
-        报名开始
-        <input
-          defaultValue="2026-06-05T08:00"
-          name="signupStart"
-          required
-          type="datetime-local"
-        />
-      </label>
-      <label>
-        报名结束
-        <input
-          defaultValue="2026-06-06T08:00"
-          name="signupEnd"
-          required
-          type="datetime-local"
-        />
-      </label>
-      <label>
-        比赛开始
-        <input
-          defaultValue="2026-06-06T09:00"
-          name="raceStart"
-          required
-          type="datetime-local"
-        />
-      </label>
-      <label>
-        比赛结束
-        <input
-          defaultValue="2026-06-08T18:00"
-          name="raceEnd"
-          required
-          type="datetime-local"
-        />
-      </label>
-      <label>
-        Token 上限
-        <input defaultValue={4000} min={0} name="tokenLimit" type="number" />
-      </label>
-      <label>
-        榜单刷新粒度（分钟）
-        <input
-          defaultValue={30}
-          min={1}
-          name="updateGranularityMinutes"
-          type="number"
-        />
-      </label>
-      <label>
-        每组人数上限
-        <input defaultValue={5} min={1} name="maxTeamSize" type="number" />
-      </label>
-      <label>
-        提交间隔（小时）
-        <input
-          defaultValue={24}
-          min={1}
-          name="submissionIntervalHours"
-          type="number"
-        />
-      </label>
-      <label>
-        封榜提前量（分钟）
-        <input
-          defaultValue={30}
-          min={0}
-          name="freezeMinutesBeforeEnd"
-          type="number"
-        />
-      </label>
-      <label>
-        Highlight 数量
-        <input
-          defaultValue={3}
-          min={0}
-          name="displayHighlightCount"
-          type="number"
-        />
-      </label>
-
-      <div className="full check-grid">
-        <label className="checkbox">
-          <input defaultChecked name="hasTrainingData" type="checkbox" />
-          有训练数据
-        </label>
-        <label className="checkbox">
-          <input defaultChecked name="enableFreeze" type="checkbox" />
-          启用封榜
-        </label>
-        <label className="checkbox">
-          <input
-            defaultChecked
-            name="displayShowTrainingData"
-            type="checkbox"
-          />
-          赛后公开训练数据
-        </label>
-        <label className="checkbox">
-          <input
-            defaultChecked
-            name="displayShowOrganizerComment"
-            type="checkbox"
-          />
-          赛后公开 Organizer 评论
-        </label>
-        <label className="checkbox">
-          <input
-            defaultChecked
-            name="displayShowTopHighlights"
-            type="checkbox"
-          />
-          展示 Top Highlights
-        </label>
-        <label className="checkbox">
-          <input defaultChecked name="displayShowRiderCode" type="checkbox" />
-          赛后公开 Rider 代码
-        </label>
-      </div>
-
-      <div className="full weights-grid">
-        <label>
-          passRate 权重
-          <input
-            defaultValue={0.5}
-            min={0.1}
-            name="weightTaskPassRate"
-            step="0.1"
-            type="number"
-          />
-        </label>
-        <label>
-          codeReview 权重
-          <input
-            defaultValue={0.5}
-            min={0.1}
-            name="weightCodeReview"
-            step="0.1"
-            type="number"
-          />
-        </label>
-        <label>
-          reasoning 权重
-          <input
-            defaultValue={0.7}
-            min={0.1}
-            name="weightReasoning"
-            step="0.1"
-            type="number"
-          />
-        </label>
-        <label>
-          keyword 权重
-          <input
-            defaultValue={0.3}
-            min={0.1}
-            name="weightKeywords"
-            step="0.1"
-            type="number"
-          />
-        </label>
-        <label>
-          totalTask 权重
-          <input
-            defaultValue={0.5}
-            min={0.1}
-            name="weightTotalTask"
-            step="0.1"
-            type="number"
-          />
-        </label>
-        <label>
-          totalToken 权重
-          <input
-            defaultValue={0.3}
-            min={0.1}
-            name="weightTotalToken"
-            step="0.1"
-            type="number"
-          />
-        </label>
-        <label>
-          totalDialogue 权重
-          <input
-            defaultValue={0.2}
-            min={0.1}
-            name="weightTotalDialogue"
-            step="0.1"
-            type="number"
-          />
-        </label>
-        <label>
-          Harness reasoning 权重
-          <input
-            defaultValue={0.6}
-            min={0.1}
-            name="harnessWeightReasoning"
-            step="0.1"
-            type="number"
-          />
-        </label>
-        <label>
-          Harness keyword 权重
-          <input
-            defaultValue={0.4}
-            min={0.1}
-            name="harnessWeightKeyword"
-            step="0.1"
-            type="number"
-          />
-        </label>
-      </div>
-
-      <button type="submit">创建赛事</button>
-    </form>
-  );
+  return <CreateRaceFormClient action={action} />;
 }
 
 function AuthForm({
@@ -1036,10 +826,64 @@ export const aryStyles = `
     padding: 12px;
   }
 
-  .audience-link {
+  .local-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .picker-card {
+    display: grid;
+    gap: 10px;
+    border-radius: 16px;
+    border: 1px solid rgba(59, 43, 27, 0.1);
+    background: var(--panel-strong);
+    padding: 16px;
+  }
+
+  .button-row-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .file-chip {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .track-preview {
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid rgba(59, 43, 27, 0.12);
+    background: #f4ede4;
+  }
+
+  .track-preview img {
+    display: block;
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .auth-tabs {
@@ -1096,7 +940,8 @@ export const aryStyles = `
     .grid,
     .detail-grid,
     .weights-grid,
-    .check-grid {
+    .check-grid,
+    .local-picker-grid {
       grid-template-columns: 1fr;
     }
 

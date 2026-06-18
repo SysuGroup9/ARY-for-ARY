@@ -70,6 +70,7 @@ export interface RacingEntrySnapshot {
   phaseProgress?: number;
   currentPhase?: "PRD" | "DEV" | "REL" | "OPS" | "PM";
   costTokens?: number;
+  submissionCount?: number;
   costUsd?: number;
   riskLevel: "none" | "low" | "medium" | "high";
   obstacleCount: number;
@@ -110,6 +111,10 @@ export interface RaceSnapshot {
   generatedAt: string;
   raceId: string;
   trackId: string;
+  trackConfig?: {
+    startFinish: { s: number };
+    checkpoints: Checkpoint[];
+  };
   competition: Competition;
   entries: RacingEntrySnapshot[];
   kpis: CompetitionKPI;

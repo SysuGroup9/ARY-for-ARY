@@ -1,5 +1,5 @@
 export interface DemoCredential {
-  label: "Organizer" | "Rider";
+  label: string;
   username: string;
   password: string;
 }
@@ -12,8 +12,13 @@ export function getDemoCredentials(): DemoCredential[] {
       password: "organizer123",
     },
     {
-      label: "Rider",
-      username: "rider_demo",
+      label: "Rider Captains",
+      username: "rider_alice ~ rider_olivia",
+      password: "rider123",
+    },
+    {
+      label: "Rider Members",
+      username: "rider_active_assistant_01 ~ rider_finished_member_06",
       password: "rider123",
     },
   ];

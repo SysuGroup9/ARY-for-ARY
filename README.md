@@ -11,7 +11,7 @@
 ```bash
 npm install
 cp .env.example .env
-npx prisma migrate dev --name init
+npx prisma migrate dev --name add-track-and-progress-fields
 npx prisma generate
 npm run db:seed
 npm run dev
@@ -27,10 +27,31 @@ npm run dev
 
 ## 演示账号
 
-| 角色      | 用户名                             | 密码             |
-| --------- | ---------------------------------- | ---------------- |
-| Organizer | `organizer_demo`                 | `organizer123` |
-| Rider     | `rider_alice` ~ `rider_olivia` | `rider123`     |
+先执行：
+
+```bash
+npm run db:seed
+```
+
+seed 会写入 1 个 Organizer 账号，以及覆盖三场演示比赛中所有展示成员的 Rider 测试账号。也就是说，页面里出现的 captain、助理、组员现在都对应真实可登录账号。
+
+| 角色      | 用户名范围                                                | 密码             | 说明 |
+| --------- | --------------------------------------------------------- | ---------------- | ---- |
+| Organizer | `organizer_demo`                                          | `organizer123`   | 唯一 Organizer 示例账号 |
+| Rider     | `rider_alice` ~ `rider_olivia`                            | `rider123`       | 15 个队长账号 |
+| Rider     | `rider_active_assistant_01` ~ `rider_active_assistant_08` | `rider123`       | 进行中比赛的助理账号 |
+| Rider     | `rider_signup_member_01` ~ `rider_signup_member_03`       | `rider123`       | 报名中比赛的组员账号 |
+| Rider     | `rider_finished_member_01` ~ `rider_finished_member_06`   | `rider123`       | 已结束比赛的组员账号 |
+
+### 三场演示比赛与账号关系
+
+`prisma/seed.ts` 会生成 3 场演示比赛：
+
+- `race_active`：正在进行中的“排序算法挑战赛”
+- `race_signup`：报名中的“API 设计大赛”
+- `race_finished`：已结束的“性能优化马拉松”
+
+这 3 场比赛里页面展示出来的所有队伍成员，现在都对应数据库中的独立 `User` 账号，并且都可以使用上面的用户名和统一密码登录。
 
 ---
 
@@ -38,7 +59,7 @@ npm run dev
 
 | 路由                    | 说明                          | 权限      |
 | ----------------------- | ----------------------------- | --------- |
-| `/`                   | 主页（含 Jumbotron 轮播横幅） | 需登录    |
+| `/`                   | 公开主页（含 Jumbotron 轮播横幅） | 公开      |
 | `/jumbotron/[raceId]` | Jumbotron 全屏大屏            | 公开      |
 | `/calibrator`         | Track Profile Calibrator      | Organizer |
 
@@ -51,10 +72,12 @@ npm run dev
 | 功能             | 说明                                                         |
 | ---------------- | ------------------------------------------------------------ |
 | 赛马轮播横幅     | 主页顶部，自动 8 秒切换赛事，鼠标悬停暂停                    |
-| 五个信息区域     | Header / KPI Strip / 赛道 SVG / TOP3+Legend / Ticker+Footer  |
+| 五个信息区域     | Header / KPI Strip / 赛道 SVG / TOP3+活跃骑手 / Ticker+Footer |
 | 马匹动画         | s 轴补间（非 x/y）、每马不同速度、起跑效果、9 种动画状态     |
 | per-entry 可视化 | 12 种颜色环 + 12 种 emoji + 排名 badge + 队名标签 + 消息气泡 |
 | KPI drill-down   | 点击完成度 / Tokens / CA / 风险 → 展开各队明细表            |
+| 活跃骑手 TOP3    | 按主动提交次数排序，独立于比赛总榜                           |
+| 小地图 Minimap   | 右下角显示整条赛道缩略图和所有队伍当前位置                   |
 | 详情面板         | 点击马匹或 TOP3 → 弹窗展示 12 字段                          |
 | Debug Mode       | 按 D 键：中心线 / 采样点 / s 值                              |
 | 全屏             | 🔲 按钮 → 新标签页 100vw×100vh                             |
@@ -108,7 +131,7 @@ Calibrator 的马匹预览与 Jumbotron 的马匹渲染使用**同一套函数**
 ARY DB → Server Action → RaceSnapshot JSON → Adapter → track-runtime → HorsePose → Jumbotron SVG
 ```
 
-MVVP 阶段 DC 侧数据未接入，缺失字段（phaseProgress / currentPhase 等）使用 mock 补全。`DCRaceDataProvider` 接口已预留，DC 接入时零改动渲染层。
+当前 Jumbotron 已优先消费 Runner 回传的真实 `progress` 字段，马匹位置不再按 rank/time 均摊伪造。`DCRaceDataProvider` 接口仍然预留，后续若接入企业侧数据源，可替换数据提供层而不改渲染层。
 
 ---
 

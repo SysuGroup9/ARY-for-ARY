@@ -1,9 +1,9 @@
 import type { UserRole } from "@/generated/prisma/enums";
 
 export function getHomeRedirectTarget(
-  hasSession: boolean,
+  _hasSession: boolean,
 ): "/" | "/login" | null {
-  return hasSession ? null : "/login";
+  return null;
 }
 
 export function getLoginRedirectTarget(

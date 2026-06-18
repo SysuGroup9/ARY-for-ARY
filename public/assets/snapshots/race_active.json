@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-12T14:17:06.755Z",
+  "generatedAt": "2026-06-18T07:45:10.128Z",
   "raceId": "race_active",
   "trackId": "oval-track",
   "competition": {
@@ -13,7 +13,7 @@
     "currentRound": 1,
     "nextPhase": "封榜中",
     "elapsedTime": 10800,
-    "systemTime": "2026-06-12T14:17:06.755Z"
+    "systemTime": "2026-06-18T07:45:10.128Z"
   },
   "entries": [
     {
@@ -22,18 +22,18 @@
       "projectName": "极速排序队",
       "caProvider": "claude",
       "rank": 1,
-      "rankDelta": 1,
       "score": 92.5,
       "overallProgress": 1,
-      "roundProgress": 0.85,
-      "phaseProgress": 0.85,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 1320,
+      "submissionCount": 0,
       "costUsd": 0.132,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "sprinting",
+      "status": "idle",
       "lastMessage": {
         "messageId": "msg-team_active_0",
         "entryId": "team_active_0",
@@ -41,10 +41,10 @@
         "type": "progress_update",
         "severity": "info",
         "summary": "已在题面补充了空数组和重复元素的处理要求。",
-        "createdAt": "2026-06-12T14:17:06.620Z",
+        "createdAt": "2026-06-18T07:45:09.781Z",
         "displayMode": "ticker"
       },
-      "updatedAt": "2026-06-12T14:17:06.613Z"
+      "updatedAt": "2026-06-18T07:45:09.763Z"
     },
     {
       "entryId": "team_active_1",
@@ -52,18 +52,18 @@
       "projectName": "奶茶码农",
       "caProvider": "other",
       "rank": 2,
-      "rankDelta": 1,
       "score": 87.3,
       "overallProgress": 0.9437837837837838,
-      "roundProgress": 0.7571428571428571,
-      "phaseProgress": 0.7571428571428571,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 2150,
+      "submissionCount": 0,
       "costUsd": 0.215,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "sprinting",
+      "status": "idle",
       "lastMessage": {
         "messageId": "msg-team_active_1",
         "entryId": "team_active_1",
@@ -71,10 +71,10 @@
         "type": "progress_update",
         "severity": "info",
         "summary": "[奶茶码农] 题目第3段描述有歧义，请补充边界条件。",
-        "createdAt": "2026-06-12T14:17:06.631Z",
+        "createdAt": "2026-06-18T07:45:09.813Z",
         "displayMode": "ticker"
       },
-      "updatedAt": "2026-06-12T14:17:06.627Z"
+      "updatedAt": "2026-06-18T07:45:09.802Z"
     },
     {
       "entryId": "team_active_2",
@@ -82,18 +82,18 @@
       "projectName": "Bug 粉碎机",
       "caProvider": "codex",
       "rank": 3,
-      "rankDelta": 1,
       "score": 81,
       "overallProgress": 0.8756756756756757,
-      "roundProgress": 0.6642857142857143,
-      "phaseProgress": 0.6642857142857143,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 1800,
+      "submissionCount": 0,
       "costUsd": 0.18000000000000002,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "sprinting",
+      "status": "idle",
       "lastMessage": {
         "messageId": "msg-team_active_2",
         "entryId": "team_active_2",
@@ -101,10 +101,10 @@
         "type": "progress_update",
         "severity": "info",
         "summary": "[Bug 粉碎机] 题目第4段描述有歧义，请补充边界条件。",
-        "createdAt": "2026-06-12T14:17:06.643Z",
+        "createdAt": "2026-06-18T07:45:09.842Z",
         "displayMode": "ticker"
       },
-      "updatedAt": "2026-06-12T14:17:06.638Z"
+      "updatedAt": "2026-06-18T07:45:09.830Z"
     },
     {
       "entryId": "team_active_3",
@@ -112,29 +112,19 @@
       "projectName": "深夜提交组",
       "caProvider": "other",
       "rank": 4,
-      "rankDelta": 0,
       "score": 75.8,
       "overallProgress": 0.8194594594594594,
-      "roundProgress": 0.5714285714285714,
-      "phaseProgress": 0.5714285714285714,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 2900,
+      "submissionCount": 0,
       "costUsd": 0.29000000000000004,
       "riskLevel": "medium",
       "obstacleCount": 0,
       "violationCount": 1,
-      "status": "running",
-      "lastMessage": {
-        "messageId": "msg-mock-team_active_3",
-        "entryId": "team_active_3",
-        "source": "dc",
-        "type": "progress_update",
-        "severity": "info",
-        "summary": "Token 消耗优化中",
-        "createdAt": "2026-06-12T14:17:06.756Z",
-        "displayMode": "bubble"
-      },
-      "updatedAt": "2026-06-12T14:17:06.650Z"
+      "status": "idle",
+      "updatedAt": "2026-06-18T07:45:09.859Z"
     },
     {
       "entryId": "team_active_4",
@@ -142,29 +132,19 @@
       "projectName": "需求分析大师",
       "caProvider": "claude",
       "rank": 5,
-      "rankDelta": 0,
       "score": 68.2,
       "overallProgress": 0.7372972972972973,
-      "roundProgress": 0.47857142857142854,
-      "phaseProgress": 0.47857142857142854,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 3500,
+      "submissionCount": 0,
       "costUsd": 0.35000000000000003,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "running",
-      "lastMessage": {
-        "messageId": "msg-mock-team_active_4",
-        "entryId": "team_active_4",
-        "source": "dc",
-        "type": "progress_update",
-        "severity": "info",
-        "summary": "准备提交下一版方案",
-        "createdAt": "2026-06-12T14:17:06.756Z",
-        "displayMode": "bubble"
-      },
-      "updatedAt": "2026-06-12T14:17:06.657Z"
+      "status": "idle",
+      "updatedAt": "2026-06-18T07:45:09.875Z"
     },
     {
       "entryId": "team_active_5",
@@ -172,29 +152,19 @@
       "projectName": "边界测试团",
       "caProvider": "other",
       "rank": 6,
-      "rankDelta": 0,
       "score": 60.4,
       "overallProgress": 0.652972972972973,
-      "roundProgress": 0.3857142857142857,
-      "phaseProgress": 0.3857142857142857,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 4200,
+      "submissionCount": 0,
       "costUsd": 0.42000000000000004,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "running",
-      "lastMessage": {
-        "messageId": "msg-mock-team_active_5",
-        "entryId": "team_active_5",
-        "source": "dc",
-        "type": "progress_update",
-        "severity": "info",
-        "summary": "测试用例通过率提升中",
-        "createdAt": "2026-06-12T14:17:06.756Z",
-        "displayMode": "bubble"
-      },
-      "updatedAt": "2026-06-12T14:17:06.663Z"
+      "status": "idle",
+      "updatedAt": "2026-06-18T07:45:09.892Z"
     },
     {
       "entryId": "team_active_6",
@@ -202,29 +172,19 @@
       "projectName": "重构先锋",
       "caProvider": "codex",
       "rank": 7,
-      "rankDelta": -1,
       "score": 52.1,
       "overallProgress": 0.5632432432432433,
-      "roundProgress": 0.2928571428571428,
-      "phaseProgress": 0.2928571428571428,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 1680,
+      "submissionCount": 0,
       "costUsd": 0.168,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "running",
-      "lastMessage": {
-        "messageId": "msg-mock-team_active_6",
-        "entryId": "team_active_6",
-        "source": "dc",
-        "type": "progress_update",
-        "severity": "info",
-        "summary": "正在 review 代码质量",
-        "createdAt": "2026-06-12T14:17:06.756Z",
-        "displayMode": "bubble"
-      },
-      "updatedAt": "2026-06-12T14:17:06.669Z"
+      "status": "idle",
+      "updatedAt": "2026-06-18T07:45:09.909Z"
     },
     {
       "entryId": "team_active_7",
@@ -232,36 +192,26 @@
       "projectName": "性能猎手",
       "caProvider": "claude",
       "rank": 8,
-      "rankDelta": -1,
       "score": 38.9,
       "overallProgress": 0.4205405405405405,
-      "roundProgress": 0.19999999999999996,
-      "phaseProgress": 0.19999999999999996,
-      "currentPhase": "DEV",
+      "roundProgress": 0,
+      "phaseProgress": 0,
+      "currentPhase": "PRD",
       "costTokens": 5100,
+      "submissionCount": 0,
       "costUsd": 0.51,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
-      "status": "stale",
-      "lastMessage": {
-        "messageId": "msg-mock-team_active_7",
-        "entryId": "team_active_7",
-        "source": "dc",
-        "type": "progress_update",
-        "severity": "info",
-        "summary": "调试内存占用问题",
-        "createdAt": "2026-06-12T14:17:06.756Z",
-        "displayMode": "bubble"
-      },
-      "updatedAt": "2026-06-12T14:17:06.675Z"
+      "status": "idle",
+      "updatedAt": "2026-06-18T07:45:09.924Z"
     }
   ],
   "kpis": {
     "completionRate": 100,
     "totalTokens": 22650,
-    "activeRiders": 7,
-    "onlineRiders": 7,
+    "activeRiders": 0,
+    "onlineRiders": 8,
     "activeCockpits": 8,
     "codexTokens": 3480,
     "claudeTokens": 9920,
@@ -273,43 +223,43 @@
   },
   "messages": [
     {
-      "messageId": "msg-team_active_0-1781273826756-0.7588448594047413",
+      "messageId": "msg-team_active_0-1781768710130-0.807929797821276",
       "entryId": "team_active_0",
       "source": "feedback",
       "type": "progress_update",
       "severity": "info",
       "summary": "[极速排序队] 题目第2段描述有歧义，请补充边界条件。",
-      "createdAt": "2026-06-12T14:17:06.618Z",
+      "createdAt": "2026-06-18T07:45:09.775Z",
       "displayMode": "ticker"
     },
     {
-      "messageId": "msg-team_active_0-1781273826756-0.7387044322253474",
+      "messageId": "msg-team_active_0-1781768710130-0.9271361687413161",
       "entryId": "team_active_0",
       "source": "feedback",
       "type": "progress_update",
       "severity": "info",
       "summary": "已在题面补充了空数组和重复元素的处理要求。",
-      "createdAt": "2026-06-12T14:17:06.620Z",
+      "createdAt": "2026-06-18T07:45:09.781Z",
       "displayMode": "ticker"
     },
     {
-      "messageId": "msg-team_active_1-1781273826756-0.6784891872254939",
+      "messageId": "msg-team_active_1-1781768710130-0.45801774728897837",
       "entryId": "team_active_1",
       "source": "feedback",
       "type": "progress_update",
       "severity": "info",
       "summary": "[奶茶码农] 题目第3段描述有歧义，请补充边界条件。",
-      "createdAt": "2026-06-12T14:17:06.631Z",
+      "createdAt": "2026-06-18T07:45:09.813Z",
       "displayMode": "ticker"
     },
     {
-      "messageId": "msg-team_active_2-1781273826756-0.8472220638237757",
+      "messageId": "msg-team_active_2-1781768710130-0.5161214006232716",
       "entryId": "team_active_2",
       "source": "feedback",
       "type": "progress_update",
       "severity": "info",
       "summary": "[Bug 粉碎机] 题目第4段描述有歧义，请补充边界条件。",
-      "createdAt": "2026-06-12T14:17:06.643Z",
+      "createdAt": "2026-06-18T07:45:09.842Z",
       "displayMode": "ticker"
     },
     {
@@ -318,8 +268,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "极速排序队: 优化 Token 消耗策略",
-      "createdAt": "2026-06-12T14:12:01.917Z",
+      "summary": "极速排序队: 已完成需求分析阶段",
+      "createdAt": "2026-06-18T07:39:56.175Z",
       "displayMode": "bubble"
     },
     {
@@ -328,8 +278,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "奶茶码农: 已完成需求分析阶段",
-      "createdAt": "2026-06-12T14:09:47.608Z",
+      "summary": "奶茶码农: 开始测试验证",
+      "createdAt": "2026-06-18T07:39:01.823Z",
       "displayMode": "bubble"
     },
     {
@@ -338,8 +288,8 @@
       "source": "dc",
       "type": "milestone",
       "severity": "info",
-      "summary": "Bug 粉碎机: 开始测试验证",
-      "createdAt": "2026-06-12T14:17:06.640Z",
+      "summary": "Bug 粉碎机: 正在进行代码实现",
+      "createdAt": "2026-06-18T07:39:48.649Z",
       "displayMode": "bubble"
     }
   ],
@@ -351,7 +301,7 @@
       "severity": "medium",
       "summary": "深夜提交组: 检测到诱导词，扣 10 分",
       "status": "active",
-      "createdAt": "2026-06-12T14:17:06.756Z"
+      "createdAt": "2026-06-18T07:45:10.130Z"
     },
     {
       "itemId": "risk-mock-team_active_0",
@@ -360,7 +310,7 @@
       "severity": "low",
       "summary": "极速排序队: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-12T14:17:06.756Z"
+      "createdAt": "2026-06-18T07:45:10.130Z"
     },
     {
       "itemId": "risk-mock-team_active_1",
@@ -369,7 +319,7 @@
       "severity": "low",
       "summary": "奶茶码农: 提交间隔即将到期，请尽快提交",
       "status": "active",
-      "createdAt": "2026-06-12T14:17:06.756Z"
+      "createdAt": "2026-06-18T07:45:10.130Z"
     }
   ]
 }

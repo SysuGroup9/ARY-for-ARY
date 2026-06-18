@@ -136,6 +136,9 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
   }, [sorted, trackProfile, path, displayS]);
 
   const top3 = entries.filter((e) => e.rank && e.rank <= 3).sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+  const activeRiders = [...entries]
+    .sort((a, b) => (b.submissionCount ?? 0) - (a.submissionCount ?? 0) || (a.rank ?? 999) - (b.rank ?? 999))
+    .slice(0, 3);
 
   return (
     <div className={debug ? "jt jt-debug" : "jt"}>
@@ -213,6 +216,15 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
             );
           })}
           {/* Entry Legend */}
+          <div className="jt-active">
+            <div className="jt-active__title">活跃骑手 TOP3</div>
+            {activeRiders.map((e, index) => (
+              <div key={e.entryId} className="jt-active__item">
+                <span>#{index + 1} {e.projectName.slice(0, 6)}</span>
+                <b>{e.submissionCount ?? 0} 次</b>
+              </div>
+            ))}
+          </div>
           <div className="jt-legend">
             {sorted.slice(0, 8).map((e) => {
               const clr = teamColors[(e.rank ?? sorted.indexOf(e)+1) % teamColors.length];
@@ -271,6 +283,24 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
               );
             })}
           </svg>
+
+          <div className="jt-minimap">
+            <div className="jt-minimap__title">Mini Map</div>
+            <svg viewBox={`0 0 ${trackProfile.viewBox.w} ${trackProfile.viewBox.h}`} className="jt-minimap__svg">
+              <polyline
+                points={path.points.map((p) => `${p.x},${p.y}`).join(" ")}
+                fill="none"
+                stroke="rgba(68,55,37,0.35)"
+                strokeWidth={8}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {poses.map((p) => {
+                const clr = teamColors[p.rank % teamColors.length];
+                return <circle key={p.entryId} cx={p.x} cy={p.y} r={18} fill={clr} opacity={0.95} />;
+              })}
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -291,6 +321,7 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
                 <div><label>整体进度</label><b>{Math.round(e.overallProgress*100)}%</b></div>
                 <div><label>CA 类型</label><b>{e.caProvider.toUpperCase()}</b></div>
                 <div><label>Token 消耗</label><b>{e.costTokens ?? 0}</b></div>
+                <div><label>主动提交次数</label><b>{e.submissionCount ?? 0}</b></div>
                 <div><label>估算费用</label><b>${((e.costTokens ?? 0) * 0.0001).toFixed(2)}</b></div>
                 <div><label>风险等级</label><b style={{color:e.riskLevel==="high"?"#c34e36":e.riskLevel==="medium"?"#e67e22":"#50b86c"}}>{e.riskLevel}</b></div>
                 <div><label>违规数</label><b>{e.violationCount}</b></div>
@@ -402,8 +433,12 @@ const styles = `
 .jt-top3__rider { font-size: 10px; color: #8b7b6e; }
 .jt-top3__ca { font-size: 9px; color: #aaa; font-weight: 500; }
 
-/* Entry Legend */
-.jt-legend { margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(68,55,37,0.08); display: flex; flex-wrap: wrap; gap: 3px; }
+/* Active riders + Entry Legend */
+.jt-active { margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(68,55,37,0.08); display: grid; gap: 4px; }
+.jt-active__title { font-size: 10px; color: #8b7b6e; text-transform: uppercase; letter-spacing: 0.06em; }
+.jt-active__item { display: flex; justify-content: space-between; gap: 8px; font-size: 10px; color: #65584b; }
+.jt-active__item b { color: #1e1a16; }
+.jt-legend { padding-top: 8px; border-top: 1px solid rgba(68,55,37,0.08); display: flex; flex-wrap: wrap; gap: 3px; }
 .jt-legend__item { font-size: 10px; color: #65584b; white-space: nowrap; }
 
 /* Drill-down */
@@ -420,6 +455,16 @@ const styles = `
 .jt-track { flex: 1; position: relative; border-radius: 8px; overflow: hidden; background: #f5efe6; border: 1px solid rgba(68,55,37,0.08); }
 .jt-track__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .jt-track__svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.jt-minimap {
+  position: absolute; right: 14px; bottom: 14px; z-index: 5;
+  width: 210px; height: 150px; padding: 8px;
+  border-radius: 12px; background: rgba(255, 252, 247, 0.92);
+  border: 1px solid rgba(68,55,37,0.12); box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.jt-minimap__title {
+  font-size: 10px; color: #8b7b6e; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;
+}
+.jt-minimap__svg { width: 100%; height: calc(100% - 16px); }
 
 /* Ticker */
 .jt-ticker {

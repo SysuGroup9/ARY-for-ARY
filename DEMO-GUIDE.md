@@ -19,11 +19,11 @@ npm run dev
 | 步骤 | 操作 | 说明 |
 |------|------|------|
 | 1 | 打开主页，观察顶部赛马横幅 | 自动轮播 3 个赛事的 Jumbotron 画面 |
-| 2 | 点击横幅 Tab 切换到「排序算法挑战赛」 | 8 匹 🐎 在赛道上按排名分散排列 |
+| 2 | 点击横幅 Tab 切换到「排序算法挑战赛」 | 8 匹 🐎 在赛道上按真实 progress 对应的位置分布 |
 | 3 | **指认 P0 要素**：Header（LIVE 徽章 + 计时）、KPI Strip（完成度/Tokens/CA）、TOP3 卡片、赛道主画面、底部滚动 Ticker |
 | 4 | **点击 KPI 项**「完成度」→ 展开各队进度明细表；再点「Tokens」→ 各队 Token 明细；再点收起 |
 | 5 | **点击赛道上的马匹** → 弹出 drill-down 详情面板（骑手/排名/分数/进度/Tokens/风险/留言） |
-| 6 | **指认 P1 要素**：气泡（马匹上方白色留言框）、风险标记（Ticker 红色 item）、Entry Legend（TOP3 下方图例） |
+| 6 | **指认 P1 要素**：气泡（马匹上方白色留言框）、风险标记（Ticker 红色 item）、活跃骑手 TOP3、Entry Legend、右下角 Mini Map |
 | 7 | 点击「🔲 全屏」→ 新标签页打开满屏 Jumbotron；按 **D 键** 展示 Debug Mode（红色中心线/采样点/s 值） |
 | 8 | 切换到「性能优化马拉松」（已结束赛事）→ 观察 FINISHED 状态和赛后总评 |
 
@@ -47,7 +47,7 @@ npm run dev
 | 1 | 在 ARY 首页，Organizer 点「生成 Jumbotron 快照」 | 触发 `generateRaceSnapshot()` |
 | 2 | 打开 `public/assets/snapshots/race_active.json` | 展示 RaceSnapshot 数据结构 |
 | 3 | 说明数据链路：ARY DB → Adapter → RaceSnapshot → track-runtime → Jumbotron | 从真实数据到可视化 |
-| 4 | 说明 mock 边界：roundProgress 从 LeaderboardEntry 推导，phaseProgress 和 RidingMessage 部分 mock | 诚实说明 PoC 边界 |
+| 4 | 说明当前边界：roundProgress 已优先读取 Runner 回传的真实 progress；submissionCount 用于活跃骑手排行；仍有少量展示字段属于 PoC 推导 | 诚实说明 PoC 边界 |
 
 ---
 

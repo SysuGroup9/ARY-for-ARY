@@ -1,27 +1,11 @@
 import { loadRaceSnapshot } from "@/lib/services/race-snapshot";
-import { notFound } from "next/navigation";
+import { getEffectiveTrackProfileFromSnapshot } from "@/lib/jumbotron/track-config";
 import JumbotronClient from "./JumbotronClient";
-import fs from "node:fs";
-import path from "node:path";
-import type { TrackProfile } from "@/lib/jumbotron/track-runtime/types";
 
 export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ raceId: string }>;
-}
-
-function loadTrackProfile(trackId: string): TrackProfile | null {
-  const filePath = path.join(
-    process.cwd(),
-    "public",
-    "assets",
-    "tracks",
-    trackId,
-    "track.profile.json",
-  );
-  if (!fs.existsSync(filePath)) return null;
-  return JSON.parse(fs.readFileSync(filePath, "utf-8")) as TrackProfile;
 }
 
 export default async function JumbotronPage({ params }: Props) {
@@ -38,12 +22,12 @@ export default async function JumbotronPage({ params }: Props) {
     );
   }
 
-  const trackProfile = loadTrackProfile(snapshot.trackId);
+  const trackProfile = getEffectiveTrackProfileFromSnapshot(snapshot);
   if (!trackProfile) {
     return (
       <div style={emptyStyles}>
         <h1>ARY Jumbotron</h1>
-        <p>赛道 {snapshot.trackId} 的 track.profile.json 不存在。</p>
+        <p>默认赛道资源加载失败，请检查 oval-track 资产。</p>
       </div>
     );
   }

@@ -6,8 +6,8 @@ import {
   getRoleCapabilities,
 } from "./viewer-access";
 
-test("redirects unauthenticated home visitors to /login", () => {
-  assert.equal(getHomeRedirectTarget(false), "/login");
+test("keeps the home page public for both anonymous and authenticated visitors", () => {
+  assert.equal(getHomeRedirectTarget(false), null);
   assert.equal(getHomeRedirectTarget(true), null);
 });
 
