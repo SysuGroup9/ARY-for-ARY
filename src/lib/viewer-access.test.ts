@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  getCreateRaceBackTarget,
+  getCreateRacePageAccess,
   getHomeRedirectTarget,
   getLoginRedirectTarget,
   getRoleCapabilities,
@@ -31,4 +33,25 @@ test("maps organizer and rider capabilities without audience session", () => {
     canManage: false,
     canRide: false,
   });
+});
+
+test("allows only organizers to access the dedicated create-race page", () => {
+  assert.deepEqual(getCreateRacePageAccess("ORGANIZER"), {
+    allowed: true,
+    redirectTo: null,
+  });
+
+  assert.deepEqual(getCreateRacePageAccess("RIDER"), {
+    allowed: false,
+    redirectTo: "/",
+  });
+
+  assert.deepEqual(getCreateRacePageAccess(null), {
+    allowed: false,
+    redirectTo: "/login",
+  });
+});
+
+test("uses the home page as the back target for create-race flow", () => {
+  assert.equal(getCreateRaceBackTarget(), "/");
 });

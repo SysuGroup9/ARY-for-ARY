@@ -43,6 +43,7 @@ export async function createRaceAction(formData: FormData) {
   const user = await requireRole("ORGANIZER");
   await createRace(user.id, formData);
   revalidatePath("/");
+  redirect("/");
 }
 
 export async function updateRaceAction(formData: FormData) {

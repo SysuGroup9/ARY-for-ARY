@@ -21,3 +21,24 @@ export function getRoleCapabilities(role: UserRole | null): {
     canRide: role === "RIDER",
   };
 }
+
+export function getCreateRacePageAccess(role: UserRole | null): {
+  allowed: boolean;
+  redirectTo: "/" | "/login" | null;
+} {
+  if (role === "ORGANIZER") {
+    return {
+      allowed: true,
+      redirectTo: null,
+    };
+  }
+
+  return {
+    allowed: false,
+    redirectTo: role ? "/" : "/login",
+  };
+}
+
+export function getCreateRaceBackTarget(): "/" {
+  return "/";
+}
