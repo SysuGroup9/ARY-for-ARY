@@ -86,20 +86,64 @@ export async function updateTeamComment(input: {
     throw new Error("无权修改队伍评语");
   }
 
-  return prisma.teamComment.upsert({
+  const team = await prisma.team.findUnique({
     where: {
-      raceId_teamId: {
+      id: input.teamId,
+    },
+    select: {
+      captainId: true,
+      id: true,
+      raceId: true,
+    },
+  });
+
+  if (!team || team.raceId !== input.raceId) {
+    throw new Error("队伍不存在");
+  }
+
+  const registration = await prisma.registration.findUnique({
+    where: {
+      raceId_userId: {
         raceId: input.raceId,
-        teamId: input.teamId,
+        userId: team.captainId,
       },
     },
-    update: {
-      content: input.content.trim(),
+    select: {
+      id: true,
     },
-    create: {
-      raceId: input.raceId,
-      teamId: input.teamId,
-      content: input.content.trim(),
-    },
+  });
+
+  const existingComment = registration
+    ? await prisma.teamComment.findFirst({
+        where: {
+          raceId: input.raceId,
+          registrationId: registration.id,
+        },
+      })
+    : await prisma.teamComment.findFirst({
+        where: {
+          raceId: input.raceId,
+          teamId: input.teamId,
+        },
+      });
+
+  const payload = {
+    content: input.content.trim(),
+    raceId: input.raceId,
+    registrationId: registration?.id ?? null,
+    teamId: input.teamId,
+  };
+
+  if (existingComment) {
+    return prisma.teamComment.update({
+      where: {
+        id: existingComment.id,
+      },
+      data: payload,
+    });
+  }
+
+  return prisma.teamComment.create({
+    data: payload,
   });
 }

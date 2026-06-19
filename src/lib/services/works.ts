@@ -67,6 +67,10 @@ export async function getWorkForLegacyTeamSlug(input: {
     where: {
       id: input.teamId,
     },
+    select: {
+      captainId: true,
+      raceId: true,
+    },
   });
 
   if (!team || team.raceId !== input.raceId) {

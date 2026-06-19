@@ -83,16 +83,29 @@ export function HeroSection({
 }
 
 export function AuthTabsPanel({
+  githubAction,
   loginAction,
   registerAction,
   returnTo,
 }: {
+  githubAction?: FormAction;
   loginAction: FormAction;
   registerAction: FormAction;
   returnTo?: string;
 }) {
   return (
     <div className="auth-tabs">
+      {githubAction ? (
+        <form action={githubAction} className="form-grid auth-oauth-form">
+          {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
+          <button className="button-secondary" type="submit">
+            使用 GitHub 登录
+          </button>
+          <p className="muted">
+            这是符合 GRS003 要求的正式身份入口。下方本地账号表单保留为开发与演示兜底。
+          </p>
+        </form>
+      ) : null}
       <input
         className="auth-tabs__toggle"
         defaultChecked

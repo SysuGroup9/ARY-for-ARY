@@ -7,13 +7,6 @@ datasource db {
   provider = "sqlite"
 }
 
-enum UserRole {
-  ADMIN
-  JUDGE
-  ORGANIZER
-  RIDER
-}
-
 enum SubmissionStatus {
   QUEUED
   PULLED
@@ -124,7 +117,6 @@ model User {
   id           String    @id @default(cuid())
   username     String    @unique
   passwordHash String
-  role         UserRole  @default(RIDER)
   rolesJson    String    @default("[\"RIDER\"]")
   profileName  String    @default("")
   profileOrgLabel String @default("")
@@ -214,7 +206,7 @@ model Registration {
   withdrawnAt  DateTime?
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
-
+ 
   race         Race               @relation(fields: [raceId], references: [id], onDelete: Cascade)
   user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   raceProject  RaceProject?
@@ -222,7 +214,17 @@ model Registration {
   work         Work?
   awards       Award[]
   reports      Report[]           @relation("SubjectReports")
-
+  submissions  Submission[]
+  artifacts    SubmissionArtifact[]
+  runnerTasks  RunnerTask[]
+  archives     TeamArchive[]
+  feedbackThreads FeedbackThread[]
+  notifications Notification[]
+  leaderboardEntries LeaderboardEntry[]
+  harnessEntries HarnessEntry[]
+  highlights   RidingHighlight[]
+  teamComments TeamComment[]
+ 
   @@unique([raceId, userId])
 }
 
@@ -459,6 +461,7 @@ model Submission {
   id              String   @id @default(cuid())
   raceId           String
   teamId           String
+  registrationId   String?
   status           SubmissionStatus @default(QUEUED)
   codeLabel        String
   codeContent      String?
@@ -481,17 +484,21 @@ model Submission {
   createdAt        DateTime @default(now())
   pulledAt         DateTime?
   scoredAt         DateTime?
-
+ 
   race             Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
   team             Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  registration     Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
   artifact         SubmissionArtifact?
   runnerTasks      RunnerTask[]
+
+  @@index([registrationId, createdAt])
 }
 
 model SubmissionArtifact {
   id           String    @id @default(cuid())
   raceId       String
   teamId       String
+  registrationId String?
   submissionId String    @unique
   codeLabel    String
   codeContent  String
@@ -500,17 +507,21 @@ model SubmissionArtifact {
   tokenUsed    Int
   agentType    AgentType
   createdAt    DateTime  @default(now())
-
+ 
   race         Race      @relation(fields: [raceId], references: [id], onDelete: Cascade)
   team         Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  registration Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
   submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   runnerTasks  RunnerTask[]
+
+  @@index([registrationId, createdAt])
 }
 
 model RunnerTask {
   id            String           @id @default(cuid())
   raceId        String
   teamId        String
+  registrationId String?
   submissionId  String
   artifactId    String
   taskType      RunnerTaskType
@@ -522,20 +533,23 @@ model RunnerTask {
   finishedAt    DateTime?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
-
+ 
   race          Race             @relation(fields: [raceId], references: [id], onDelete: Cascade)
   team          Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  registration  Registration?    @relation(fields: [registrationId], references: [id], onDelete: SetNull)
   submission    Submission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   artifact      SubmissionArtifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
-
+ 
   @@index([raceId, status, createdAt])
   @@index([teamId, taskType, createdAt])
+  @@index([registrationId, taskType, createdAt])
 }
 
 model TeamArchive {
   id              String   @id @default(cuid())
   raceId           String
   teamId           String
+  registrationId   String?
   submissionId     String
   codeLabel        String
   codeContent      String
@@ -552,24 +566,30 @@ model TeamArchive {
   progress         Float?   @default(0)
   antiCheatPenalty Float
   createdAt        DateTime @default(now())
-
+ 
   race             Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
   team             Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
+  registration     Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+ 
   @@unique([raceId, teamId])
+  @@index([registrationId])
 }
 
 model FeedbackThread {
   id         String   @id @default(cuid())
   raceId      String
   teamId      String
+  registrationId String?
   status      FeedbackStatus @default(PENDING)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
+ 
   race        Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
   team        Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  registration Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
   messages    FeedbackMessage[]
+
+  @@index([registrationId])
 }
 
 model FeedbackMessage {
@@ -590,15 +610,20 @@ model Notification {
   content     String
   target      NotificationTarget
   teamId      String?
+  registrationId String?
   createdAt   DateTime @default(now())
-
+ 
   race        Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  registration Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+
+  @@index([registrationId])
 }
 
 model LeaderboardEntry {
   id            String   @id @default(cuid())
   raceId         String
   teamId         String
+  registrationId String?
   submissionId   String
   totalScore     Float
   progress       Float?   @default(0)
@@ -607,52 +632,64 @@ model LeaderboardEntry {
   dialogueScore  Float?
   agentType      AgentType
   createdAt      DateTime @default(now())
-
+ 
   race           Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
   team           Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
+  registration   Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+ 
   @@unique([raceId, teamId])
+  @@index([registrationId])
 }
 
 model HarnessEntry {
   id             String   @id @default(cuid())
   raceId          String
   teamId          String
+  registrationId  String?
   harnessScore    Float
   reasoningScore  Float?
   keywordScore    Float?
   createdAt       DateTime @default(now())
-
+ 
   race            Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
   team            Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
+  registration    Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+ 
   @@unique([raceId, teamId])
+  @@index([registrationId])
 }
 
 model RidingHighlight {
   id          String   @id @default(cuid())
   raceId       String
   teamId       String
+  registrationId String?
   score        Float
   agentType    AgentType
   excerpt      String
   codeSnippet  String
   createdAt    DateTime @default(now())
-
+ 
   race         Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
   team         Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  registration Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+
+  @@index([registrationId])
 }
 
 model TeamComment {
   id          String   @id @default(cuid())
   raceId       String
   teamId       String
+  registrationId String?
   content      String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
+ 
   race         Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
   team         Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
+  registration Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+ 
   @@unique([raceId, teamId])
+  @@index([registrationId])
 }

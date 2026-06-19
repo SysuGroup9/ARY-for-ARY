@@ -26,8 +26,8 @@ export async function listConsoleRacesForUser(input: {
   if (hasRole(roles, "ORGANIZER")) {
     items.push(
       ...races
-        .filter((race) => race.organizerId === input.userId)
-        .map((race) => {
+        .filter((race: RaceListItem) => race.organizerId === input.userId)
+        .map((race: RaceListItem) => {
           const slug = buildRaceSlug(race.id, race.title);
           return {
             access: "organizer" as const,
@@ -43,10 +43,13 @@ export async function listConsoleRacesForUser(input: {
     items.push(
       ...races
         .filter(
-          (race) =>
-            race.registrations.some((registration) => registration.userId === input.userId),
+          (race: RaceListItem) =>
+            race.registrations.some(
+              (registration: RaceListItem["registrations"][number]) =>
+                registration.userId === input.userId,
+            ),
         )
-        .map((race) => {
+        .map((race: RaceListItem) => {
           const slug = buildRaceSlug(race.id, race.title);
           return {
             access: "rider" as const,
@@ -76,13 +79,16 @@ export async function listConsoleRacesForUser(input: {
       },
     });
     const assignedRaceIds = new Set(
-      assignments.map((assignment) => assignment.work.registration.raceId),
+      assignments.map(
+        (assignment: { work: { registration: { raceId: string } } }) =>
+          assignment.work.registration.raceId,
+      ),
     );
 
     items.push(
       ...races
-        .filter((race) => assignedRaceIds.has(race.id))
-        .map((race) => {
+        .filter((race: RaceListItem) => assignedRaceIds.has(race.id))
+        .map((race: RaceListItem) => {
           const slug = buildRaceSlug(race.id, race.title);
           return {
             access: "judge" as const,
@@ -113,7 +119,8 @@ export async function listScreenConsoleRacesForUser(input: {
   const races = await listRaces();
 
   if (hasRole(roles, "ADMIN")) {
-    return races.map((race) => {
+    // 企业能力尚未独立建模，当前由 Admin 代理大屏控制台可见范围。
+    return races.map((race: RaceListItem) => {
       const slug = buildRaceSlug(race.id, race.title);
       return {
         defaultHref: `/console/screen/${slug}/jumbotron`,
@@ -121,19 +128,6 @@ export async function listScreenConsoleRacesForUser(input: {
         slug,
       };
     });
-  }
-
-  if (hasRole(roles, "ORGANIZER")) {
-    return races
-      .filter((race) => race.organizerId === input.userId)
-      .map((race) => {
-        const slug = buildRaceSlug(race.id, race.title);
-        return {
-          defaultHref: `/console/screen/${slug}/jumbotron`,
-          race,
-          slug,
-        };
-      });
   }
 
   return [];
@@ -145,9 +139,11 @@ export async function getConsoleRaceBySlug(raceSlug: string): Promise<{
 } | null> {
   const races = await listRaces();
   const exactMatch = races.find(
-    (item) => buildRaceSlug(item.id, item.title) === raceSlug,
+    (item: RaceListItem) => buildRaceSlug(item.id, item.title) === raceSlug,
   );
-  const race = exactMatch ?? races.find((item) => item.id === getRaceIdFromSlug(raceSlug));
+  const race =
+    exactMatch ??
+    races.find((item: RaceListItem) => item.id === getRaceIdFromSlug(raceSlug));
 
   if (!race) {
     return null;

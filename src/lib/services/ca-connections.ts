@@ -83,7 +83,6 @@ export async function createCAConnectionForRaceProject(input: {
         connectorBaseUrl: input.connectorBaseUrl?.trim() ?? "",
         connectorId: input.connectorId.trim(),
         connectorVersion: input.connectorVersion.trim(),
-        handshakeCompletedAt: new Date(),
         ingestionSource: IngestionSource.MANUAL,
         ingestionStatus: getDefaultCAConnectionStatus(),
         raceProjectId: raceProject.id,

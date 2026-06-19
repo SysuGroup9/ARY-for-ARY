@@ -30,8 +30,8 @@ export function getRoleCapabilities(roles: readonly AppRole[] | null): {
     canJudge: hasRole(normalized, "JUDGE"),
     canManage: hasRole(normalized, "ORGANIZER"),
     canRide: hasRole(normalized, "RIDER"),
-    canUseScreen:
-      hasRole(normalized, "ADMIN") || hasRole(normalized, "ORGANIZER"),
+    // 企业能力尚未独立建模，当前由 Admin 代理大屏控制台权限。
+    canUseScreen: hasRole(normalized, "ADMIN"),
   };
 }
 
@@ -99,10 +99,7 @@ export function getConsoleHomeSections(
     sections.add("admin");
   }
 
-  if (
-    hasRole(normalized, "ADMIN") ||
-    hasRole(normalized, "ORGANIZER")
-  ) {
+  if (hasRole(normalized, "ADMIN")) {
     sections.add("screen");
   }
 
@@ -201,8 +198,7 @@ export function getConsoleScreenAccess(roles: readonly AppRole[] | null): {
   }
 
   const normalized = normalizeRoles(roles);
-  const allowed =
-    hasRole(normalized, "ADMIN") || hasRole(normalized, "ORGANIZER");
+  const allowed = hasRole(normalized, "ADMIN");
 
   return {
     allowed,

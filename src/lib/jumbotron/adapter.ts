@@ -76,6 +76,7 @@ export interface AryTeamData {
 
 export interface AryLeaderboardEntryData {
   id: string;
+  registrationId?: null | string;
   teamId: string;
   totalScore: number;
   progress?: number | null;
@@ -88,11 +89,13 @@ export interface AryLeaderboardEntryData {
 
 export interface ArySubmissionData {
   id: string;
+  registrationId?: null | string;
   teamId: string;
   createdAt: Date;
 }
 
 export interface AryTeamArchiveData {
+  registrationId?: null | string;
   teamId: string;
   agentType: string;
   tokenUsed: number;
@@ -101,6 +104,7 @@ export interface AryTeamArchiveData {
 }
 
 export interface AryFeedbackThreadData {
+  registrationId?: null | string;
   teamId: string;
   messages: Array<{ content: string; createdAt: Date }>;
 }
@@ -172,20 +176,27 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
 
   const ranked = [...leaderboardEntries].sort((a, b) => b.totalScore - a.totalScore);
   const maxScore = ranked[0]?.totalScore ?? 100;
-  const archiveMap = new Map(teamArchives.map((a) => [a.teamId, a]));
-  const feedbackMap = new Map(feedbackThreads.map((f) => [f.teamId, f]));
+  const registrationsById = new Map(
+    (race.registrations ?? []).map((registration) => [registration.id, registration]),
+  );
+  const registrationsByUserId = new Map(
+    (race.registrations ?? []).map((registration) => [registration.userId, registration]),
+  );
+  const archiveMap = new Map(
+    teamArchives.map((archive) => [archive.registrationId ?? archive.teamId, archive]),
+  );
+  const feedbackMap = new Map(
+    feedbackThreads.map((thread) => [thread.registrationId ?? thread.teamId, thread]),
+  );
   const submissionCountMap = submissions.reduce((map, submission) => {
-    map.set(submission.teamId, (map.get(submission.teamId) ?? 0) + 1);
+    const containerId = submission.registrationId ?? submission.teamId;
+    map.set(containerId, (map.get(containerId) ?? 0) + 1);
     return map;
   }, new Map<string, number>());
   const now = new Date();
   const allRankedProgressZero =
     ranked.length > 0 &&
     ranked.every((entry) => typeof entry.progress === "number" && entry.progress === 0);
-
-  const registrationsByUserId = new Map(
-    (race.registrations ?? []).map((registration) => [registration.userId, registration]),
-  );
   const projectedLeaderboard = race.projections?.find(
     (projection) => projection.type === "CURRENT_LEADERBOARD",
   );
@@ -236,13 +247,21 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
     const projected =
       projectedEntries.get(team.id) ??
       projectedRows.find((item) => item.username === team.captain.username);
-    const rank = projected?.rank ? projected.rank - 1 : ranked.findIndex((e) => e.teamId === team.id);
+    const rank = projected?.rank
+      ? projected.rank - 1
+      : ranked.findIndex(
+          (entry) =>
+            entry.registrationId === team.id ||
+            entry.teamId === team.id ||
+            registrationsById.get(entry.registrationId ?? "")?.userId === team.captain.id,
+        );
     const entry = ranked[rank];
-    const archive = archiveMap.get(team.id);
-    const compatibilityTeam = teams.find((candidate) => candidate.captain.id === team.captain.id);
-    const feedback = feedbackMap.get(compatibilityTeam?.id ?? team.id);
-    const submissionCount = submissionCountMap.get(compatibilityTeam?.id ?? team.id) ?? 0;
     const registration = registrationsByUserId.get(team.captain.id);
+    const containerId = registration?.id ?? team.id;
+    const archive = archiveMap.get(containerId) ?? archiveMap.get(team.id);
+    const feedback = feedbackMap.get(containerId) ?? feedbackMap.get(team.id);
+    const submissionCount =
+      submissionCountMap.get(containerId) ?? submissionCountMap.get(team.id) ?? 0;
     const sessionTokenCost =
       registration?.raceProject?.caConnections?.reduce(
         (sum, connection) =>
@@ -400,9 +419,7 @@ export function generateMessages(race: AryRaceData): RidingMessageSnapshot[] {
         .filter((session) => session.latestActivity)
         .map((session, index) => ({
           messageId: `session-${registration.id}-${index}`,
-          entryId:
-            race.teams.find((team) => team.captain.id === registration.userId)?.id ??
-            registration.id,
+          entryId: registration.id,
           source: "session",
           type: "progress_update" as const,
           severity: "info" as const,
@@ -446,9 +463,7 @@ export function generateAttentionItems(race: AryRaceData): AttentionItem[] {
     if (registration.raceProject?.aggregateIngestionStatus === "FAILED") {
       items.push({
         itemId: `risk-ca-${registration.id}`,
-        entryId:
-          race.teams.find((team) => team.captain.id === registration.userId)?.id ??
-          registration.userId,
+        entryId: registration.id,
         category: "risk",
         severity: "medium",
         summary: `${registration.user.username}: CA ingestion failed`,
@@ -460,13 +475,18 @@ export function generateAttentionItems(race: AryRaceData): AttentionItem[] {
 
   for (const archive of race.teamArchives) {
     if ((archive.antiCheatPenalty ?? 0) > 0) {
+      const registration = archive.registrationId
+        ? (race.registrations ?? []).find((item) => item.id === archive.registrationId)
+        : null;
       const team = race.teams.find((t) => t.id === archive.teamId);
+      const entryId = archive.registrationId ?? archive.teamId;
+      const label = registration?.user.username ?? team?.name ?? archive.teamId;
       items.push({
-        itemId: `risk-${archive.teamId}`,
-        entryId: archive.teamId,
+        itemId: `risk-${entryId}`,
+        entryId,
         category: "violation",
         severity: "medium",
-        summary: `${team?.name ?? archive.teamId}: 检测到诱导词，扣 ${archive.antiCheatPenalty} 分`,
+        summary: `${label}: 检测到诱导词，扣 ${archive.antiCheatPenalty} 分`,
         status: "active",
         createdAt: new Date().toISOString(),
       });

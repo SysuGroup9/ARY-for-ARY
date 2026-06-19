@@ -103,6 +103,7 @@ const sampleRaces = [
     highlights: [
       {
         id: "highlight_b",
+        registrationId: "reg_b",
         teamId: "team_b",
         team: { id: "team_b", name: "Legacy Highlight Name" },
         agentType: "CLAUDE",
@@ -123,6 +124,7 @@ const sampleRaces = [
     leaderboardEntries: [
       {
         id: "leader_b",
+        registrationId: "reg_b",
         teamId: "team_b",
         team: { id: "team_b", name: "Render Rocket" },
         totalScore: 94.1,

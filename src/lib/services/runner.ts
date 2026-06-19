@@ -21,6 +21,7 @@ type RunnerResultInput = ReturnType<typeof runnerResultSchema.parse>;
 type LatestArtifactRecord = {
   id: string;
   raceId: string;
+  registrationId: null | string;
   teamId: string;
   submissionId: string;
   codeLabel: string;
@@ -35,19 +36,21 @@ type LatestArtifactRecord = {
 export async function enqueueSubmissionTestTask(input: {
   artifactId: string;
   raceId: string;
+  registrationId: string;
   submissionId: string;
   teamId: string;
   tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 }) {
-  await staleActiveRunnerTasks(input.tx, input.teamId, [
-    "SUBMISSION_TEST",
-    "PROGRESS_EVAL",
-  ]);
+  await staleActiveRunnerTasks(input.tx, {
+    registrationId: input.registrationId,
+    teamId: input.teamId,
+  }, ["SUBMISSION_TEST", "PROGRESS_EVAL"]);
 
   return input.tx.runnerTask.create({
     data: {
       artifactId: input.artifactId,
       raceId: input.raceId,
+      registrationId: input.registrationId,
       submissionId: input.submissionId,
       taskType: "SUBMISSION_TEST",
       teamId: input.teamId,
@@ -76,11 +79,19 @@ export async function enqueueProgressEvalTasks(raceId: string) {
 
   await prisma.$transaction(async (tx) => {
     for (const artifact of latestArtifacts) {
-      await staleActiveRunnerTasks(tx, artifact.teamId, ["PROGRESS_EVAL"]);
+      await staleActiveRunnerTasks(
+        tx,
+        {
+          registrationId: artifact.registrationId,
+          teamId: artifact.teamId,
+        },
+        ["PROGRESS_EVAL"],
+      );
       await tx.runnerTask.create({
         data: {
           artifactId: artifact.id,
           raceId,
+          registrationId: artifact.registrationId,
           submissionId: artifact.submissionId,
           taskType: "PROGRESS_EVAL",
           teamId: artifact.teamId,
@@ -123,11 +134,19 @@ export async function enqueueHarnessEvalTaskForArtifact(
   tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
   artifact: LatestArtifactRecord,
 ) {
-  await staleActiveRunnerTasks(tx, artifact.teamId, ["HARNESS_EVAL"]);
+  await staleActiveRunnerTasks(
+    tx,
+    {
+      registrationId: artifact.registrationId,
+      teamId: artifact.teamId,
+    },
+    ["HARNESS_EVAL"],
+  );
   return tx.runnerTask.create({
     data: {
       artifactId: artifact.id,
       raceId: artifact.raceId,
+      registrationId: artifact.registrationId,
       submissionId: artifact.submissionId,
       taskType: "HARNESS_EVAL",
       teamId: artifact.teamId,
@@ -406,78 +425,87 @@ async function projectProgressEvalSuccess(
     },
   });
 
-  await tx.teamArchive.upsert({
-    where: {
-      raceId_teamId: {
+  const teamArchiveWhere = task.registrationId
+    ? {
+        raceId: task.raceId,
+        registrationId: task.registrationId,
+      }
+    : {
         raceId: task.raceId,
         teamId: task.teamId,
-      },
-    },
-    update: {
-      antiCheatPenalty: scoreResult.antiCheatPenalty,
-      codeContent: task.artifact.codeContent,
-      codeLabel: task.artifact.codeLabel,
-      dialogueScore: scoreResult.dialogueScore,
-      keywordScore: scoreResult.keywordScore,
-      reasoningScore: scoreResult.reasoningScore,
-      recordLabel: task.artifact.recordLabel,
-      ridingRecord: task.artifact.ridingRecord,
-      submissionId: task.submissionId,
-      taskScore: scoreResult.taskScore,
-      tokenScore: scoreResult.tokenScore,
-      tokenUsed: task.artifact.tokenUsed,
-      totalScore: scoreResult.totalScore,
-      progress: input.progress ?? null,
-    },
-    create: {
-      agentType: task.artifact.agentType,
-      antiCheatPenalty: scoreResult.antiCheatPenalty,
-      codeContent: task.artifact.codeContent,
-      codeLabel: task.artifact.codeLabel,
-      dialogueScore: scoreResult.dialogueScore,
-      keywordScore: scoreResult.keywordScore,
-      raceId: task.raceId,
-      reasoningScore: scoreResult.reasoningScore,
-      recordLabel: task.artifact.recordLabel,
-      ridingRecord: task.artifact.ridingRecord,
-      submissionId: task.submissionId,
-      taskScore: scoreResult.taskScore,
-      teamId: task.teamId,
-      tokenScore: scoreResult.tokenScore,
-      tokenUsed: task.artifact.tokenUsed,
-      totalScore: scoreResult.totalScore,
-      progress: input.progress ?? null,
-    },
+      };
+  const existingTeamArchive = await tx.teamArchive.findFirst({
+    where: teamArchiveWhere,
   });
 
-  await tx.leaderboardEntry.upsert({
-    where: {
-      raceId_teamId: {
+  const teamArchivePayload = {
+    agentType: task.artifact.agentType,
+    antiCheatPenalty: scoreResult.antiCheatPenalty,
+    codeContent: task.artifact.codeContent,
+    codeLabel: task.artifact.codeLabel,
+    dialogueScore: scoreResult.dialogueScore,
+    keywordScore: scoreResult.keywordScore,
+    raceId: task.raceId,
+    reasoningScore: scoreResult.reasoningScore,
+    recordLabel: task.artifact.recordLabel,
+    registrationId: task.registrationId,
+    ridingRecord: task.artifact.ridingRecord,
+    submissionId: task.submissionId,
+    taskScore: scoreResult.taskScore,
+    teamId: task.teamId,
+    tokenScore: scoreResult.tokenScore,
+    tokenUsed: task.artifact.tokenUsed,
+    totalScore: scoreResult.totalScore,
+    progress: input.progress ?? null,
+  };
+
+  if (existingTeamArchive) {
+    await tx.teamArchive.update({
+      where: { id: existingTeamArchive.id },
+      data: teamArchivePayload,
+    });
+  } else {
+    await tx.teamArchive.create({
+      data: teamArchivePayload,
+    });
+  }
+
+  const leaderboardWhere = task.registrationId
+    ? {
+        raceId: task.raceId,
+        registrationId: task.registrationId,
+      }
+    : {
         raceId: task.raceId,
         teamId: task.teamId,
-      },
-    },
-    update: {
-      agentType: task.artifact.agentType,
-      dialogueScore: scoreResult.dialogueScore,
-      submissionId: task.submissionId,
-      taskScore: scoreResult.taskScore,
-      tokenScore: scoreResult.tokenScore,
-      totalScore: scoreResult.totalScore,
-      progress: input.progress ?? null,
-    },
-    create: {
-      agentType: task.artifact.agentType,
-      dialogueScore: scoreResult.dialogueScore,
-      raceId: task.raceId,
-      submissionId: task.submissionId,
-      taskScore: scoreResult.taskScore,
-      teamId: task.teamId,
-      tokenScore: scoreResult.tokenScore,
-      totalScore: scoreResult.totalScore,
-      progress: input.progress ?? null,
-    },
+      };
+  const existingLeaderboardEntry = await tx.leaderboardEntry.findFirst({
+    where: leaderboardWhere,
   });
+
+  const leaderboardPayload = {
+    agentType: task.artifact.agentType,
+    dialogueScore: scoreResult.dialogueScore,
+    progress: input.progress ?? null,
+    raceId: task.raceId,
+    registrationId: task.registrationId,
+    submissionId: task.submissionId,
+    taskScore: scoreResult.taskScore,
+    teamId: task.teamId,
+    tokenScore: scoreResult.tokenScore,
+    totalScore: scoreResult.totalScore,
+  };
+
+  if (existingLeaderboardEntry) {
+    await tx.leaderboardEntry.update({
+      where: { id: existingLeaderboardEntry.id },
+      data: leaderboardPayload,
+    });
+  } else {
+    await tx.leaderboardEntry.create({
+      data: leaderboardPayload,
+    });
+  }
 
   await tx.race.update({
     where: { id: task.raceId },
@@ -513,26 +541,38 @@ async function projectHarnessEvalSuccess(
     },
   });
 
-  await tx.harnessEntry.upsert({
-    where: {
-      raceId_teamId: {
+  const harnessWhere = task.registrationId
+    ? {
+        raceId: task.raceId,
+        registrationId: task.registrationId,
+      }
+    : {
         raceId: task.raceId,
         teamId: task.teamId,
-      },
-    },
-    update: {
-      harnessScore,
-      reasoningScore,
-      keywordScore,
-    },
-    create: {
-      harnessScore,
-      reasoningScore,
-      keywordScore,
-      raceId: task.raceId,
-      teamId: task.teamId,
-    },
+      };
+  const existingHarnessEntry = await tx.harnessEntry.findFirst({
+    where: harnessWhere,
   });
+
+  const harnessPayload = {
+    harnessScore,
+    keywordScore,
+    raceId: task.raceId,
+    registrationId: task.registrationId,
+    reasoningScore,
+    teamId: task.teamId,
+  };
+
+  if (existingHarnessEntry) {
+    await tx.harnessEntry.update({
+      where: { id: existingHarnessEntry.id },
+      data: harnessPayload,
+    });
+  } else {
+    await tx.harnessEntry.create({
+      data: harnessPayload,
+    });
+  }
 
   const successfulHarnessTasks = await tx.runnerTask.findMany({
     where: {
@@ -565,6 +605,7 @@ async function projectHarnessEvalSuccess(
             : "Organizer 未公开 Rider 代码。",
           excerpt: extractHighlightSafe(runnerTask.artifact.ridingRecord),
           raceId: task.raceId,
+          registrationId: runnerTask.registrationId,
           score: runnerTask.score ?? 0,
           teamId: runnerTask.teamId,
         })),
@@ -581,7 +622,10 @@ async function projectHarnessEvalSuccess(
 
 async function staleActiveRunnerTasks(
   tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
-  teamId: string,
+  subject: {
+    registrationId: null | string;
+    teamId: string;
+  },
   taskTypes: RunnerTaskTypeValue[],
 ) {
   await tx.runnerTask.updateMany({
@@ -592,7 +636,9 @@ async function staleActiveRunnerTasks(
       taskType: {
         in: taskTypes,
       },
-      teamId,
+      ...(subject.registrationId
+        ? { registrationId: subject.registrationId }
+        : { teamId: subject.teamId }),
     },
     data: {
       status: "STALE",
@@ -605,20 +651,18 @@ async function getLatestArtifactsForRace(
 ): Promise<LatestArtifactRecord[]> {
   const artifacts = await prisma.submissionArtifact.findMany({
     where: { raceId },
-    orderBy: [
-      { teamId: "asc" },
-      { createdAt: "desc" },
-    ],
+    orderBy: [{ createdAt: "desc" }],
   });
 
-  const latestByTeam = new Map<string, LatestArtifactRecord>();
+  const latestByContainer = new Map<string, LatestArtifactRecord>();
   for (const artifact of artifacts) {
-    if (!latestByTeam.has(artifact.teamId)) {
-      latestByTeam.set(artifact.teamId, artifact);
+    const containerKey = artifact.registrationId ?? `team:${artifact.teamId}`;
+    if (!latestByContainer.has(containerKey)) {
+      latestByContainer.set(containerKey, artifact);
     }
   }
 
-  return [...latestByTeam.values()];
+  return [...latestByContainer.values()];
 }
 
 function toRunnerWireTaskType(taskType: RunnerTaskTypeValue) {

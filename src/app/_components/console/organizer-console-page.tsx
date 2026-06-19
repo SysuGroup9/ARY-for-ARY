@@ -136,13 +136,10 @@ function renderOrganizerSection({
               >
                 报告
               </a>
-              <a
-                className="button-secondary"
-                href={`/console/screen/${raceSlug}/jumbotron`}
-              >
-                大屏控制台
-              </a>
             </div>
+            <p className="muted">
+              企业能力尚未独立建模；当前大屏控制台仅向管理员开放，后续再从独立企业权限收口。
+            </p>
           </Panel>
         </section>
       );
@@ -331,17 +328,23 @@ function renderOrganizerSection({
                 race.submissions.length === 0 ? (
                   <p className="muted">暂时还没有提交或作品资产。</p>
                 ) : (
-                  race.submissions.slice(0, 10).map((submission) => (
-                    <div className="public-link-card" key={submission.id}>
-                      <strong>{submission.codeLabel}</strong>
-                      <span>
-                        队伍：
-                        {race.teams.find((team) => team.id === submission.teamId)
-                          ?.name ?? submission.teamId}
-                      </span>
-                      <span>状态：{submission.status}</span>
-                    </div>
-                  ))
+                  race.submissions.slice(0, 10).map((submission) => {
+                    const registration = race.registrations.find(
+                      (item) => item.id === submission.registrationId,
+                    );
+                    const containerLabel = registration
+                      ? registration.user.username
+                      : race.teams.find((team) => team.id === submission.teamId)?.name ??
+                        submission.teamId;
+
+                    return (
+                      <div className="public-link-card" key={submission.id}>
+                        <strong>{submission.codeLabel}</strong>
+                        <span>队伍：{containerLabel}</span>
+                        <span>状态：{submission.status}</span>
+                      </div>
+                    );
+                  })
                 )
               ) : (
                 race.registrations
@@ -373,13 +376,20 @@ function renderOrganizerSection({
               ) : race.highlights.length === 0 ? (
                 <p className="muted">暂时还没有已发布亮点。</p>
               ) : (
-                race.highlights.map((highlight) => (
-                  <div className="public-link-card" key={highlight.id}>
-                    <strong>{highlight.team.name}</strong>
-                    <span>{getAgentLabel(highlight.agentType)}</span>
-                    <span>{highlight.excerpt}</span>
-                  </div>
-                ))
+                race.highlights.map((highlight) => {
+                  const registration = race.registrations.find(
+                    (item) => item.id === highlight.registrationId,
+                  );
+                  const containerLabel = registration?.user.username ?? highlight.team.name;
+
+                  return (
+                    <div className="public-link-card" key={highlight.id}>
+                      <strong>{containerLabel}</strong>
+                      <span>{getAgentLabel(highlight.agentType)}</span>
+                      <span>{highlight.excerpt}</span>
+                    </div>
+                  );
+                })
               )}
             </div>
           </Panel>
@@ -610,13 +620,10 @@ function renderOrganizerSection({
                 <input name="raceId" type="hidden" value={race.id} />
                 <button type="submit">生成大屏快照</button>
               </form>
-              <a
-                className="button-secondary"
-                href={`/console/screen/${raceSlug}/jumbotron`}
-              >
-                打开大屏控制台
-              </a>
             </div>
+            <p className="muted">
+              大屏控制台当前由管理员代理访问；主办方可先生成快照，再由管理员进入大屏控制台联调展示。
+            </p>
           </Panel>
           <Panel title="危险操作" eyebrow="维护">
             <form action={clearRaceAction}>

@@ -7,16 +7,16 @@ type RaceSummaryLike = {
   phase: string;
   raceStart: Date;
   raceEnd: Date;
-  projections?: Array<{
+  projections?: ReadonlyArray<{
     id: string;
     payloadJson: string;
     type: string;
   }>;
-  registrations?: Array<{
+  registrations?: ReadonlyArray<{
     id: string;
     userId: string;
     user: { id: string; username: string };
-    awards?: Array<{ awardName: string; rank: number }>;
+    awards?: ReadonlyArray<{ awardName: string; rank: number }>;
     raceProject?: null | {
       aggregateIngestionStatus: string;
       id: string;
@@ -27,13 +27,14 @@ type RaceSummaryLike = {
       title: string;
     };
   }>;
-  teams: Array<{
+  teams: ReadonlyArray<{
     id: string;
     name: string;
     captain: { id: string; username: string };
   }>;
-  highlights: Array<{
+  highlights: ReadonlyArray<{
     id: string;
+    registrationId?: null | string;
     teamId: string;
     team: { id: string; name: string };
     agentType: string;
@@ -41,15 +42,16 @@ type RaceSummaryLike = {
     excerpt: string;
     codeSnippet: string;
   }>;
-  teamArchives: Array<{
+  teamArchives: ReadonlyArray<{
     id: string;
     teamId: string;
     team: { id: string; name: string };
     agentType: string;
     totalScore: number;
   }>;
-  leaderboardEntries: Array<{
+  leaderboardEntries: ReadonlyArray<{
     id: string;
+    registrationId?: null | string;
     teamId: string;
     team: { id: string; name: string };
     totalScore: number;
@@ -190,6 +192,10 @@ export function buildPublicSiteModel<T extends RaceSummaryLike>(
   }));
 
   const featuredWorks = finishedRaces.flatMap((race) => {
+    const teamCaptainIdByTeamId = new Map(
+      race.teams.map((team) => [team.id, team.captain.id]),
+    );
+
     return (race.registrations ?? [])
       .filter((registration) => registration.work)
       .map((registration) => ({
@@ -206,15 +212,21 @@ export function buildPublicSiteModel<T extends RaceSummaryLike>(
         excerpt: registration.work!.summary,
         score: registration.awards?.length
           ? 100 - (registration.awards[0]!.rank - 1)
-          : race.leaderboardEntries.find((entry) =>
-              race.teams.find((team) => team.id === entry.teamId)?.captain.id ===
-              registration.userId,
-            )?.totalScore ?? 0,
+          : race.leaderboardEntries.find((entry) => {
+                if (entry.registrationId === registration.id) {
+                  return true;
+                }
+
+                return teamCaptainIdByTeamId.get(entry.teamId) === registration.userId;
+              })?.totalScore ?? 0,
         agentType:
-          race.highlights.find((highlight) =>
-            race.teams.find((team) => team.id === highlight.teamId)?.captain.id ===
-            registration.userId,
-          )?.agentType ?? "CUSTOM",
+          race.highlights.find((highlight) => {
+            if (highlight.registrationId === registration.id) {
+              return true;
+            }
+
+            return teamCaptainIdByTeamId.get(highlight.teamId) === registration.userId;
+          })?.agentType ?? "CUSTOM",
       }));
   });
 

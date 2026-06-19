@@ -38,6 +38,8 @@ export async function createSubmission(riderId: string, formData: FormData) {
     throw new Error("当前报名尚未生成可用的提交容器");
   }
 
+  const registrationId = registration.id;
+
   const race = await prisma.race.findUnique({
     where: {
       id: parsed.raceId,
@@ -78,6 +80,7 @@ export async function createSubmission(riderId: string, formData: FormData) {
         codeContent: parsed.codeContent,
         codeLabel: parsed.codeLabel,
         raceId: parsed.raceId,
+        registrationId,
         recordLabel: null,
         ridingRecord: null,
         status: SubmissionStatus.QUEUED,
@@ -92,6 +95,7 @@ export async function createSubmission(riderId: string, formData: FormData) {
         codeContent: parsed.codeContent,
         codeLabel: parsed.codeLabel,
         raceId: parsed.raceId,
+        registrationId,
         recordLabel: null,
         ridingRecord: null,
         submissionId: submission.id,
@@ -103,6 +107,7 @@ export async function createSubmission(riderId: string, formData: FormData) {
     await enqueueSubmissionTestTask({
       artifactId: artifact.id,
       raceId: parsed.raceId,
+      registrationId,
       submissionId: submission.id,
       teamId: team.id,
       tx,
@@ -137,6 +142,8 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
     throw new Error("当前报名尚未生成可用的提交容器");
   }
 
+  const registrationId = registration.id;
+
   const race = await prisma.race.findUnique({
     where: {
       id: parsed.raceId,
@@ -158,6 +165,7 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
         codeContent: parsed.codeContent,
         codeLabel: parsed.codeLabel,
         raceId: parsed.raceId,
+        registrationId,
         recordLabel: parsed.recordLabel,
         ridingRecord: parsed.ridingRecord,
         status: SubmissionStatus.QUEUED,
@@ -172,6 +180,7 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
         codeContent: parsed.codeContent,
         codeLabel: parsed.codeLabel,
         raceId: parsed.raceId,
+        registrationId,
         recordLabel: parsed.recordLabel,
         ridingRecord: parsed.ridingRecord,
         submissionId: submission.id,
@@ -183,6 +192,7 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
     await enqueueHarnessEvalTaskForArtifact(tx, {
       id: artifact.id,
       raceId: parsed.raceId,
+      registrationId,
       teamId: team.id,
       submissionId: submission.id,
       codeLabel: parsed.codeLabel,

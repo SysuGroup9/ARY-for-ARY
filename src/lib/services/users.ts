@@ -26,12 +26,10 @@ export async function registerUser(formData: FormData) {
   }
 
   const roles: AppRole[] = ["RIDER"];
-  const role = getDefaultActiveRole(roles);
 
   const user = await prisma.user.create({
     data: {
       passwordHash: await hashPassword(parsed.password),
-      role,
       rolesJson: serializeRoles(roles),
       username: parsed.username,
     },
@@ -39,7 +37,7 @@ export async function registerUser(formData: FormData) {
 
   await createSession({
     id: user.id,
-    role,
+    role: getDefaultActiveRole(roles),
     roles,
     username: user.username,
   });
@@ -69,13 +67,10 @@ export async function loginUser(formData: FormData) {
   }
 
   const roles = parseRolesJson(user.rolesJson);
-  const role = hasRole(roles, user.role)
-    ? user.role
-    : getDefaultActiveRole(roles);
 
   await createSession({
     id: user.id,
-    role,
+    role: getDefaultActiveRole(roles),
     roles,
     username: user.username,
   });
@@ -106,14 +101,12 @@ export async function updateUserRoles(input: {
   userId: string;
 }) {
   const roles: AppRole[] = input.roles.length === 0 ? ["RIDER"] : input.roles;
-  const primaryRole = getDefaultActiveRole(roles);
 
   return prisma.user.update({
     where: {
       id: input.userId,
     },
     data: {
-      role: primaryRole,
       rolesJson: serializeRoles(roles),
     },
   });

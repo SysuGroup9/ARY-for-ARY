@@ -269,7 +269,7 @@ Race Phase 状态机：`registration → preparation → active → frozen → f
 |--------|-------|---------|------|
 | **角色数量** | 重大 | ✅ 已解决 | 4 角色体系（ADMIN/JUDGE/ORGANIZER/RIDER）+ Public 无登录 = 5 种体验面。 |
 | **Role 存储方式** | 重大 | 🔶 部分解决 | `rolesJson` 支持多角色，但 `role` 单值字段仍存，未完全迁移。 |
-| **GitHub 登录** | 重大 | ❌ 未解决 | 代码库无任何 GitHub OAuth 配置（next.config.ts 无 GitHub 相关项，无 auth API 路由）；用户仍通过用户名+密码登录。 |
+| **GitHub 登录** | 重大 | 🔶 部分解决 | GitHub OAuth 主链路代码已具备（`github-oauth.ts`、callback route、loginWithGitHubAction）；但首页/`/login`/callback/session 的真实验收尚未完成，且登录模型仍保留本地账号兜底。 |
 | **权限校验** | 重大 | 🔶 部分解决 | `viewer-access.ts` 实现 11 个入口控制函数（19 项测试通过），覆盖 admin/judge/organizer/rider/screen 入口。但完整 13×6 矩阵未逐项验证；Console 实际准入链路被反馈"基本畅通无阻"，未达可验收状态。 |
 | **Organizer 范围** | 轻微 | 🔶 部分解决 | `viewer-access.ts` 中有 `managed race` 概念，但需核实实际查询层是否已按 managed race 过滤。 |
 | **Admin Console** | 重大 | ✅ 已解决 | `/console/admin/*` 路由就位，含用户列表/资料补全/角色维护 3 个 section。 |
@@ -296,9 +296,9 @@ Race Phase 状态机：`registration → preparation → active → frozen → f
 
 | 差异项 | 原评级 | 当前状态 | 详情 |
 |--------|-------|---------|------|
-| **CA 接入方式** | 重大 | ❌ 未解决 | CAConnection/Session 模型已就位，但运行时仍使用 Runner Pull 模式（`runner.ts` + `organizer_demo/` 仍在代码库中）。CA Push+Fetch 链路未实现。 |
+| **CA 接入方式** | 重大 | 🔶 部分解决 | CAConnection/Session 模型与最小运行时桥已具备（handshake / signals / snapshot fetch API + connector demo）；但旧 Runner Pull 主路径仍在，尚未完成正式运行时切换。 |
 | **CAConnection 模型** | 重大 | ✅ 已解决 | Schema 层已实现（含 caType/connectorId/ingestionStatus/registeredAt/disabledAt）。 |
-| **数据方向** | 重大 | ❌ 未解决 | Runner Pull → 回传模式仍在运行，Push+Fetch 混合模型未实现。 |
+| **数据方向** | 重大 | 🔶 部分解决 | Push+Fetch 最小闭环已可演示，但 Runner Pull → 回传模式仍在运行，正式主路径尚未切换完成。 |
 | **原始数据可见性** | 中度 | 🔶 部分解决 | Evidence.visibility 字段已设计，但 CA Session 不公开的运行时强制执行待核实。 |
 | **接入失败处理** | 轻微 | 🔶 部分解决 | RaceProject.aggregateIngestionStatus 字段已设计；语义上不改变 Registration 资格，但需完整链路验证。 |
 | **CA 作为参赛资格** | 中度 | 🔶 部分解决 | Schema 分离了 CA 接入与 Registration 资格，运行时门禁逻辑待核实。 |
@@ -339,7 +339,7 @@ Race Phase 状态机：`registration → preparation → active → frozen → f
 
 | 差异项 | 原评级 | 当前状态 | 详情 |
 |--------|-------|---------|------|
-| **认证方式** | 重大 | ❌ 未解决 | 仍为 JWT Cookie + 用户名/密码。GitHub OAuth 完全未接入。 |
+| **认证方式** | 重大 | 🔶 部分解决 | 仍为 JWT Cookie session；GitHub OAuth 主链路已接入，但本地用户名/密码入口仍保留为开发兜底，尚未完全收口到单一正式身份入口。 |
 | **数据库** | 轻微 | 未变 | 仍为 SQLite，迁移 Postgres 非 MVP 强制性要求。 |
 | **Prisma 版本** | 轻微 | ✅ 一致 | Prisma 7 符合要求。 |
 | **Next.js** | 轻微 | ✅ 一致 | Next.js 16 App Router 符合要求。 |
@@ -366,8 +366,8 @@ Race Phase 状态机：`registration → preparation → active → frozen → f
 |---|--------|--------|---------|---------|
 | 1 | **Team 实体删除** | 存在 Team+TeamMember | 🔶 Schema 中仍存在 | 深层 teamId→registrationId 迁移未完成；兼容层（rider-bridge.ts）仍在使用 |
 | 2 | **User.role 集合化** | 单一 role 枚举 | 🔶 role + rolesJson 双轨 | `role` 字段未删除；旧代码可能仍读取 role 单值 |
-| 3 | **GitHub OAuth 登录** | 用户名+密码 | ❌ 完全未开始 | 无任何 OAuth 配置；无 auth API 路由；User.githubAccount 字段已预留但未使用 |
-| 4 | **CA Push+Fetch 模式** | Runner Pull | ❌ 运行时未切换 | CAConnection/Session 模型已就位，但 ingest pipeline 仍是 Runner Pull |
+| 3 | **GitHub OAuth 登录** | 用户名+密码 | 🔶 主链路已实现 | OAuth service / callback route / login action 已就位，但真实验收与登录模型收口未完成 |
+| 4 | **CA Push+Fetch 模式** | Runner Pull | 🔶 最小闭环已具备 | handshake / signals / snapshot fetch API 与 connector demo 已就位，但 ingest pipeline 主路径仍保留 Runner Pull |
 
 ## 4.3 当前仍存在的中度差异（共 8 项）
 
@@ -431,9 +431,9 @@ Race Phase 状态机：`registration → preparation → active → frozen → f
 
 | 差距项 | 描述 | 影响 |
 |--------|------|------|
-| 🆕 **prisma.ts 硬编码路径** | `src/lib/prisma.ts` 在 `production` 分支里硬编码写入 `/tmp/ary-runtime`；Windows 环境下映射到 `C:\tmp\ary-runtime`，导致 `EPERM: operation not permitted` | `next build` 无法完整通过 |
+| 🆕 **prisma.ts 硬编码路径** | `src/lib/prisma.ts` 在 `production` 分支里硬编码写入 `/tmp/ary-runtime`；该问题曾在 Windows 环境触发过构建阻塞，但通过恢复 Prisma client 生成产物后，当前 `db:generate` / `typecheck` / `build` 已可通过 | 历史风险，需后续继续观察 |
 
-**当前状态**：未修复。
+**当前状态**：已缓解，当前构建验证已通过。
 
 ## 5.2 身份入口链路断点
 
@@ -460,7 +460,7 @@ Race Phase 状态机：`registration → preparation → active → frozen → f
 |--------|------|------|
 | 🆕 **登录模型仍偏向"任何人都可直接注册/登录本地账号"** | 尚未收口到 grs003 期望的正式身份体系与 OAuth 方案 | 与 GRS003 要求的 GitHub OAuth 唯一登录入口不一致 |
 
-**当前状态**：未修复（与差异 #13 GitHub OAuth 关联）。
+**当前状态**：部分收口（GitHub OAuth 主链路已具备，但正式入口策略仍未完全收口）。
 
 ## 5.5 中文残留扫描
 
@@ -479,8 +479,8 @@ Race Phase 状态机：`registration → preparation → active → frozen → f
 | 等级 | v1.0 原始 | v1.1 当前 | 变化 |
 |------|----------|----------|------|
 | 重大差异-已解决 | 0 | 18 | +18 |
-| 重大差异-部分解决 | 0 | 3 | +3 |
-| 重大差异-未解决 | 24 | 3 | -21 |
+| 重大差异-部分解决 | 0 | 5 | +5 |
+| 重大差异-未解决 | 24 | 1 | -23 |
 | 中度差异-已解决 | 0 | 8 | +8 |
 | 中度差异-部分解决 | 0 | 5 | +5 |
 | 中度差异-未解决 | 14 | 1 | -13 |
@@ -493,8 +493,8 @@ Race Phase 状态机：`registration → preparation → active → frozen → f
 |------|------|------|
 | 总差异项 | 48 | 49（含新增） |
 | 已完全解决 | 0 | **26**（18 重大 + 8 中度） |
-| 部分解决（进行中） | 0 | **8** |
-| 仍完全未解决 | 38 | **10**（含新增 5） |
+| 部分解决（进行中） | 0 | **10** |
+| 仍完全未解决 | 38 | **8**（含新增 5） |
 
 ## 6.3 核心结论（更新）
 
@@ -505,9 +505,9 @@ Race Phase 状态机：`registration → preparation → active → frozen → f
 2. **信息架构已基本重建**：15+ 页面全部就位，URL 结构从平铺改为层级式，公开端导航、Console 管理端、Screen Console 7 模式均已实现。
 
 3. **剩余差距集中在三个方向**：
-   - **认证升级**：GitHub OAuth 完全未开始（差距最大）
-   - **运行时链路**：CA Push+Fetch 未切换、深层 teamId 迁移未完成、Role 单值残留
-   - **质量收口**：构建环境、身份入口链路断点、Console 准入验证、提交链路断点
+   - **认证升级**：GitHub OAuth 主链路已实现，但真实验收与登录模型收口未完成
+   - **运行时链路**：CA Push+Fetch 最小闭环已具备，但主路径仍未切换；深层 teamId 迁移与 Role 单值残留仍待清理
+   - **质量收口**：身份入口链路断点、Console 准入验证、提交链路断点仍需真实验收；构建阻塞已不再是当前主问题
 
 ---
 
@@ -534,3 +534,4 @@ Race Phase 状态机：`registration → preparation → active → frozen → f
 |------|------|---------|
 | v1.0 | 2026-06-18 | 初始版本：基于 GRS001/GRS002 成果与 GRS003 规范全集首次差异分析，48 项差异。 |
 | v1.1 | 2026-06-19 | 全线重新审计：基于 `docs/superpowers/status.md` 记录的 2026-06-19 收口成果与代码库实战验证，逐项重新评估。18 项重大差异已解决，8 项中度差异已解决，新增 5 项运行时/质量差距。核心差异从"领域模型完全不重叠"缩小为"GitHub OAuth+CA 运行时链路+质量收口"三方向。 |
+| v1.2 | 2026-06-19 | 修正部分过时判断：GitHub OAuth 与 CA Push+Fetch 已从“完全未开始”更新为“主链路/最小闭环已具备但尚未完成真实验收或主路径切换”；构建环境阻塞改为历史风险，不再视为当前主阻塞。 |

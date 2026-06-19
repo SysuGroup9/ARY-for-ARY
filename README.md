@@ -60,7 +60,7 @@ npm run db:seed
 ### Rider
 
 1. 打开 `/login`
-2. 使用 `rider_* / rider123` 登录
+2. 可优先点击 `使用 GitHub 登录`；本地 `rider_* / rider123` 仍保留为开发兜底
 3. 登录后可在公开首页点 `进入控制台`，或直接打开 `/console`
 4. 进入 `赛事控制台`
 5. 选择目标赛事
@@ -180,7 +180,18 @@ copy .env.example .env
 
 ```env
 DATABASE_URL="file:./dev.db"
+SESSION_SECRET=replace-with-a-long-random-string
+ARY_BASE_URL=http://localhost:3000
+GITHUB_CLIENT_ID=replace-with-github-oauth-app-client-id
+GITHUB_CLIENT_SECRET=replace-with-github-oauth-app-client-secret
+GITHUB_CALLBACK_URL=http://localhost:3000/api/auth/github/callback
 ```
+
+GitHub OAuth 说明：
+
+- `ARY_BASE_URL` 用于默认推导回调地址。
+- `GITHUB_CALLBACK_URL` 可选；如果显式填写，它会覆盖默认推导值。
+- GitHub OAuth App 的 callback URL 需要与 `http://localhost:3000/api/auth/github/callback` 或你的部署地址完全一致。
 
 ### 3. 生成 Prisma Client
 
@@ -222,6 +233,28 @@ npm run build
 npm run lint
 npm run build
 ```
+
+## GitHub OAuth 与真实 agent 演示
+
+### GitHub OAuth
+
+1. 在 GitHub Developer Settings 中创建 OAuth App。
+2. Homepage URL 填本地或部署地址。
+3. Callback URL 填 `http://localhost:3000/api/auth/github/callback`。
+4. 将 Client ID / Client Secret 写入根目录 `.env`。
+5. 启动项目后打开 `/login`，点击 `使用 GitHub 登录`。
+
+### Real agent / CA connector demo
+
+仓库内已提供一个最小 connector 演示器：[`organizer_demo/ca_connector_demo/README.md`](ARY-for-ARY/organizer_demo/ca_connector_demo/README.md)
+
+它会完成三步：
+
+1. 调用 ARY handshake API
+2. 推送 `session_started` / `task_progress` signal
+3. 本地暴露 snapshot 接口，供 Rider 控制台手动抓取
+
+适合本地把 `CAConnection -> handshake -> signal -> snapshot fetch` 这条链路完整跑通。
 
 ## 目前推荐的最短体验路径
 

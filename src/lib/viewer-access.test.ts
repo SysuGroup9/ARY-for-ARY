@@ -31,7 +31,7 @@ test("maps organizer and rider capabilities without audience session", () => {
     canJudge: false,
     canManage: true,
     canRide: false,
-    canUseScreen: true,
+    canUseScreen: false,
   });
 
   assert.deepEqual(getRoleCapabilities(["RIDER"]), {
@@ -98,7 +98,7 @@ test("shows console entry only for users with actual console sections", () => {
 });
 
 test("maps console home sections from the current role", () => {
-  assert.deepEqual(getConsoleHomeSections(["ORGANIZER"]), ["races", "screen"]);
+  assert.deepEqual(getConsoleHomeSections(["ORGANIZER"]), ["races"]);
   assert.deepEqual(getConsoleHomeSections(["RIDER"]), ["races"]);
   assert.deepEqual(getConsoleHomeSections(["JUDGE"]), ["races"]);
   assert.deepEqual(getConsoleHomeSections(["ADMIN"]), ["admin", "screen"]);
@@ -208,8 +208,8 @@ test("keeps admin and screen console access explicit", () => {
     redirectTo: "/console",
   });
   assert.deepEqual(getConsoleScreenAccess(["ORGANIZER"]), {
-    allowed: true,
-    redirectTo: null,
+    allowed: false,
+    redirectTo: "/console",
   });
   assert.deepEqual(getConsoleScreenAccess(["ADMIN"]), {
     allowed: true,

@@ -78,7 +78,7 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
 
   const raceData: AryRaceData = {
     feedbackThreads: race.feedbackThreads.map((thread) => ({
-      teamId: thread.teamId,
+      teamId: thread.registrationId ?? thread.teamId,
       messages: thread.messages.map((message) => ({
         content: message.content,
         createdAt: message.createdAt,
@@ -92,7 +92,7 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
       id: entry.id,
       progress: entry.progress,
       taskScore: entry.taskScore,
-      teamId: entry.teamId,
+      teamId: entry.registrationId ?? entry.teamId,
       tokenScore: entry.tokenScore,
       totalScore: entry.totalScore,
     })),
@@ -141,13 +141,13 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
     submissions: race.submissions.map((submission) => ({
       createdAt: submission.createdAt,
       id: submission.id,
-      teamId: submission.teamId,
+      teamId: submission.registrationId ?? submission.teamId,
     })),
     summary: race.summary,
     teamArchives: race.teamArchives.map((archive) => ({
       agentType: archive.agentType,
       antiCheatPenalty: archive.antiCheatPenalty,
-      teamId: archive.teamId,
+      teamId: archive.registrationId ?? archive.teamId,
       tokenUsed: archive.tokenUsed,
       totalScore: archive.totalScore,
     })),

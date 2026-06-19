@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearSession, requireRole } from "@/lib/auth";
+import { startGitHubOAuth } from "@/lib/github-oauth";
 import { replyFeedback, sendFeedback } from "@/lib/services/feedback";
 import { createCAConnectionForRaceProject } from "@/lib/services/ca-connections";
+import { fetchCASessionSnapshotForConnection } from "@/lib/services/ca-fetch";
 import { rebuildSessionSummaryEvidenceForRace } from "@/lib/services/evidence";
 import { assignJudgeToWork, upsertJudgingRecord } from "@/lib/services/judging";
 import {
@@ -40,6 +42,11 @@ export async function loginAction(formData: FormData) {
   await loginUser(formData);
   const returnTo = String(formData.get("returnTo") ?? "");
   redirect(returnTo || "/");
+}
+
+export async function loginWithGitHubAction(formData: FormData) {
+  const returnTo = String(formData.get("returnTo") ?? "");
+  await startGitHubOAuth(returnTo);
 }
 
 export async function logoutAction() {
@@ -146,6 +153,18 @@ export async function registerCAConnectionAction(formData: FormData) {
     connectorVersion: String(formData.get("connectorVersion") ?? ""),
     raceProjectId: String(formData.get("raceProjectId") ?? ""),
     userId: user.id,
+  });
+  await rebuildSessionSummaryEvidenceForRace(raceId);
+  await rebuildRaceProcessProjections(raceId);
+  revalidatePath("/console/races");
+}
+
+export async function fetchCASnapshotAction(formData: FormData) {
+  await requireRole("RIDER");
+  const raceId = String(formData.get("raceId") ?? "");
+  await fetchCASessionSnapshotForConnection({
+    caConnectionId: String(formData.get("caConnectionId") ?? ""),
+    caSessionId: String(formData.get("caSessionId") ?? ""),
   });
   await rebuildSessionSummaryEvidenceForRace(raceId);
   await rebuildRaceProcessProjections(raceId);

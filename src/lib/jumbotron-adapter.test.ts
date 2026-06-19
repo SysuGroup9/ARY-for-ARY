@@ -29,6 +29,7 @@ function buildRaceData(overrides?: Partial<AryRaceData>): AryRaceData {
     leaderboardEntries: [
       {
         id: "lb_1",
+        registrationId: "reg_1",
         teamId: "team_1",
         totalScore: 90,
         progress: null,
@@ -40,6 +41,7 @@ function buildRaceData(overrides?: Partial<AryRaceData>): AryRaceData {
       },
       {
         id: "lb_2",
+        registrationId: "reg_2",
         teamId: "team_2",
         totalScore: 45,
         progress: null,
@@ -51,11 +53,12 @@ function buildRaceData(overrides?: Partial<AryRaceData>): AryRaceData {
       },
     ],
     submissions: [
-      { id: "sub_1", teamId: "team_1", createdAt: now },
-      { id: "sub_2", teamId: "team_2", createdAt: now },
+      { id: "sub_1", registrationId: "reg_1", teamId: "team_1", createdAt: now },
+      { id: "sub_2", registrationId: "reg_2", teamId: "team_2", createdAt: now },
     ],
     teamArchives: [
       {
+        registrationId: "reg_1",
         teamId: "team_1",
         agentType: "CLAUDE",
         tokenUsed: 1000,
@@ -63,6 +66,7 @@ function buildRaceData(overrides?: Partial<AryRaceData>): AryRaceData {
         antiCheatPenalty: 0,
       },
       {
+        registrationId: "reg_2",
         teamId: "team_2",
         agentType: "OPENAI",
         tokenUsed: 1500,
@@ -224,6 +228,7 @@ test("prefers registration work titles over legacy team names when work assets e
       leaderboardEntries: [
         {
           id: "lb_1",
+          registrationId: "reg_1",
           teamId: "team_1",
           totalScore: 90,
           progress: null,
@@ -234,9 +239,10 @@ test("prefers registration work titles over legacy team names when work assets e
           createdAt: new Date("2026-06-18T12:00:00.000Z"),
         },
       ],
-      submissions: [{ id: "sub_1", teamId: "team_1", createdAt: new Date("2026-06-18T12:00:00.000Z") }],
+      submissions: [{ id: "sub_1", registrationId: "reg_1", teamId: "team_1", createdAt: new Date("2026-06-18T12:00:00.000Z") }],
       teamArchives: [
         {
+          registrationId: "reg_1",
           teamId: "team_1",
           agentType: "CLAUDE",
           tokenUsed: 1000,
@@ -334,6 +340,7 @@ test("prefers session token cost totals over legacy archive totals when registra
       ],
       teamArchives: [
         {
+          registrationId: "reg_1",
           teamId: "team_1",
           agentType: "CLAUDE",
           tokenUsed: 5000,

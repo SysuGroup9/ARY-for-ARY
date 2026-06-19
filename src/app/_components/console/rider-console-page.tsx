@@ -1,4 +1,5 @@
 import {
+  fetchCASnapshotAction,
   registerForRaceAction,
   registerCAConnectionAction,
   sendFeedbackAction,
@@ -129,6 +130,7 @@ function renderRiderSection({
                   聚合接入状态：{registration.raceProject.aggregateIngestionStatus}
                 </p>
                 <form action={registerCAConnectionAction} className="form-grid">
+                  <input name="raceId" type="hidden" value={race.id} />
                   <input name="raceProjectId" type="hidden" value={registration.raceProject.id} />
                   <label>
                     CA 类型
@@ -174,6 +176,18 @@ function renderRiderSection({
                       握手：{connection.handshakeCompletedAt ? "已完成" : "待完成"}
                     </span>
                     <span>Sessions：{connection.sessions.length}</span>
+                    <p className="muted">
+                      先让 connector 调用 handshake API 完成登记确认；只有出现 session 后，ARY 才能抓取对应 snapshot。
+                    </p>
+                    <form action={fetchCASnapshotAction} className="form-grid">
+                      <input name="caConnectionId" type="hidden" value={connection.id} />
+                      <input name="raceId" type="hidden" value={race.id} />
+                      <label>
+                        CA Session ID
+                        <input name="caSessionId" placeholder="codex_session_demo_001" required />
+                      </label>
+                      <button type="submit">抓取快照</button>
+                    </form>
                   </div>
                 ))
               ) : (
@@ -201,9 +215,16 @@ function renderRiderSection({
       );
 
     case "riding": {
-      const teamEntry = riderTeam
-        ? race.leaderboardEntries.find((entry) => entry.teamId === riderTeam.id)
-        : null;
+      const riderRegistrationId = registration?.id ?? null;
+      const teamEntry = riderRegistrationId
+        ? race.leaderboardEntries.find(
+            (entry) =>
+              entry.registrationId === riderRegistrationId ||
+              entry.teamId === riderTeam?.id,
+          )
+        : riderTeam
+          ? race.leaderboardEntries.find((entry) => entry.teamId === riderTeam.id)
+          : null;
 
       return (
         <Panel title="骑行状态" eyebrow="Rider View">
@@ -223,9 +244,17 @@ function renderRiderSection({
             <div>
               <dt>提交次数</dt>
               <dd>
-                {riderTeam
-                  ? race.submissions.filter((submission) => submission.teamId === riderTeam.id).length
-                  : 0}
+                {riderRegistrationId
+                  ? race.submissions.filter(
+                      (submission) =>
+                        submission.registrationId === riderRegistrationId ||
+                        submission.teamId === riderTeam?.id,
+                    ).length
+                  : riderTeam
+                    ? race.submissions.filter(
+                        (submission) => submission.teamId === riderTeam.id,
+                      ).length
+                    : 0}
               </dd>
             </div>
           </div>
@@ -268,7 +297,12 @@ function renderRiderSection({
                 <p className="muted">当前还没有可用的作品提交记录。</p>
               ) : (
                 race.submissions
-                  .filter((submission) => submission.teamId === riderTeam.id)
+                  .filter((submission) =>
+                    registration?.id
+                      ? submission.registrationId === registration.id ||
+                        submission.teamId === riderTeam.id
+                      : submission.teamId === riderTeam.id,
+                  )
                   .map((submission) => (
                     <div className="public-link-card" key={submission.id}>
                       <strong>{submission.codeLabel}</strong>
@@ -282,9 +316,14 @@ function renderRiderSection({
       );
 
     case "review": {
-      const thread = riderTeam
-        ? race.feedbackThreads.find((item) => item.teamId === riderTeam.id)
-        : null;
+      const thread = registration?.id
+        ? race.feedbackThreads.find(
+            (item) =>
+              item.registrationId === registration.id || item.teamId === riderTeam?.id,
+          )
+        : riderTeam
+          ? race.feedbackThreads.find((item) => item.teamId === riderTeam.id)
+          : null;
 
       return (
         <section className="grid">
@@ -347,7 +386,11 @@ function renderRiderSection({
             ))}
             {riderTeam
               ? race.teamArchives
-                  .filter((item) => item.teamId === riderTeam.id)
+                  .filter((item) =>
+                    registration?.id
+                      ? item.registrationId === registration.id || item.teamId === riderTeam.id
+                      : item.teamId === riderTeam.id,
+                  )
                   .slice(0, 1)
                   .map((archive) => (
                     <div className="public-link-card" key={`${archive.id}-final-score`}>

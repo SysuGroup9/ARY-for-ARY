@@ -23,7 +23,6 @@ export interface SessionUser {
 }
 
 interface SessionPayload {
-  role: AppRole;
   roles: AppRole[];
   sub: string;
   username: string;
@@ -43,7 +42,6 @@ export async function verifyPassword(
 export async function createSession(user: SessionUser): Promise<void> {
   const normalizedRoles = normalizeRoles(user.roles);
   const token = await new SignJWT({
-    role: user.role,
     roles: normalizedRoles,
     username: user.username,
   } satisfies Omit<SessionPayload, "sub">)
@@ -78,10 +76,10 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   try {
     const verified = await jwtVerify(token, encoder.encode(SESSION_SECRET));
     const payload = verified.payload as unknown as SessionPayload;
-    const roles = normalizeRoles(payload.roles ?? [payload.role]);
+    const roles = normalizeRoles(payload.roles);
     return {
       id: payload.sub,
-      role: payload.role ?? getDefaultActiveRole(roles),
+      role: getDefaultActiveRole(roles),
       roles,
       username: payload.username,
     };
@@ -126,9 +124,7 @@ export async function loadDatabaseUser(): Promise<SessionUser | null> {
 
   return {
     id: user.id,
-    role: hasRole(roles, user.role)
-      ? user.role
-      : getDefaultActiveRole(roles),
+    role: getDefaultActiveRole(roles),
     roles,
     username: user.username,
   };

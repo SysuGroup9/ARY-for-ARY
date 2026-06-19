@@ -9,11 +9,7 @@ import {
   buildRiderReportSeed,
   buildWorkSeedRecord,
 } from "../src/lib/result-chain-helpers";
-import {
-  getDefaultActiveRole,
-  serializeRoles,
-  type AppRole,
-} from "../src/lib/user-roles";
+import { serializeRoles, type AppRole } from "../src/lib/user-roles";
 
 async function main() {
   await prisma.runnerTask.deleteMany();
@@ -42,7 +38,6 @@ async function main() {
     roles: AppRole[];
     username: string;
   }) {
-    const role = getDefaultActiveRole(input.roles);
     return prisma.user.create({
       data: {
         id: input.id,
@@ -50,7 +45,6 @@ async function main() {
         profileCompleted: input.profileCompleted ?? true,
         profileName: input.username,
         profileOrgLabel: "ARY",
-        role,
         rolesJson: serializeRoles(input.roles),
         username: input.username,
       },

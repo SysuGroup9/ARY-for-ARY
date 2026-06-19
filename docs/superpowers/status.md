@@ -7,10 +7,45 @@
 - 当前代码库已经从单页混合模式推进到分层结构，核心分区包括公开站、赛事控制台、管理控制台、大屏控制台和大屏展示层。
 - 公开页面主路线已经落到 `/races`、`/works`、`/riders`、`/cooperation`、`/console/*` 这一组 `grs003` 推荐路径上。
 - 控制台入口、评委视图、骑手视图、主办方视图，以及公开页中的大部分用户可见文案，已经收口到中文。
+- 大屏控制台与赛事控制台已经按能力边界拆开；在企业能力尚未独立建模前，大屏控制台先仅向 `Admin` 开放，不再默认暴露给 Organizer。
+- GitHub OAuth 主链路代码与 CA handshake / signal / snapshot fetch 运行时桥已经具备，且仓库内新增了可运行的本地 connector demo。
 - Jumbotron 与大屏赛道渲染样式仍以“尽量保留最早样式”为原则，这几轮中文化收口没有改动赛道视觉结构。
-- 项目尚未完成全部 `grs003` 要求，尤其是 GitHub OAuth、运行时路径、CA 接入，以及部分深层语义迁移仍在进行中。
+- 项目尚未完成全部 `grs003` 要求，尤其是生产级 OAuth 运维、运行时路径、CA 接入质量收口，以及部分深层语义迁移仍在进行中。
 
 ## 已完成收口
+
+## 2026-06-19 GitHub OAuth 与真实 agent 最小闭环补齐（进行中）
+
+- GitHub OAuth
+  - `src/lib/github-oauth.ts` 已承担 state cookie、GitHub code exchange、用户查找/创建与 session 写入。
+  - `src/app/api/auth/github/callback/route.ts` 已承接 callback，并把 `github_denied / github_missing_code / github_callback_failed` 回落到登录页。
+  - `README.md` 与 `.env.example` 已补齐 `SESSION_SECRET / ARY_BASE_URL / GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET / GITHUB_CALLBACK_URL` 说明。
+- Real agent demo
+  - 新增 `organizer_demo/ca_connector_demo/` 最小演示器：本地 snapshot server、ARY handshake client、signal push client、`.env.example` 与 README。
+  - 该 demo 默认自动发送 `session_started` 与 `task_progress`，并通过 Rider 控制台手动触发 snapshot fetch。
+- 当前边界
+  - 这一轮以“最小演示闭环”为目标，不扩展到生产级 connector SDK、自动 snapshot 调度、secret 轮换或审计编排。
+- 验证
+  - `powershell -Command "$env:DATABASE_URL='file:./dev.db'; npm run db:generate"` 已通过，已恢复 `src/generated/prisma` 生成产物。
+  - `npm --prefix organizer_demo/ca_connector_demo run typecheck` 已通过。
+  - `powershell -Command "$env:DATABASE_URL='file:./dev.db'; npm --prefix organizer_demo/ca_connector_demo run typecheck; npm run build"` 已通过。
+
+## 2026-06-19 大屏控制台权限边界收口（已完成验收）
+
+- `src/lib/viewer-access.ts`
+  - `canUseScreen`、`getConsoleHomeSections()` 和 `getConsoleScreenAccess()` 不再把 Organizer 视为大屏控制台用户。
+  - 增加注释明确：企业能力尚未独立建模，当前由 `Admin` 代理大屏控制台权限。
+- `src/lib/services/console-routes.ts`
+  - `listScreenConsoleRacesForUser()` 改为仅 `Admin` 返回赛事列表，不再给 Organizer 返回大屏入口。
+- `src/app/_components/console/organizer-console-page.tsx`
+  - 主办方视图移除直达大屏控制台按钮，改为说明当前需由管理员代理进入大屏控制台联调。
+- 对应测试
+  - `src/lib/viewer-access.test.ts`
+  - `src/lib/services/console-routes.test.ts`
+  - `src/app/_components/console/organizer-console-page.test.tsx`
+- 验证
+  - `node --import tsx --test src/lib/viewer-access.test.ts` 已通过。
+  - `src/lib/services/console-routes.test.ts` 与 `src/app/_components/console/organizer-console-page.test.tsx` 当前受 `src/lib/prisma.ts` 对 `@/generated` 的运行时依赖阻塞，命令会在加载 Prisma 时失败，尚未完成自动化验收。
 
 ## 2026-06-19 公开端与过程投影收口（已完成验收）
 

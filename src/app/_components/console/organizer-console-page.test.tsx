@@ -109,6 +109,9 @@ test("organizer console overview and settings no longer expose obvious English u
   assert.match(html, /显示选项/);
   assert.match(html, /保存赛事内容/);
   assert.match(html, /保存显示选项/);
+  assert.match(html, /企业能力尚未独立建模；当前大屏控制台仅向管理员开放/);
+  assert.doesNotMatch(html, /大屏控制台/);
+  assert.doesNotMatch(html, /打开大屏控制台/);
   assert.doesNotMatch(html, /Organizer View/);
   assert.doesNotMatch(html, /Race Summary/);
   assert.doesNotMatch(html, /Next Links/);

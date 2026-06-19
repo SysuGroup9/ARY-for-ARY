@@ -1,4 +1,6 @@
-import { loginAction, registerAction } from "@/app/actions";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { loginAction, loginWithGitHubAction, registerAction } from "@/app/actions";
 import {
   AuthTabsPanel,
   HeroSection,
@@ -8,10 +10,9 @@ import {
 } from "@/app/_components/ary-shared";
 import { loadDatabaseUser } from "@/lib/auth";
 import { getLoginRedirectTarget } from "@/lib/viewer-access";
-import { redirect } from "next/navigation";
 
 interface Props {
-  searchParams?: Promise<{ returnTo?: string }>;
+  searchParams?: Promise<{ oauthError?: string; returnTo?: string }>;
 }
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,15 @@ export default async function LoginPage({ searchParams }: Props) {
   const sessionUser = await loadDatabaseUser();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const returnTo = resolvedSearchParams?.returnTo;
+  const oauthError = resolvedSearchParams?.oauthError;
+  const oauthErrorMessage =
+    oauthError === "github_denied"
+      ? "你取消了 GitHub 授权，请重试。"
+      : oauthError === "github_missing_code"
+        ? "GitHub 回调缺少必要参数，请重新发起登录。"
+        : oauthError === "github_callback_failed"
+          ? "GitHub 登录回调失败，请检查环境变量与回调地址配置。"
+          : null;
 
   const redirectTarget = getLoginRedirectTarget(Boolean(sessionUser));
   if (redirectTarget) {
@@ -40,7 +50,10 @@ export default async function LoginPage({ searchParams }: Props) {
               </p>
             </div>
 
+            {oauthErrorMessage ? <p className="muted">{oauthErrorMessage}</p> : null}
+
             <AuthTabsPanel
+              githubAction={loginWithGitHubAction}
               loginAction={loginAction}
               registerAction={registerAction}
               returnTo={returnTo}
@@ -75,9 +88,9 @@ export default async function LoginPage({ searchParams }: Props) {
 
           <SeedAccountsPanel />
 
-          <a className="button-secondary auth-sidebar__back" href="/">
+          <Link className="button-secondary auth-sidebar__back" href="/">
             返回公开首页
-          </a>
+          </Link>
         </aside>
       </section>
 

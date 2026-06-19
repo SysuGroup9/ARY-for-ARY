@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { listConsoleRacesForUser } from "@/lib/services/console-routes";
+import {
+  listConsoleRacesForUser,
+  listScreenConsoleRacesForUser,
+} from "@/lib/services/console-routes";
 
 test("rider console race list returns only races where the user has a registration", async () => {
   const races = await listConsoleRacesForUser({
@@ -15,6 +18,21 @@ test("rider console race list returns only races where the user has a registrati
     assert.ok(item.slug.length > 0);
     assert.ok(item.defaultHref.startsWith("/console/races/"));
   }
+});
+
+test("screen console race list is admin-only while enterprise capability is still proxied by admin", async () => {
+  const adminRaces = await listScreenConsoleRacesForUser({
+    roles: ["ADMIN"],
+    userId: "admin_01",
+  });
+  const organizerRaces = await listScreenConsoleRacesForUser({
+    roles: ["ORGANIZER"],
+    userId: "organizer_01",
+  });
+
+  assert.ok(Array.isArray(adminRaces));
+  assert.ok(adminRaces.every((item) => item.defaultHref.startsWith("/console/screen/")));
+  assert.deepEqual(organizerRaces, []);
 });
 
 test("judge console race list returns only races where the user has judge assignments", async () => {

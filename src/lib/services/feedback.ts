@@ -18,16 +18,30 @@ export async function sendFeedback(authorId: string, formData: FormData) {
   }
 
   return prisma.$transaction(async (tx) => {
+    const registration = await tx.registration.findUnique({
+      where: {
+        raceId_userId: {
+          raceId: parsed.raceId,
+          userId: authorId,
+        },
+      },
+    });
+
+    if (!registration) {
+      throw new Error("请先报名参赛后再反馈");
+    }
+
     const thread =
       (await tx.feedbackThread.findFirst({
         where: {
           raceId: parsed.raceId,
-          teamId: team.id,
+          registrationId: registration.id,
         },
       })) ??
       (await tx.feedbackThread.create({
         data: {
           raceId: parsed.raceId,
+          registrationId: registration.id,
           teamId: team.id,
         },
       }));
