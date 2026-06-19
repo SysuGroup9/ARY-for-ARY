@@ -21,6 +21,7 @@ export function RiderConsolePageView({
   reviewSummary,
   riderReports,
   riderTeam,
+  raceSlug,
   section,
 }: {
   race: RaceListItem;
@@ -28,6 +29,7 @@ export function RiderConsolePageView({
   reviewSummary: null | { summary: string; title: string };
   riderReports: Array<{ summary: string; title: string }>;
   riderTeam: RiderTeam;
+  raceSlug?: string;
   section:
     | "ca-setup"
     | "registration"
@@ -36,6 +38,8 @@ export function RiderConsolePageView({
     | "riding"
     | "submission";
 }) {
+  const resolvedRaceSlug = raceSlug ?? race.id;
+
   return (
     <>
       <Panel title={riderSectionTitle[section]} eyebrow="Rider View">
@@ -45,6 +49,7 @@ export function RiderConsolePageView({
       </Panel>
       {renderRiderSection({
         race,
+        raceSlug: resolvedRaceSlug,
         registration,
         reviewSummary,
         riderReports,
@@ -66,6 +71,7 @@ const riderSectionTitle = {
 
 function renderRiderSection({
   race,
+  raceSlug,
   registration,
   reviewSummary,
   riderReports,
@@ -73,12 +79,16 @@ function renderRiderSection({
   section,
 }: {
   race: RaceListItem;
+  raceSlug: string;
   registration: RiderRegistration;
   reviewSummary: null | { summary: string; title: string };
   riderReports: Array<{ summary: string; title: string }>;
   riderTeam: RiderTeam;
   section: keyof typeof riderSectionTitle;
 }) {
+  const riderRegistrationHref = `/console/races/${raceSlug}/rider/registration`;
+  const riderSubmissionHref = `/console/races/${raceSlug}/rider/submission`;
+
   switch (section) {
     case "registration":
       return (
@@ -99,6 +109,7 @@ function renderRiderSection({
               </p>
               <form action={registerForRaceAction} className="form-grid">
                 <input name="raceId" type="hidden" value={race.id} />
+                <input name="returnTo" type="hidden" value={riderRegistrationHref} />
                 <button type="submit">报名参赛</button>
               </form>
             </div>
@@ -231,11 +242,19 @@ function renderRiderSection({
             </Panel>
           ) : race.phase === "active" || race.phase === "frozen" ? (
             <Panel title="提交作品" eyebrow="Rider View">
-              <SubmissionFormClient action={submitEntryAction} raceId={race.id} />
+              <SubmissionFormClient
+                action={submitEntryAction}
+                raceId={race.id}
+                returnTo={riderSubmissionHref}
+              />
             </Panel>
           ) : race.phase === "finished" ? (
             <Panel title="提交赛后代码与记录" eyebrow="Rider View">
-              <FinalSubmissionFormClient action={submitFinalEntryAction} raceId={race.id} />
+              <FinalSubmissionFormClient
+                action={submitFinalEntryAction}
+                raceId={race.id}
+                returnTo={riderSubmissionHref}
+              />
             </Panel>
           ) : (
             <Panel title="提交窗口" eyebrow="Rider View">

@@ -122,3 +122,43 @@ test("public register page blocks new registration during active phase", () => {
   assert.match(html, /报名已截止/);
   assert.match(html, /赛前已报名的骑手仍可继续进入自己的工作台/);
 });
+
+test("public register page blocks new registration during preparation phase", () => {
+  const html = renderToStaticMarkup(
+    <RaceRegisterPageView
+      race={buildRace({ phase: "preparation" })}
+      raceSlug="race_active--sorting-challenge"
+      registration={null}
+      sessionUser={{
+        id: "user_1",
+        role: "RIDER",
+        roles: ["RIDER"],
+        username: "alice",
+      }}
+    />,
+  );
+
+  assert.match(html, /报名已截止/);
+  assert.doesNotMatch(html, /报名参赛/);
+});
+
+test("public register page carries returnTo into the registration action", () => {
+  const html = renderToStaticMarkup(
+    <RaceRegisterPageView
+      race={buildRace()}
+      raceSlug="race_active--sorting-challenge"
+      registration={null}
+      sessionUser={{
+        id: "user_1",
+        role: "RIDER",
+        roles: ["RIDER"],
+        username: "alice",
+      }}
+    />,
+  );
+
+  assert.match(
+    html,
+    /type="hidden" name="returnTo" value="\/console\/races\/race_active--sorting-challenge\/rider\/registration"/,
+  );
+});

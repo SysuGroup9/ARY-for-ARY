@@ -259,13 +259,157 @@
 - `Team` 兼容层仍然存在，深层 `teamId -> registrationId` 迁移尚未完成。
 - `runner` 路径和 `CA Push + Fetch` 目标之间仍有差距。
 - 除 `status.md` 之外，仓库中仍有不少旧文件或旧字符串可能带有历史编码问题。
-- 构建阶段存在独立环境问题：
-  - `src/lib/prisma.ts` 在 `production` 分支里硬编码写入 `/tmp/ary-runtime`。
-  - 在当前 Windows 环境下会映射到 `C:\\tmp\\ary-runtime`，导致 `next build` 的某些场景出现 `EPERM: operation not permitted, mkdir 'C:\\tmp\\ary-runtime'`。
-  - 这不是本次 `status.md` 编码修复引入的问题，但会影响后续完整构建验证。
+- 构建阶段的 `prisma` 运行时目录问题已收口，本地 Windows 环境下的 `next build` 现已恢复通过。
 
 ## 下一步建议
 
 - 先修 `src/lib/prisma.ts` 的运行时目录策略，把生产态 SQLite 运行目录收口到当前平台可写位置。
 - 继续扫描用户可见英文残留，优先公开页和 Organizer Console 其他 section。
 - 继续推进 `grs003` 深层语义迁移：GitHub OAuth、CA 接入链，以及兼容 `team` 退场。
+
+
+## 2026-06-19 登录壳层、Riders/Works 索引页与创建赛事表单文案清理
+- `src/app/_components/ary-shared.tsx`
+  - 登录 / 注册入口从英文改为中文：
+  - `登录`
+  - `注册`
+  - `用户名`
+  - `密码`
+  - `演示账号`
+  - `当前重点`
+  - Hero 主标题改为 `公开赛场，私有赛源。`
+  - 登录说明和注册说明也收口为中文，不再直接暴露英文控制台说明。
+- `src/app/riders/page.tsx`
+  - `Riders / Featured Riders` 改为：
+  - `骑手`
+  - `精选骑手`
+- `src/app/works/page.tsx`
+  - 原页面混有英文标题和错误编码中文，已整页重写为正常中文公开作品索引：
+  - `作品`
+  - `公开作品`
+  - `赛事上下文`
+  - `筛选与排序`
+  - `作品卡片`
+  - `精选作品`
+  - `返回赛事列表`
+- `src/app/_components/create-race-form-client.tsx`
+  - 原表单中有大段错误编码中文，已在保持字段名、结构和业务参数不变的前提下重写为可读中文。
+  - 收口后的主要可见文案包括：
+  - `赛事名称`
+  - `赛事简介`
+  - `题目包名称`
+  - `题目描述`
+  - `训练数据说明`
+  - `评测说明`
+  - `关键词`
+  - `报名开始 / 报名结束 / 比赛开始 / 比赛结束`
+  - `创建赛事`
+  - `选择本地题目包`
+  - `选择本地底图`
+  - `当前底图预览`
+- `src/app/_components/public/public-copy-cleanup.test.tsx`
+  - 新增定向测试，锁定：
+  - 登录壳层使用可读中文
+  - Riders / Works 索引页标题使用可读中文
+  - 创建赛事表单源码不再包含典型错误编码标记
+- 说明
+  - 这一轮仍然只做用户可见层文案与编码清理，不改布局，不改大屏样式，不改创建赛事表单字段结构和提交参数。
+- 验证
+  - `node --import tsx --test src/app/_components/public/public-copy-cleanup.test.tsx`
+  - `cmd /c npm run build`
+
+
+## 2026-06-19 Prisma 运行时目录跨平台收口
+- `src/lib/prisma-runtime-paths.ts`
+  - 新增跨平台运行时数据库路径解析逻辑。
+  - 仅在 `NODE_ENV=production` 且 `VERCEL=1` 时启用 runtime shadow copy。
+  - Windows 下使用工作区可写目录：`<cwd>/.tmp/ary-runtime/runtime.db`。
+  - 非 Windows 的 Vercel 生产环境继续使用 `/tmp/ary-runtime/runtime.db`。
+- `src/lib/prisma.ts`
+  - 不再直接硬编码 `/tmp/ary-runtime`，改为调用路径解析函数。
+- `src/lib/prisma-runtime-paths.test.ts`
+  - 新增 4 组定向测试，覆盖 Windows、非 Windows、非生产环境和本地 production build 非 Vercel 场景。
+- 验证
+  - `node --import tsx --test src/lib/prisma-runtime-paths.test.ts`
+  - `cmd /c npm run build`
+
+## 2026-06-19 old_version 选手链路恢复进展
+
+- 公开首页行动入口已按当前真实链路收口：
+  - `骑手注册 / 登录`
+  - `查看赛事报名页`
+  - 登录后额外显示：
+  - `继续参赛`
+  - `提交赛后材料`
+- 首页主 CTA 已按赛事阶段切换为真实目标：
+  - 报名中：`立即报名`
+  - 报名结束：`查看赛题`
+  - 进行中 / 封榜中：`进入实况大厅`
+  - 已结束：`查看赛果`
+- 公开报名页已成为正式入口：
+  - 未登录用户会跳去 `/login?returnTo=...`
+  - Rider 可直接报名
+  - 已报名用户可继续进入 Rider 工作台
+  - `preparation` 阶段明确不可新报名
+- Rider 工作台中的三条核心链路已全部带回流目标：
+  - 正式报名后回到 `rider/registration`
+  - 赛中提交后回到 `rider/submission`
+  - 赛后提交后回到 `rider/submission`
+- 登录页已恢复演示账号面板。
+- `old_version/` 已从当前构建中排除，不再干扰 `next build`。
+
+### 真实验收证据
+
+- 已用真实本地 Chrome 自动化跑通过以下链路：
+  - 登录
+  - 报名中赛事进入 Rider 工作台
+  - 进行中赛事提交
+  - 已结束赛事赛后提交
+- 浏览器验收后，数据库中已确认写入：
+  - `race_signup / rider_charlie / APPROVED`
+  - `race_active / flow-check.ts / QUEUED`
+  - `race_finished / post-race-flow.ts + post-race-record.txt / QUEUED`
+
+### 对应验证
+
+- `node --import tsx --test src/app/actions.return-to.test.ts src/app/_components/public/race-register-page.test.tsx src/app/_components/submission-form-client.test.tsx src/app/_components/final-submission-form-client.test.tsx src/app/_components/public/public-copy-cleanup.test.tsx src/lib/public-site.test.ts src/app/_components/public/home-copy.test.tsx src/app/_components/public/copy-sanity.test.tsx src/app/_components/console/rider-console-page.test.tsx`
+- `cmd /c npm run build`
+
+## 2026-06-19 登录后统一退出入口进展
+
+- `src/app/_components/public/public-header.tsx`
+  - 已登录态不再显示 `身份入口`
+  - 改为统一显示 `退出登录`
+  - 仍保留 `进入控制台` 独立入口
+- `src/app/_components/console/console-shell.tsx`
+  - 控制台侧栏顶部新增统一 `退出登录` 按钮
+
+### 对应验证
+
+- `node --import tsx --test src/app/_components/public/public-header.test.tsx src/app/_components/console/console-shell.test.tsx src/app/_components/public/public-copy-cleanup.test.tsx src/app/_components/public/home-copy.test.tsx src/app/_components/public/copy-sanity.test.tsx`
+- `cmd /c npm run build`
+
+## 2026-06-19 README 教程重写进展
+
+- `README.md` 已从旧的 Jumbotron 单模块说明重写为当前项目级 README。
+- 新结构已拆为两个独立板块：
+  - `分角色教程`
+  - `运行教程`
+- 已补充：
+  - 项目入口
+  - 演示账号
+  - Rider / Organizer / Judge / Admin 的最短操作路径
+  - 公开展示体验路径
+  - 相关文档入口
+
+### 对应验证
+
+- `cmd /c npm run build`
+
+## 当前仍缺失 / 未完成
+
+- GitHub OAuth 仍未接入，当前仍是本地账号 / 密码会话。
+- `Team` 兼容层仍然存在，深层 `teamId -> registrationId` 迁移尚未完成。
+- `runner` 路径与 `CA Push + Fetch` 目标之间仍有差距。
+- 进行中赛事的公开赛事页仍没有直接暴露明显的 `进入提交` 按钮。
+  - 当前提交流程已可用，但主要仍通过 `/console/races/[raceSlug]/rider/submission` 进入。

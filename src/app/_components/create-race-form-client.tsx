@@ -30,11 +30,17 @@ function serializeCheckpoints(
   return JSON.stringify(checkpoints);
 }
 
-export default function CreateRaceFormClient({ action }: { action: FormAction }) {
+export default function CreateRaceFormClient({
+  action,
+}: {
+  action: FormAction;
+}) {
   const [trackId, setTrackId] = useState("oval-track");
   const [taskPackageLabel, setTaskPackageLabel] = useState("sort-task-v1.zip");
   const [backgroundName, setBackgroundName] = useState("background.png");
-  const [backgroundPreview, setBackgroundPreview] = useState("/assets/tracks/oval-track/background.png");
+  const [backgroundPreview, setBackgroundPreview] = useState(
+    "/assets/tracks/oval-track/background.png",
+  );
   const taskInputRef = useRef<HTMLInputElement>(null);
   const backgroundInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,11 +49,17 @@ export default function CreateRaceFormClient({ action }: { action: FormAction })
     [trackId],
   );
 
-  const [startFinishS, setStartFinishS] = useState(activeTrack.startFinish.s.toString());
-  const [checkpointsText, setCheckpointsText] = useState(serializeCheckpoints(activeTrack.checkpoints));
+  const [startFinishS, setStartFinishS] = useState(
+    activeTrack.startFinish.s.toString(),
+  );
+  const [checkpointsText, setCheckpointsText] = useState(
+    serializeCheckpoints(activeTrack.checkpoints),
+  );
 
   function handleTrackChange(nextTrackId: string) {
-    const nextTrack = TRACK_OPTIONS.find((item) => item.trackId === nextTrackId) ?? TRACK_OPTIONS[0];
+    const nextTrack =
+      TRACK_OPTIONS.find((item) => item.trackId === nextTrackId) ??
+      TRACK_OPTIONS[0];
     setTrackId(nextTrack.trackId);
     setStartFinishS(nextTrack.startFinish.s.toString());
     setCheckpointsText(serializeCheckpoints(nextTrack.checkpoints));
@@ -86,7 +98,12 @@ export default function CreateRaceFormClient({ action }: { action: FormAction })
       </label>
       <label>
         题目包名称
-        <input name="taskPackageLabel" required value={taskPackageLabel} onChange={(event) => setTaskPackageLabel(event.target.value)} />
+        <input
+          name="taskPackageLabel"
+          required
+          value={taskPackageLabel}
+          onChange={(event) => setTaskPackageLabel(event.target.value)}
+        />
       </label>
       <label>
         任务入口 URL
@@ -95,22 +112,45 @@ export default function CreateRaceFormClient({ action }: { action: FormAction })
 
       <div className="full local-picker-grid">
         <div className="picker-card">
-          <strong>企业发布题目</strong>
-          <p className="muted">选择本地题目包后，会自动回填题目包名称。</p>
-          <input ref={taskInputRef} className="sr-only" type="file" onChange={handleTaskFile} />
+          <strong>本地题目包</strong>
+          <p className="muted">
+            选择本地题目包后，会自动回填题目包名称。
+          </p>
+          <input
+            ref={taskInputRef}
+            className="sr-only"
+            type="file"
+            onChange={handleTaskFile}
+          />
           <div className="button-row-inline">
-            <button type="button" className="button-secondary" onClick={() => taskInputRef.current?.click()}>
+            <button
+              type="button"
+              className="button-secondary"
+              onClick={() => taskInputRef.current?.click()}
+            >
               选择本地题目包
             </button>
             <span className="file-chip">{taskPackageLabel}</span>
           </div>
         </div>
         <div className="picker-card">
-          <strong>提供底图</strong>
-          <p className="muted">当前统一默认底图为 oval-track，也可临时选择本地图像做预览。</p>
-          <input ref={backgroundInputRef} accept="image/*" className="sr-only" type="file" onChange={handleBackgroundFile} />
+          <strong>底图预览</strong>
+          <p className="muted">
+            当前默认底图为 oval-track，也可以临时选择本地图像做预览。
+          </p>
+          <input
+            ref={backgroundInputRef}
+            accept="image/*"
+            className="sr-only"
+            type="file"
+            onChange={handleBackgroundFile}
+          />
           <div className="button-row-inline">
-            <button type="button" className="button-secondary" onClick={() => backgroundInputRef.current?.click()}>
+            <button
+              type="button"
+              className="button-secondary"
+              onClick={() => backgroundInputRef.current?.click()}
+            >
               选择本地底图
             </button>
             <span className="file-chip">{backgroundName}</span>
@@ -123,7 +163,11 @@ export default function CreateRaceFormClient({ action }: { action: FormAction })
 
       <label>
         Jumbotron 赛道
-        <select name="trackId" value={trackId} onChange={(event) => handleTrackChange(event.target.value)}>
+        <select
+          name="trackId"
+          value={trackId}
+          onChange={(event) => handleTrackChange(event.target.value)}
+        >
           {TRACK_OPTIONS.map((item) => (
             <option key={item.trackId} value={item.trackId}>
               {item.name}
@@ -133,11 +177,24 @@ export default function CreateRaceFormClient({ action }: { action: FormAction })
       </label>
       <label>
         起终点位置 s
-        <input name="trackStartFinishS" max={1} min={0} step="0.01" type="number" value={startFinishS} onChange={(event) => setStartFinishS(event.target.value)} />
+        <input
+          name="trackStartFinishS"
+          max={1}
+          min={0}
+          step="0.01"
+          type="number"
+          value={startFinishS}
+          onChange={(event) => setStartFinishS(event.target.value)}
+        />
       </label>
       <label className="full">
         检查点配置（JSON）
-        <textarea name="trackCheckpointsJson" rows={5} value={checkpointsText} onChange={(event) => setCheckpointsText(event.target.value)} />
+        <textarea
+          name="trackCheckpointsJson"
+          rows={5}
+          value={checkpointsText}
+          onChange={(event) => setCheckpointsText(event.target.value)}
+        />
       </label>
 
       <label className="full">
@@ -177,19 +234,39 @@ export default function CreateRaceFormClient({ action }: { action: FormAction })
       </label>
       <label>
         报名开始
-        <input defaultValue="2026-06-05T08:00" name="signupStart" required type="datetime-local" />
+        <input
+          defaultValue="2026-06-05T08:00"
+          name="signupStart"
+          required
+          type="datetime-local"
+        />
       </label>
       <label>
         报名结束
-        <input defaultValue="2026-06-06T08:00" name="signupEnd" required type="datetime-local" />
+        <input
+          defaultValue="2026-06-06T08:00"
+          name="signupEnd"
+          required
+          type="datetime-local"
+        />
       </label>
       <label>
         比赛开始
-        <input defaultValue="2026-06-06T09:00" name="raceStart" required type="datetime-local" />
+        <input
+          defaultValue="2026-06-06T09:00"
+          name="raceStart"
+          required
+          type="datetime-local"
+        />
       </label>
       <label>
         比赛结束
-        <input defaultValue="2026-06-08T18:00" name="raceEnd" required type="datetime-local" />
+        <input
+          defaultValue="2026-06-08T18:00"
+          name="raceEnd"
+          required
+          type="datetime-local"
+        />
       </label>
       <label>
         Token 上限
@@ -197,7 +274,12 @@ export default function CreateRaceFormClient({ action }: { action: FormAction })
       </label>
       <label>
         榜单刷新粒度（分钟）
-        <input defaultValue={30} min={1} name="updateGranularityMinutes" type="number" />
+        <input
+          defaultValue={30}
+          min={1}
+          name="updateGranularityMinutes"
+          type="number"
+        />
       </label>
       <label>
         每组人数上限
@@ -205,11 +287,21 @@ export default function CreateRaceFormClient({ action }: { action: FormAction })
       </label>
       <label>
         提交间隔（小时）
-        <input defaultValue={24} min={1} name="submissionIntervalHours" type="number" />
+        <input
+          defaultValue={24}
+          min={1}
+          name="submissionIntervalHours"
+          type="number"
+        />
       </label>
       <label>
         封榜提前量（分钟）
-        <input defaultValue={30} min={0} name="freezeMinutesBeforeEnd" type="number" />
+        <input
+          defaultValue={30}
+          min={0}
+          name="freezeMinutesBeforeEnd"
+          type="number"
+        />
       </label>
       <label>
         Highlight 数量
@@ -226,59 +318,125 @@ export default function CreateRaceFormClient({ action }: { action: FormAction })
           启用封榜
         </label>
         <label className="checkbox">
-          <input defaultChecked name="displayShowTrainingData" type="checkbox" />
+          <input
+            defaultChecked
+            name="displayShowTrainingData"
+            type="checkbox"
+          />
           赛后公开训练数据
         </label>
         <label className="checkbox">
-          <input defaultChecked name="displayShowOrganizerComment" type="checkbox" />
-          赛后公开 Organizer 评论
+          <input
+            defaultChecked
+            name="displayShowOrganizerComment"
+            type="checkbox"
+          />
+          赛后公开主办方评语
         </label>
         <label className="checkbox">
-          <input defaultChecked name="displayShowTopHighlights" type="checkbox" />
-          展示 Top Highlights
+          <input
+            defaultChecked
+            name="displayShowTopHighlights"
+            type="checkbox"
+          />
+          显示 Top Highlights
         </label>
         <label className="checkbox">
           <input defaultChecked name="displayShowRiderCode" type="checkbox" />
-          赛后公开 Rider 代码
+          赛后公开骑手代码
         </label>
       </div>
 
       <div className="full weights-grid">
         <label>
           passRate 权重
-          <input defaultValue={0.5} min={0.1} name="weightTaskPassRate" step="0.1" type="number" />
+          <input
+            defaultValue={0.5}
+            min={0.1}
+            name="weightTaskPassRate"
+            step="0.1"
+            type="number"
+          />
         </label>
         <label>
           codeReview 权重
-          <input defaultValue={0.5} min={0.1} name="weightCodeReview" step="0.1" type="number" />
+          <input
+            defaultValue={0.5}
+            min={0.1}
+            name="weightCodeReview"
+            step="0.1"
+            type="number"
+          />
         </label>
         <label>
           reasoning 权重
-          <input defaultValue={0.7} min={0.1} name="weightReasoning" step="0.1" type="number" />
+          <input
+            defaultValue={0.7}
+            min={0.1}
+            name="weightReasoning"
+            step="0.1"
+            type="number"
+          />
         </label>
         <label>
           keyword 权重
-          <input defaultValue={0.3} min={0.1} name="weightKeywords" step="0.1" type="number" />
+          <input
+            defaultValue={0.3}
+            min={0.1}
+            name="weightKeywords"
+            step="0.1"
+            type="number"
+          />
         </label>
         <label>
           totalTask 权重
-          <input defaultValue={0.5} min={0.1} name="weightTotalTask" step="0.1" type="number" />
+          <input
+            defaultValue={0.5}
+            min={0.1}
+            name="weightTotalTask"
+            step="0.1"
+            type="number"
+          />
         </label>
         <label>
           totalToken 权重
-          <input defaultValue={0.3} min={0.1} name="weightTotalToken" step="0.1" type="number" />
+          <input
+            defaultValue={0.3}
+            min={0.1}
+            name="weightTotalToken"
+            step="0.1"
+            type="number"
+          />
         </label>
         <label>
           totalDialogue 权重
-          <input defaultValue={0.2} min={0.1} name="weightTotalDialogue" step="0.1" type="number" />
+          <input
+            defaultValue={0.2}
+            min={0.1}
+            name="weightTotalDialogue"
+            step="0.1"
+            type="number"
+          />
         </label>
         <label>
           Harness reasoning 权重
-          <input defaultValue={0.6} min={0.1} name="harnessWeightReasoning" step="0.1" type="number" />
+          <input
+            defaultValue={0.6}
+            min={0.1}
+            name="harnessWeightReasoning"
+            step="0.1"
+            type="number"
+          />
         </label>
         <label>
           Harness keyword 权重
-          <input defaultValue={0.4} min={0.1} name="harnessWeightKeyword" step="0.1" type="number" />
+          <input
+            defaultValue={0.4}
+            min={0.1}
+            name="harnessWeightKeyword"
+            step="0.1"
+            type="number"
+          />
         </label>
       </div>
 

@@ -29,31 +29,31 @@ export function HeroSection({
 }) {
   const content = {
     audience: {
-      items: [
-        "Browse races, works, results, and rider profiles.",
-        "Enter the current featured race in one or two clicks.",
-        "Keep console workflows out of the public gallery.",
-      ],
       lede:
-        "The public side of ARY is now a gallery-first experience focused on races, works, results, and rider profiles.",
+        "ARY 的公开站以赛事、作品、赛果和骑手档案为主线，让第一次进入的人也能快速看懂当前赛场。",
+      items: [
+        "浏览赛事、作品、赛果和骑手档案",
+        "快速进入当前主推赛事与公开页面",
+        "让控制台工作流不干扰公开浏览体验",
+      ],
     },
     auth: {
-      items: [
-        "公开注册只创建骑手账号。",
-        "主办方、评委、管理员权限由既有角色分配决定。",
-        "公开浏览、身份入口和控制台入口现在分开显示。",
-      ],
       lede:
-        "这里是 ARY 的公开身份入口：登录已有账号，或注册骑手身份，再进入对应赛事完成报名。",
+        "这里是 ARY 的身份入口。公开浏览继续留在公开站，报名、提交、评审和后台工作从登录后进入对应控制台。",
+      items: [
+        "公开注册默认只创建骑手账号",
+        "主办方、评委和管理员身份由控制台分配",
+        "登录后继续参与赛事，或进入对应工作台",
+      ],
     },
     member: {
-      items: [
-        "Public site and Console now live on separate routes.",
-        "Race workspaces are moving under /console/*.",
-        "The next refactor slice is deeper grs003 domain alignment.",
-      ],
       lede:
-        "ARY is being refactored from a mixed dashboard into separate public and console experiences aligned to grs003.",
+        "ARY 正在从混合式单页重构为符合 grs003 的公开站与控制台分层体验，当前重点仍是中文化与赛事工作流收口。",
+      items: [
+        "公开站与控制台已经拆成独立路由",
+        "赛事工作区继续向 /console/* 收口",
+        "下一轮重点仍是 grs003 的深层语义对齐",
+      ],
     },
   }[mode];
 
@@ -61,17 +61,17 @@ export function HeroSection({
     <section className="hero">
       <div className="hero__copy">
         <p className="hero__eyebrow">ARY</p>
-        <h1>Public Yard, Private Race Source.</h1>
+        <h1>公开赛场，私有赛源。</h1>
         <p className="hero__lede">{content.lede}</p>
         <div className="hero__chips">
           <span>Next.js 16</span>
           <span>Prisma 7</span>
           <span>SQLite</span>
-          <span>Console Split</span>
+          <span>控制台分层</span>
         </div>
       </div>
       <div className="hero__card">
-        <h2>Current Focus</h2>
+        <h2>当前重点</h2>
         <ul>
           {content.items.map((item) => (
             <li key={item}>{item}</li>
@@ -112,7 +112,7 @@ export function AuthTabsPanel({
           登录
         </label>
         <label className="auth-tabs__switch" htmlFor="auth-tab-register">
-          骑手注册
+          注册
         </label>
       </div>
 
@@ -129,7 +129,7 @@ export function AuthTabsPanel({
       <div className="auth-tabs__panel auth-tabs__panel--register">
         <AuthForm
           action={registerAction}
-          description="公开注册只创建 Rider 身份账号；赛事报名仍需登录后进入对应赛事完成。"
+          description="公开注册默认只创建骑手账号。完成注册后，再进入对应赛事完成报名。"
           returnTo={returnTo}
           submitLabel="注册骑手账号"
           title="创建骑手账号"
@@ -143,13 +143,13 @@ export function SeedAccountsPanel() {
   const credentials = getDemoCredentials();
 
   return (
-    <Panel title="Seed Accounts" eyebrow="Demo">
+    <Panel title="演示账号" eyebrow="Demo">
       <div className="seed-grid">
         {credentials.map((credential) => (
           <div key={credential.label}>
             <strong>{credential.label}</strong>
-            <p>username: {credential.username}</p>
-            <p>password: {credential.password}</p>
+            <p>用户名：{credential.username}</p>
+            <p>密码：{credential.password}</p>
           </div>
         ))}
       </div>
@@ -182,14 +182,14 @@ function AuthForm({
       </div>
       {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
       <label>
-        Username
-        <input name="username" placeholder="username" required />
+        用户名
+        <input name="username" placeholder="请输入用户名" required />
       </label>
       <label>
-        Password
+        密码
         <input
           name="password"
-          placeholder="password"
+          placeholder="请输入密码"
           required
           type="password"
         />
@@ -451,9 +451,9 @@ export const aryStyles = `
 
   .auth-entry-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) 320px;
+    grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.9fr);
     gap: 20px;
-    align-items: start;
+    align-items: stretch;
     max-width: 1240px;
     margin: 0 auto;
     padding: 0 20px 32px;
@@ -502,6 +502,81 @@ export const aryStyles = `
   #auth-tab-login:checked ~ .auth-tabs__panel--login,
   #auth-tab-register:checked ~ .auth-tabs__panel--register {
     display: grid;
+  }
+
+  .auth-page {
+    position: relative;
+  }
+
+  .auth-page::before {
+    content: "";
+    position: absolute;
+    inset: 20px 20px auto;
+    height: 180px;
+    border-radius: 24px;
+    background:
+      radial-gradient(circle at left top, rgba(49, 87, 164, 0.18), transparent 55%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .auth-page > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .auth-panel {
+    min-height: 100%;
+  }
+
+  .auth-panel__header {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .auth-panel__header h2,
+  .auth-sidebar__header h2 {
+    margin: 0;
+  }
+
+  .auth-sidebar {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+  }
+
+  .auth-sidebar__card,
+  .auth-sidebar__tip {
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(43, 52, 68, 0.08);
+    background: var(--panel-strong);
+    padding: 16px;
+  }
+
+  .auth-sidebar__header {
+    display: grid;
+    gap: 10px;
+  }
+
+  .auth-sidebar__list {
+    margin: 0;
+    padding-left: 1.15rem;
+    line-height: 1.8;
+  }
+
+  .auth-sidebar__meta {
+    display: grid;
+    gap: 8px;
+  }
+
+  .auth-sidebar__meta strong {
+    font-size: 0.95rem;
+  }
+
+  .auth-sidebar__back {
+    width: fit-content;
   }
 
   .public-header {

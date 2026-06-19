@@ -82,6 +82,7 @@ export default async function RiderConsoleSectionPage({ params }: Props) {
       <RiderConsolePageView
         race={context.race}
         registration={registration}
+        raceSlug={raceSlug}
         reviewSummary={reportModel.reviewSummary ? { summary: reportModel.reviewSummary.summary, title: reportModel.reviewSummary.title } : null}
         riderReports={reportModel.riderReports.map((report) => ({
           summary: report.summary,

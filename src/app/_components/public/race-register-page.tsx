@@ -18,10 +18,10 @@ export function RaceRegisterPageView({
   registration: RiderRegistration;
   sessionUser: SessionUser | null;
 }) {
-  const isRegistrationPhase =
-    race.phase === "registration" || race.phase === "preparation";
+  const isRegistrationPhase = race.phase === "registration";
   const canRide = sessionUser ? hasRole(sessionUser.roles, "RIDER") : false;
   const loginHref = `/login?returnTo=${encodeURIComponent(`/races/${raceSlug}/register`)}`;
+  const riderReturnTo = `/console/races/${raceSlug}/rider/registration`;
 
   return (
     <div className="stack">
@@ -112,6 +112,7 @@ export function RaceRegisterPageView({
             </p>
             <form action={registerForRaceAction} className="form-grid">
               <input name="raceId" type="hidden" value={race.id} />
+              <input name="returnTo" type="hidden" value={riderReturnTo} />
               <button type="submit">报名参赛</button>
             </form>
           </div>

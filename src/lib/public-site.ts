@@ -323,6 +323,7 @@ export function getRacePrimaryCta(
 ): { href: string; label: string } {
   switch (race.phase) {
     case "registration":
+      return { href: `/races/${race.slug}/register`, label: "立即报名" };
     case "preparation":
       return { href: `/races/${race.slug}`, label: "查看赛题" };
     case "active":

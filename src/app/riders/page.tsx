@@ -16,7 +16,7 @@ export default async function RidersIndexPage() {
       <PublicHeader roles={sessionUser?.roles ?? null} />
       <section className="shell shell--public-only">
         <section className="content content--public">
-          <Panel title="Riders" eyebrow="Featured Riders">
+          <Panel title="骑手" eyebrow="精选骑手">
             <div className="stack" style={{ marginBottom: "1rem" }}>
               <p className="muted">当前索引页优先展示公开骑手资产，不扩展成完整社交主页。</p>
             </div>

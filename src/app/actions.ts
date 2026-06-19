@@ -124,10 +124,12 @@ export async function registerTeamAction(formData: FormData) {
 export async function registerForRaceAction(formData: FormData) {
   const user = await requireRole("RIDER");
   const raceId = String(formData.get("raceId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "");
   await registerForRace(user.id, raceId);
   await rebuildRaceProcessProjections(raceId);
   revalidatePath("/");
   revalidatePath("/console/races");
+  redirect(returnTo || "/console/races");
 }
 
 export async function registerCAConnectionAction(formData: FormData) {
@@ -184,14 +186,18 @@ export async function submitJudgingRecordAction(formData: FormData) {
 
 export async function submitEntryAction(formData: FormData) {
   const user = await requireRole("RIDER");
+  const returnTo = String(formData.get("returnTo") ?? "");
   await createSubmission(user.id, formData);
   revalidatePath("/");
+  redirect(returnTo || "/");
 }
 
 export async function submitFinalEntryAction(formData: FormData) {
   const user = await requireRole("RIDER");
+  const returnTo = String(formData.get("returnTo") ?? "");
   await createFinalSubmission(user.id, formData);
   revalidatePath("/");
+  redirect(returnTo || "/");
 }
 
 export async function sendFeedbackAction(formData: FormData) {
