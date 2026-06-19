@@ -1,8 +1,14 @@
 import { createRaceAction } from "@/app/actions";
 import { CreateRaceForm, Panel } from "@/app/_components/ary-shared";
-import { ConsoleShell, buildConsoleRootNavItems } from "@/app/_components/console/console-shell";
+import {
+  ConsoleShell,
+  buildConsoleRootNavItems,
+} from "@/app/_components/console/console-shell";
 import { loadDatabaseUser } from "@/lib/auth";
-import { getConsoleHomeSections, getCreateRacePageAccess } from "@/lib/viewer-access";
+import {
+  getConsoleHomeSections,
+  getCreateRacePageAccess,
+} from "@/lib/viewer-access";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -20,26 +26,24 @@ export default async function ConsoleNewRacePage() {
   return (
     <ConsoleShell
       breadcrumbs={[
-        { href: "/console", label: "Console" },
-        { href: "/console/races", label: "Race Console" },
-        { label: "Create Race" },
+        { href: "/console", label: "控制台" },
+        { href: "/console/races", label: "赛事控制台" },
+        { label: "创建赛事" },
       ]}
-      description="Organizer-only race creation lives under Console instead of the public site."
+      description="该页面承接原先位于公开首页的创建赛事入口。"
       navItems={buildConsoleRootNavItems(sections)}
-      title="Create Race"
+      title="创建赛事"
     >
-      <Panel title="Create Race" eyebrow="Organizer View">
+      <Panel title="创建赛事" eyebrow="主办方视图">
         <div className="stack">
           <a className="button-secondary" href="/console/races">
-            Back to Race Console
+            返回赛事控制台
           </a>
-          <p className="muted">
-            This route replaces the old public-side creation entry.
-          </p>
+          <p className="muted">该页面承接原先位于公开首页的创建赛事入口。</p>
         </div>
       </Panel>
 
-      <Panel title="Race Form" eyebrow="Organizer View">
+      <Panel title="赛事表单" eyebrow="主办方视图">
         <CreateRaceForm action={createRaceAction} />
       </Panel>
     </ConsoleShell>

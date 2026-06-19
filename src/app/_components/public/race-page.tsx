@@ -1,7 +1,13 @@
 import { formatDateTime } from "@/lib/format";
 import type { RaceListItem } from "@/lib/services/races";
 
-export function RacePageView({ race, raceSlug }: { race: RaceListItem; raceSlug: string }) {
+export function RacePageView({
+  race,
+  raceSlug,
+}: {
+  race: RaceListItem;
+  raceSlug: string;
+}) {
   const primaryCta =
     race.phase === "registration" || race.phase === "preparation"
       ? { href: "/login", label: "立即报名" }
@@ -32,7 +38,7 @@ export function RacePageView({ race, raceSlug }: { race: RaceListItem; raceSlug:
       </section>
 
       <section className="panel">
-        <p className="eyebrow">Overview</p>
+        <p className="eyebrow">赛事概览</p>
         <h2>赛事上下文</h2>
         <div className="stack">
           <p>{race.taskDescription}</p>
@@ -42,8 +48,8 @@ export function RacePageView({ race, raceSlug }: { race: RaceListItem; raceSlug:
 
       <section className="grid">
         <section className="panel">
-          <p className="eyebrow">Rules</p>
-          <h2>规则</h2>
+          <p className="eyebrow">规则</p>
+          <h2>规则说明</h2>
           <div className="stack">
             <p>题目包：{race.taskPackageLabel}</p>
             <p>赛道：{race.trackId}</p>
@@ -52,40 +58,46 @@ export function RacePageView({ race, raceSlug }: { race: RaceListItem; raceSlug:
         </section>
 
         <section className="panel">
-          <p className="eyebrow">Schedule</p>
+          <p className="eyebrow">赛程</p>
           <h2>赛程安排</h2>
           <div className="stack">
-            <p>报名：{formatDateTime(race.signupStart)} - {formatDateTime(race.signupEnd)}</p>
-            <p>比赛：{formatDateTime(race.raceStart)} - {formatDateTime(race.raceEnd)}</p>
+            <p>
+              报名：{formatDateTime(race.signupStart)} -{" "}
+              {formatDateTime(race.signupEnd)}
+            </p>
+            <p>
+              比赛：{formatDateTime(race.raceStart)} -{" "}
+              {formatDateTime(race.raceEnd)}
+            </p>
           </div>
         </section>
       </section>
 
       <section className="panel">
-        <p className="eyebrow">Public Entry</p>
+        <p className="eyebrow">公开入口</p>
         <h2>公开入口</h2>
         <div className="button-row-inline">
           <a className="button" href={primaryCta.href}>
             {primaryCta.label}
           </a>
           <a className="button-secondary" href={`/races/${raceSlug}/live`}>
-            进入 Live Hall
+            进入实况大厅
           </a>
           <a className="button-secondary" href={`/races/${raceSlug}/works`}>
-            查看 Works
+            查看作品
           </a>
           <a className="button-secondary" href={`/races/${raceSlug}/results`}>
-            查看 Results
+            查看赛果
           </a>
           <a className="button-secondary" href={`/races/${raceSlug}/review`}>
-            查看 Review
+            查看复盘
           </a>
         </div>
       </section>
 
       <section className="grid">
         <section className="panel">
-          <p className="eyebrow">Riders</p>
+          <p className="eyebrow">骑手</p>
           <h2>参赛骑手</h2>
           <div className="stack">
             {race.teams.map((team) => (
@@ -98,25 +110,25 @@ export function RacePageView({ race, raceSlug }: { race: RaceListItem; raceSlug:
         </section>
 
         <section className="panel">
-          <p className="eyebrow">Works / Results / Review</p>
+          <p className="eyebrow">作品 / 赛果 / 复盘</p>
           <h2>赛事信息分区</h2>
           <ul className="bullet-list">
-            <li>Works：公开作品集合与作品详情入口</li>
-            <li>Results：最终赛果与榜单</li>
-            <li>Review：赛后总结与公开复盘</li>
+            <li>作品：公开作品集合与作品详情入口</li>
+            <li>赛果：最终赛果与榜单</li>
+            <li>复盘：赛后总结与公开复盘</li>
           </ul>
         </section>
       </section>
 
       <section className="panel">
-        <p className="eyebrow">Next Step</p>
+        <p className="eyebrow">下一步</p>
         <h2>下一步入口</h2>
         <div className="button-row-inline">
           <a className="button-secondary" href="/cooperation">
-            查看 Cooperation
+            查看合作
           </a>
           <a className="button-secondary" href="/races">
-            返回 Races
+            返回赛事列表
           </a>
         </div>
       </section>

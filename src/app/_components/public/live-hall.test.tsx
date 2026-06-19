@@ -58,7 +58,7 @@ test("does not fall back to legacy leaderboard rows when process projection is m
     />,
   );
 
-  assert.match(html, /No process leaderboard is available yet\./);
+  assert.match(html, /暂时还没有可用的过程榜单。/);
   assert.doesNotMatch(html, /Legacy Team/);
   assert.doesNotMatch(html, /Legacy Leaderboard Rows/);
 });
@@ -103,6 +103,21 @@ test("renders event stream items from the event-stream read model instead of scr
   );
 
   assert.match(html, /Bob reported an ingestion failure\./);
-  assert.match(html, /Event Stream/);
+  assert.match(html, /事件流/);
   assert.doesNotMatch(html, /Screen-only announcement\./);
+});
+
+test("uses Chinese live-hall headings and actions for public viewers", () => {
+  const html = renderToStaticMarkup(<LiveHallView race={buildRace()} />);
+
+  assert.match(html, /实况大厅/);
+  assert.match(html, /过程总览/);
+  assert.match(html, /过程指标/);
+  assert.match(html, /当前输出/);
+  assert.match(html, /打开大屏/);
+  assert.match(html, /打开大屏控制台/);
+  assert.doesNotMatch(html, /Live Hall/);
+  assert.doesNotMatch(html, /Process Summary/);
+  assert.doesNotMatch(html, /Open Jumbotron/);
+  assert.doesNotMatch(html, /Open Screen Console/);
 });

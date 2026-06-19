@@ -160,77 +160,77 @@ export function LiveHallView({ race }: { race: RaceListItem }) {
   return (
     <div className="stack">
       <section className="panel">
-        <p className="eyebrow">Live Hall</p>
+        <p className="eyebrow">实况大厅</p>
         <h1>{race.title}</h1>
         <p className="muted">
-          This page reads process summaries from projection data derived from
-          `Registration / RaceProject / CAConnection / Session`.
+          该页读取基于 `Registration / RaceProject / CAConnection / Session`
+          聚合出的过程投影数据，用于公开实况展示。
         </p>
       </section>
 
       <section className="grid">
         <section className="panel">
-          <p className="eyebrow">Race Status</p>
-          <h2>Process Summary</h2>
+          <p className="eyebrow">赛事状态</p>
+          <h2>过程总览</h2>
           <div className="detail-grid">
             <div>
-              <dt>Phase</dt>
+              <dt>阶段</dt>
               <dd>{race.phase}</dd>
             </div>
             <div>
-              <dt>Total Registrations</dt>
+              <dt>总报名数</dt>
               <dd>{totalRegistrations}</dd>
             </div>
             <div>
-              <dt>Active Registrations</dt>
+              <dt>活跃报名</dt>
               <dd>{activeRegistrations}</dd>
             </div>
             <div>
-              <dt>Active Connections</dt>
+              <dt>活跃连接</dt>
               <dd>{activeConnections}</dd>
             </div>
             <div>
-              <dt>Active Sessions</dt>
+              <dt>活跃会话</dt>
               <dd>{activeSessions}</dd>
             </div>
             <div>
-              <dt>Process Leaderboard Rows</dt>
+              <dt>过程榜单条目</dt>
               <dd>{processLeaderboardCount}</dd>
             </div>
           </div>
         </section>
 
         <section className="panel">
-          <p className="eyebrow">Process Metrics</p>
-          <h2>Cost / Progress / Risk</h2>
+          <p className="eyebrow">过程指标</p>
+          <h2>成本 / 进度 / 风险</h2>
           <div className="detail-grid">
             <div>
-              <dt>Total Tokens</dt>
+              <dt>总 Token</dt>
               <dd>{totalTokenCost}</dd>
             </div>
             <div>
-              <dt>Average Progress</dt>
+              <dt>平均进度</dt>
               <dd>{averageProgressPercent}%</dd>
             </div>
             <div>
-              <dt>Risk Count</dt>
+              <dt>风险数</dt>
               <dd>{riskCount}</dd>
             </div>
           </div>
         </section>
 
         <section className="panel">
-          <p className="eyebrow">Screen Entry</p>
-          <h2>Current Output</h2>
+          <p className="eyebrow">大屏入口</p>
+          <h2>当前输出</h2>
           <div className="button-row-inline">
             <a className="button-secondary" href={`/jumbotron/${race.id}`}>
-              Open Jumbotron
+              打开大屏
             </a>
             <a
               className="button-secondary"
               href={`/console/screen/${race.id}--${slugifyTitle(race.title)}/jumbotron`}
             >
-              Open Screen Console
+              打开大屏控制台
             </a>
           </div>
         </section>
@@ -238,37 +238,36 @@ export function LiveHallView({ race }: { race: RaceListItem }) {
 
       <section className="grid">
         <section className="panel">
-          <p className="eyebrow">Rider Activity</p>
-          <h2>Registration Status</h2>
+          <p className="eyebrow">骑手动态</p>
+          <h2>报名状态</h2>
           <div className="stack">
             {riderActivity.length ? (
               riderActivity.slice(0, 8).map((item) => (
                 <div className="public-link-card" key={item.registrationId}>
                   <strong>{item.username}</strong>
                   <span>
-                    {item.aggregateIngestionStatus} · {item.sessionCount} session
-                    {item.sessionCount === 1 ? "" : "s"}
+                    {item.aggregateIngestionStatus} / {item.sessionCount} 次会话
                   </span>
                 </div>
               ))
             ) : (
-              <p className="muted">No rider activity has been projected yet.</p>
+              <p className="muted">暂时还没有可展示的骑手动态。</p>
             )}
           </div>
         </section>
 
         <section className="panel">
-          <p className="eyebrow">Current Leaderboard</p>
-          <h2>Process Leaderboard</h2>
+          <p className="eyebrow">当前榜单</p>
+          <h2>过程榜单</h2>
           {processLeaderboardCount === 0 ? (
-            <p className="muted">No process leaderboard is available yet.</p>
+            <p className="muted">暂时还没有可用的过程榜单。</p>
           ) : (
             <table className="table">
               <thead>
                 <tr>
-                  <th>Rank</th>
-                  <th>Entry</th>
-                  <th>Total</th>
+                  <th>排名</th>
+                  <th>对象</th>
+                  <th>总分</th>
                 </tr>
               </thead>
               <tbody>
@@ -285,8 +284,8 @@ export function LiveHallView({ race }: { race: RaceListItem }) {
         </section>
 
         <section className="panel">
-          <p className="eyebrow">Event Stream</p>
-          <h2>Recent Events</h2>
+          <p className="eyebrow">事件流</p>
+          <h2>最近事件</h2>
           <div className="stack">
             {eventStreamItems.length ? (
               eventStreamItems.map((item, index) => (
@@ -299,7 +298,7 @@ export function LiveHallView({ race }: { race: RaceListItem }) {
                 </div>
               ))
             ) : (
-              <p className="muted">No event stream items have been generated yet.</p>
+              <p className="muted">暂时还没有生成新的事件流条目。</p>
             )}
           </div>
         </section>

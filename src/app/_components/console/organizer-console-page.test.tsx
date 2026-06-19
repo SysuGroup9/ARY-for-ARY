@@ -80,3 +80,39 @@ test("organizer console avoids exposing legacy compatibility wording in ca-statu
   assert.match(html, /Published Skill Signals/);
   assert.match(html, /Organizer Report Notes/);
 });
+
+test("organizer console overview and settings no longer expose obvious English user-facing copy", () => {
+  const html =
+    renderToStaticMarkup(
+      <OrganizerConsolePageView
+        judgeAssignments={[]}
+        judges={[]}
+        race={buildRace()}
+        raceSlug="race_active--sorting-challenge"
+        section="overview"
+      />,
+    ) +
+    renderToStaticMarkup(
+      <OrganizerConsolePageView
+        judgeAssignments={[]}
+        judges={[]}
+        race={buildRace()}
+        raceSlug="race_active--sorting-challenge"
+        section="settings"
+      />,
+    );
+
+  assert.match(html, /主办方视图/);
+  assert.match(html, /赛事概览/);
+  assert.match(html, /下一步入口/);
+  assert.match(html, /赛事内容/);
+  assert.match(html, /显示选项/);
+  assert.match(html, /保存赛事内容/);
+  assert.match(html, /保存显示选项/);
+  assert.doesNotMatch(html, /Organizer View/);
+  assert.doesNotMatch(html, /Race Summary/);
+  assert.doesNotMatch(html, /Next Links/);
+  assert.doesNotMatch(html, /Settings/);
+  assert.doesNotMatch(html, /Save Race Content/);
+  assert.doesNotMatch(html, /Save Display Options/);
+});

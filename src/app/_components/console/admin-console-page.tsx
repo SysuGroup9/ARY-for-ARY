@@ -9,6 +9,19 @@ type UserRow = {
   username: string;
 };
 
+const adminSectionTitle = {
+  "profile-completion": "资料补全",
+  roles: "角色维护",
+  users: "用户列表",
+} as const;
+
+const roleLabelMap: Record<AppRole, string> = {
+  ADMIN: "管理员",
+  JUDGE: "评委",
+  ORGANIZER: "主办方",
+  RIDER: "骑手",
+};
+
 export function AdminConsolePageView({
   section,
   users,
@@ -18,21 +31,16 @@ export function AdminConsolePageView({
 }) {
   return (
     <>
-      <Panel title={adminSectionTitle[section]} eyebrow="Admin Console">
+      <Panel title={adminSectionTitle[section]} eyebrow="管理控制台">
         <p className="muted">
-          This branch now uses `User.roles` semantics for account governance. GitHub OAuth and the full profile-completion workflow still remain future slices.
+          当前仅提供最小账号治理能力，用于查看用户、资料补全状态和维护
+          `User.roles`。
         </p>
       </Panel>
       {renderAdminSection({ section, users })}
     </>
   );
 }
-
-const adminSectionTitle = {
-  "profile-completion": "Profile Completion",
-  roles: "User Roles",
-  users: "Users",
-} as const;
 
 function renderAdminSection({
   section,
@@ -44,14 +52,16 @@ function renderAdminSection({
   switch (section) {
     case "users":
       return (
-        <Panel title="User List" eyebrow="Users">
+        <Panel title="用户列表" eyebrow="账号概览">
           <div className="stack">
             {users.map((user) => (
               <div className="public-link-card" key={user.id}>
                 <strong>{user.username}</strong>
-                <span>Roles: {user.roles.join(", ")}</span>
                 <span>
-                  Profile: {user.profileCompleted ? "Completed" : "Incomplete"}
+                  角色：{user.roles.map((role) => roleLabelMap[role]).join("、")}
+                </span>
+                <span>
+                  资料状态：{user.profileCompleted ? "已补全" : "待补全"}
                 </span>
               </div>
             ))}
@@ -60,16 +70,16 @@ function renderAdminSection({
       );
     case "profile-completion":
       return (
-        <Panel title="Profile State" eyebrow="Current Coverage">
+        <Panel title="资料补全" eyebrow="当前覆盖情况">
           <div className="stack">
             {users.map((user) => (
               <div className="public-link-card" key={`${user.id}-profile`}>
                 <strong>{user.username}</strong>
-                <span>{user.profileCompleted ? "Completed" : "Incomplete"}</span>
+                <span>{user.profileCompleted ? "已补全" : "待补全"}</span>
               </div>
             ))}
             <p className="muted">
-              The repository now stores profile completion state, but still lacks the full GitHub-driven profile onboarding required by `grs003`.
+              该视图只反映当前资料补全状态，不承载 GitHub 登录流程或更复杂的账号运营能力。
             </p>
           </div>
         </Panel>
@@ -78,7 +88,11 @@ function renderAdminSection({
       return (
         <section className="stack">
           {users.map((user) => (
-            <Panel key={`${user.id}-roles`} title={user.username} eyebrow="Role Governance">
+            <Panel
+              key={`${user.id}-roles`}
+              title={user.username}
+              eyebrow="角色维护"
+            >
               <form action={updateUserRolesAction} className="form-grid">
                 <input name="userId" type="hidden" value={user.id} />
                 <div className="check-grid">
@@ -90,11 +104,11 @@ function renderAdminSection({
                         type="checkbox"
                         value={role}
                       />
-                      {role}
+                      {roleLabelMap[role]}
                     </label>
                   ))}
                 </div>
-                <button type="submit">Save Roles</button>
+                <button type="submit">保存角色</button>
               </form>
             </Panel>
           ))}
