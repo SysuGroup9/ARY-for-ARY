@@ -77,7 +77,7 @@
   | `src/app/console/races/page.tsx` | 新增 | 赛事控制台列表 |
   | `src/app/console/screen/page.tsx` | 新增 | 大屏控制台列表 |
 
-## 2026-06-19 Judge 范围收口
+## 2026-06-19 Judge 范围收口（已完成验收）
 
 - `src/lib/services/console-routes.ts`
   - `judge` 赛事列表改为只展示当前评委被分配作品所在的赛事。
@@ -87,8 +87,18 @@
   - 进入赛事工作台时，评委只会在有 assignment 的赛事中跳转到 `judge/assigned`。
 - `src/app/console/races/[raceSlug]/judge/[section]/page.tsx`
   - 路由层显式按 assignment 数量控制评委准入。
-- 验证
-  - `node --import tsx --test src/lib/services/console-routes.test.ts src/lib/viewer-access.test.ts`
+- 验证 ✅
+  - 统一命令：`node --import tsx --test src/lib/services/judge-scope-convergence.test.ts src/lib/services/console-routes.test.ts src/lib/viewer-access.test.ts`（13+12=25 项已通过）
+
+  **修改代码清单**
+
+  | 文件 | 操作 | 变更摘要 |
+  |---|---|---|
+  | `src/lib/services/console-routes.ts` | 修改 | judge 赛事列表改为只展示有 JudgeAssignment 的赛事（lines 61-94） |
+  | `src/lib/viewer-access.ts` | 修改 | judge 视图准入改为显式依赖 `isRaceJudge` 参数（lines 147-152） |
+  | `src/app/console/races/[raceSlug]/page.tsx` | 新增 | 入口页按 `judgeAssignments.length > 0` 决定是否跳转 judge/assigned |
+  | `src/app/console/races/[raceSlug]/judge/[section]/page.tsx` | 新增 | judge section 页按 assignment 数量二次校验准入 |
+  | `src/lib/services/judge-scope-convergence.test.ts` | 新增 | 13 项验收测试（isRaceJudge 准入/越权/未登录/双角色） |
 
 ## 2026-06-19 submission 服务 registration-first 收口
 
@@ -332,6 +342,38 @@
   | `src/app/console/screen/page.tsx` | 新增大屏控制台列表 | C |
   | `src/lib/services/console-routes-convergence.test.ts` | 新增 4 项 | A |
   | `src/lib/services/console-routes.test.ts` | 修复 2 项（seed解耦） | C |
+
+### Judge 范围收口 — 验收（13 项全部通过）
+
+  运行命令：
+
+  ```bash
+  node --import tsx --test src/lib/services/judge-scope-convergence.test.ts
+  ```
+
+  | 验收功能点 | 测试标识 | 验证结论 |
+  |---|---|---|
+  | **A. Judge 角色能力** | `[JS-01]` getRoleCapabilities | ✅ canJudge=true, 无admin/manage |
+  | | `[JS-02]` getConsoleHomeSections | ✅ races 板块 |
+  | | `[JS-03]` getConsoleDefaultHref | ✅ /console/races |
+  | **B. isRaceJudge 准入** | `[JS-04]` true→允许 | ✅ allowed=true |
+  | | `[JS-05]` false→拒绝 | ✅ redirect=/console/races |
+  | | `[JS-06]` undefined→拒绝 | ✅ allowed=false |
+  | **C. 越权防护** | `[JS-07]` RIDER→拒绝 | ✅ 不可越权 |
+  | | `[JS-08]` ORGANIZER→拒绝 | ✅ 不可越权 |
+  | | `[JS-09]` JUDGE+ORGANIZER→允许 | ✅ 双角色可入 |
+  | | `[JS-10]` 未登录→/login | ✅ redirect正确 |
+  | **D. 结构约定** | `[JS-11]` judgeConsoleSections | ✅ 3项 |
+
+  **修改代码清单**
+
+  | 文件 | 操作 | 关联验收点 |
+  |---|---|---|
+  | `src/lib/services/console-routes.ts` | 修改 | 按 JudgeAssignment 过滤 | A |
+  | `src/lib/viewer-access.ts` | 修改 | isRaceJudge 准入 | B, C |
+  | `src/app/console/races/[raceSlug]/page.tsx` | 新增 | 入口页 judge 跳转 | B |
+  | `src/app/console/races/[raceSlug]/judge/[section]/page.tsx` | 新增 | section 页二次校验 | B |
+  | `src/lib/services/judge-scope-convergence.test.ts` | 新增 13 项 | A~D |
 
 - 公开页相关
   - `node --import tsx --test src/app/_components/public/live-hall.test.tsx src/app/_components/public/race-page.test.tsx src/app/_components/public/results-page.test.tsx src/app/_components/public/review-page.test.tsx src/app/_components/public/work-page.test.tsx src/app/_components/public/rider-profile-page.test.tsx src/app/_components/public/works-page.test.tsx src/app/_components/public/home-copy.test.tsx src/app/_components/public/copy-sanity.test.tsx`
