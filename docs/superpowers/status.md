@@ -118,7 +118,7 @@
   | `src/lib/services/rider-bridge.ts` | 新增 | `getCompatibilityContainerForRegistration()` 集中兼容层查询 |
   | `src/lib/services/submission-registration-first.test.ts` | 新增 | 18 项验收测试（Agent标签7项+Schema校验6项+错误语义5项） |
 
-## 2026-06-19 Rider Console 语义收口
+## 2026-06-19 Rider Console 语义收口（已完成验收）
 
 - `src/lib/services/rider-console.ts`
   - 增加 `buildRiderConsoleReportModel()`。
@@ -136,7 +136,7 @@
   | `src/app/_components/console/rider-console-page.tsx` | 修改 | 视图语义改为报名/作品提交/评审结果/骑手报告；不暴露 compatibility 层 |
   | `src/app/_components/console/rider-console-semantics.test.tsx` | 新增 | 3 项验收测试（6 section 中文+compatibility 隔离+report 语义） |
 
-## 2026-06-19 Admin Console 最小账号治理中文化收口
+## 2026-06-19 Admin Console 最小账号治理中文化收口（已完成验收）
 
 - `src/app/_components/console/admin-console-page.tsx`
   - 收口为 `用户列表 / 资料补全 / 角色维护` 三个最小账号治理区块。
@@ -149,8 +149,16 @@
   - breadcrumb、title、description 和 section 标签改为中文。
 - `src/app/_components/console/admin-console-page.test.tsx`
   - 新增 Admin Console 中文化测试。
-- 验证
-  - `node --import tsx --test src/app/_components/console/admin-console-page.test.tsx src/app/_components/console/console-copy.test.tsx`
+- 验证 ✅
+  - 统一命令：`node --import tsx --test src/app/_components/console/admin-console-chinese.test.tsx`（3 项通过）
+
+  **修改代码清单**
+
+  | 文件 | 操作 | 变更摘要 |
+  |---|---|---|
+  | `src/app/_components/console/admin-console-page.tsx` | 修改 | 3 section(用户列表/资料补全/角色维护)+4 角色标签(管理员/评委/主办方/骑手) |
+  | `src/app/console/admin/[section]/page.tsx` | 修改 | breadcrumb/title/description 全中文 |
+  | `src/app/_components/console/admin-console-chinese.test.tsx` | 新增 | 3 项验收测试（标题+角色标签+资料状态+治理说明） |
 
 ## 2026-06-19 Live Hall 与 Race Page 公开入口中文化收口
 
@@ -441,6 +449,24 @@
   | `src/lib/services/rider-console.ts` | 新增 buildRiderConsoleReportModel |
   | `src/app/_components/console/rider-console-page.tsx` | 修改 6 section 语义 |
   | `src/app/_components/console/rider-console-semantics.test.tsx` | 新增 3 项 |
+
+### Admin Console 中文化收口 — 验收（3 项全部通过）
+
+  运行命令：`node --import tsx --test src/app/_components/console/admin-console-chinese.test.tsx`
+
+  | 验收功能点 | 验证结论 |
+  |---|---|
+  | 3 section：用户列表/资料补全/角色维护 | ✅ 全中文 |
+  | 4 角色标签：管理员/评委/主办方/骑手 | ✅ 无英文残留 |
+  | 资料状态：已补全/待补全 | ✅ 全中文 |
+  | 角色维护含保存按钮 | ✅ |
+  | 最小账号治理说明 | ✅ |
+
+  | 文件 | 操作 |
+  |---|---|
+  | `src/app/_components/console/admin-console-page.tsx` | 中文化 |
+  | `src/app/console/admin/[section]/page.tsx` | 中文化 |
+  | `src/app/_components/console/admin-console-chinese.test.tsx` | 新增 3 项 |
 
 - 公开页相关
   - `node --import tsx --test src/app/_components/public/live-hall.test.tsx src/app/_components/public/race-page.test.tsx src/app/_components/public/results-page.test.tsx src/app/_components/public/review-page.test.tsx src/app/_components/public/work-page.test.tsx src/app/_components/public/rider-profile-page.test.tsx src/app/_components/public/works-page.test.tsx src/app/_components/public/home-copy.test.tsx src/app/_components/public/copy-sanity.test.tsx`
