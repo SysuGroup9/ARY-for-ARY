@@ -100,15 +100,23 @@
   | `src/app/console/races/[raceSlug]/judge/[section]/page.tsx` | 新增 | judge section 页按 assignment 数量二次校验准入 |
   | `src/lib/services/judge-scope-convergence.test.ts` | 新增 | 13 项验收测试（isRaceJudge 准入/越权/未登录/双角色） |
 
-## 2026-06-19 submission 服务 registration-first 收口
+## 2026-06-19 submission 服务 registration-first 收口（已完成验收）
 
 - `src/lib/services/submissions.ts`
   - `createSubmission()` 和 `createFinalSubmission()` 先查 `Registration`，再查兼容 `team` 容器。
   - 对外错误语义统一回到“个人报名 / 可用提交容器 / 比赛阶段”。
 - `src/lib/services/rider-bridge.ts`
   - 新增 `getCompatibilityContainerForRegistration()`，集中兼容层查询。
-- 验证
-  - `node --import tsx --test src/lib/services/submissions.test.ts`
+- 验证 ✅
+  - 统一命令：`node --import tsx --test src/lib/services/submission-registration-first.test.ts`（18 项通过）
+
+  **修改代码清单**
+
+  | 文件 | 操作 | 变更摘要 |
+  |---|---|---|
+  | `src/lib/services/submissions.ts` | 修改 | `createSubmission`/`createFinalSubmission` 先查 `Registration` 再查兼容 `team` 容器；错误消息改为"个人报名/可用提交容器" |
+  | `src/lib/services/rider-bridge.ts` | 新增 | `getCompatibilityContainerForRegistration()` 集中兼容层查询 |
+  | `src/lib/services/submission-registration-first.test.ts` | 新增 | 18 项验收测试（Agent标签7项+Schema校验6项+错误语义5项） |
 
 ## 2026-06-19 Rider Console 语义收口
 
@@ -374,6 +382,34 @@
   | `src/app/console/races/[raceSlug]/page.tsx` | 新增 | 入口页 judge 跳转 | B |
   | `src/app/console/races/[raceSlug]/judge/[section]/page.tsx` | 新增 | section 页二次校验 | B |
   | `src/lib/services/judge-scope-convergence.test.ts` | 新增 13 项 | A~D |
+
+### Submission registration-first 收口 — 验收（18 项全部通过）
+
+  运行命令：
+
+  ```bash
+  node --import tsx --test src/lib/services/submission-registration-first.test.ts
+  ```
+
+  | 验收功能点 | 测试标识 | 验证结论 |
+  |---|---|---|
+  | **A. Agent 标签映射** | `[SF-01]~[SF-07]` 7 种类型 | ✅ 全部正确含兜底 |
+  | **B. 比赛中提交 Schema** | `[SF-08]` 正常接受 | ✅ 不含 Riding Record |
+  | | `[SF-09]` 拒绝非 .ts/.js | ✅ 后缀校验 |
+  | | `[SF-10]` 拒绝空代码 | ✅ 内容校验 |
+  | | `[SF-14]` 不含 recordLabel 字段 | ✅ 赛后字段剥离 |
+  | | `[SF-15]` 拒绝非法 tokenUsed | ✅ 数字校验 |
+  | **C. 赛后提交 Schema** | `[SF-11]` 接受含 Riding Record | ✅ recordLabel+ridingRecord |
+  | | `[SF-12]` 拒绝空 Riding Record | ✅ 必填校验 |
+  | **D. 错误语义** | `[SF-13]` registration-first 措辞 | ✅ 个人报名/提交容器/比赛阶段 |
+
+  **修改代码清单**
+
+  | 文件 | 操作 | 关联验收点 |
+  |---|---|---|
+  | `src/lib/services/submissions.ts` | 修改 | 先查 Registration 再查兼容 team | A~D |
+  | `src/lib/services/rider-bridge.ts` | 新增 | 兼容层查询 | B, C |
+  | `src/lib/services/submission-registration-first.test.ts` | 新增 18 项 | A~D |
 
 - 公开页相关
   - `node --import tsx --test src/app/_components/public/live-hall.test.tsx src/app/_components/public/race-page.test.tsx src/app/_components/public/results-page.test.tsx src/app/_components/public/review-page.test.tsx src/app/_components/public/work-page.test.tsx src/app/_components/public/rider-profile-page.test.tsx src/app/_components/public/works-page.test.tsx src/app/_components/public/home-copy.test.tsx src/app/_components/public/copy-sanity.test.tsx`
