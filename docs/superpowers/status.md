@@ -12,7 +12,7 @@
 
 ## 已完成收口
 
-## 2026-06-19 公开端与过程投影收口
+## 2026-06-19 公开端与过程投影收口（已完成验收）
 
 - `src/lib/jumbotron/adapter.ts`
   - 去掉了在没有真实来源时伪造的骑行消息。
@@ -27,7 +27,7 @@
 - 验证 ✅
   - `node --import tsx --test src/lib/jumbotron-adapter.test.ts src/app/_components/public/live-hall.test.tsx src/lib/services/projections-convergence.test.ts`（48 项通过）
 
-## 2026-06-19 公开结果链收口
+## 2026-06-19 公开结果链收口（已完成验收）
 
 - `src/lib/services/results.ts`
   - 增加 `buildPublicResultsModel()`。
@@ -43,10 +43,12 @@
   - `work-page.tsx`
   - `rider-profile-page.tsx`
   - `works-page.tsx`
-- 验证
-  - `node --import tsx --test src/lib/services/results.test.ts src/lib/services/review.test.ts src/lib/services/public-routes.test.ts`
+- 验证 ✅
+  - 纯函数：`node --import tsx --test src/lib/services/results-chain-convergence.test.ts`（9 项通过）
+  - 组件渲染：`node --import tsx --test src/app/_components/public/results-page.test.tsx src/app/_components/public/review-page.test.tsx src/app/_components/public/work-page.test.tsx src/app/_components/public/rider-profile-page.test.tsx src/app/_components/public/works-page.test.tsx`（13 项通过）
+  - 合计 22 项全部通过
 
-## 2026-06-19 控制台基础路线收口
+## 2026-06-19 控制台基础路线收口（已完成验收）
 
 - 新增控制台路由与壳层：
   - `src/app/console/layout.tsx`
@@ -60,8 +62,20 @@
   - 增加 `admin / judge / organizer / rider / screen` 入口控制。
 - `src/lib/services/console-routes.ts`
   - 增加赛事控制台列表、大屏控制台列表，以及按 slug 取赛事上下文的逻辑。
-- 验证
-  - `node --import tsx --test src/lib/viewer-access.test.ts src/lib/services/console-routes.test.ts src/app/_components/console/console-copy.test.tsx`
+- 验证 ✅
+  - 统一命令：`node --import tsx --test src/lib/services/console-routes-convergence.test.ts src/lib/viewer-access.test.ts src/app/_components/console/console-copy.test.tsx src/lib/services/console-routes.test.ts`（19 项通过）
+
+  **修改代码清单**
+
+  | 文件 | 操作 | 变更摘要 |
+  |---|---|---|
+  | `src/lib/user-roles.ts` | 新增 | `normalizeRoles / parseRolesJson / hasRole / getDefaultActiveRole` 4角色体系 |
+  | `src/lib/viewer-access.ts` | 新增 | `getConsoleHomeSections / getConsoleDefaultHref / getConsoleRaceViewAccess / getCreateRacePageAccess / getConsoleScreenAccess / getConsoleAdminAccess` 等 11 个入口控制函数 |
+  | `src/app/_components/console/console-shell.tsx` | 新增 | `ConsoleShell` 布局 + `organizerConsoleSections / riderConsoleSections / judgeConsoleSections / adminConsoleSections / screenConsoleModes` 共 5 套导航常量 + `buildConsoleRootNavItems / buildConsoleSectionNavItems` |
+  | `src/app/console/layout.tsx` | 新增 | Console 根布局 |
+  | `src/app/console/page.tsx` | 新增 | Console 首页 |
+  | `src/app/console/races/page.tsx` | 新增 | 赛事控制台列表 |
+  | `src/app/console/screen/page.tsx` | 新增 | 大屏控制台列表 |
 
 ## 2026-06-19 Judge 范围收口
 
@@ -234,6 +248,90 @@
   | `src/lib/jumbotron-adapter.test.ts` | 扩展 | 17 项回归 + 本次新增测试。 | A~E |
   | `src/app/_components/public/live-hall.test.tsx` | 新增 | 4 项渲染测试：过程榜渲染、不回退旧数据、事件流渲染、中文界面。 | F |
   | `src/lib/services/projections-convergence.test.ts` | 新增 | 27 项验收测试，覆盖 A~E 全部功能点及边界异常。 | A~Edge |
+
+### 公开结果链收口 — 验收（22 项全部通过）
+
+  运行命令：
+
+  ```bash
+  # 纯函数
+  node --import tsx --test src/lib/services/results-chain-convergence.test.ts
+  # 组件渲染
+  node --import tsx --test src/app/_components/public/results-page.test.tsx src/app/_components/public/review-page.test.tsx src/app/_components/public/work-page.test.tsx src/app/_components/public/rider-profile-page.test.tsx src/app/_components/public/works-page.test.tsx
+  ```
+
+  | 验收功能点 | 测试标识 | 验证结论 |
+  |---|---|---|
+  | **A. results 纯函数** | `[R-01]~[R-04]` Award 标签映射 | ✅ 4 种映射正确 |
+  | | `[R-05]~[R-07]` 评委评论 Skill 推断 | ✅ 3 种推断正确 |
+  | | `[R-08]~[R-09]` 去重逻辑 | ✅ 正常+空数组 |
+  | **B. results-page** | 奖项榜单+作品+亮点+评审入口 | ✅ 全部区域渲染 |
+  | | `/works/` 链接呈现 | ✅ 可公开跳转 |
+  | | 无奖项空态 | ✅ 中文提示 |
+  | **C. review-page** | 评审总结+证据摘要+评委观点 | ✅ 全部区域渲染 |
+  | | 无数据空态 | ✅ 获奖说明空态 |
+  | **D. work-page** | 标题+作者+技术说明+评委+奖项 | ✅ 全部区域渲染 |
+  | **E. rider-profile** | 个人信息+Skill Tag+性能摘要 | ✅ 全部区域渲染 |
+  | | 无数据空态 | ✅ 参赛记录空态 |
+  | **F. works-page** | 赛事上下文+作品卡片+奖项标识 | ✅ 全部区域渲染 |
+  | | 无作品空态 | ✅ 中文提示 |
+
+  **修改代码清单**
+
+  | 文件 | 操作 | 变更摘要 | 关联验收点 |
+  |---|---|---|---|
+  | `src/lib/services/results.ts` | 修改 | `mapAwardToSkillLabel()` / `inferSkillLabelFromJudgingComment()` / `dedupeHighlights()` 三个纯函数改为 export 以支持独立测试。 | A |
+  | | 新增 | `buildPublicResultsModel()` 按 `Award / Report / Work` 聚合公开赛果模型。 | 综合 |
+  | `src/lib/services/review.ts` | 新增 | `buildPublicReviewModel()` 按 `review_summary / Award / Evidence` 聚合复盘页模型。 | C |
+  | `src/lib/services/public-routes.ts` | 新增 | `getWorkBySlug()` / `getRiderBySlug()` 补齐 `techNotes` / `judgeComments` / `skillTags` / `performanceSummary`。 | D~F |
+  | `src/app/_components/public/results-page.tsx` | 新增 | `ResultsPageView` 渲染奖项榜单、获奖作品、骑行亮点、评审入口。 | B |
+  | `src/app/_components/public/review-page.tsx` | 新增 | `ReviewPageView` 渲染评审总结、获奖说明、评委观点、证据摘要。 | C |
+  | `src/app/_components/public/work-page.tsx` | 新增 | `WorkPageView` 渲染作品资产、技术说明、评委点评、奖项信息。 | D |
+  | `src/app/_components/public/rider-profile-page.tsx` | 新增 | `RiderProfileView` 渲染个人信息、Skill Tag、性能摘要、参赛记录。 | E |
+  | `src/app/_components/public/works-page.tsx` | 新增 | `WorksPageView` 渲染赛事上下文 + 作品卡片列表。 | F |
+  | `src/lib/services/results-chain-convergence.test.ts` | 新增 | 9 项纯函数验收测试。 | A |
+
+### 控制台基础路线收口 — 验收（19 项全部通过）
+
+  运行命令：
+
+  ```bash
+  node --import tsx --test src/lib/services/console-routes-convergence.test.ts src/lib/viewer-access.test.ts src/app/_components/console/console-copy.test.tsx src/lib/services/console-routes.test.ts
+  ```
+
+  | 验收功能点 | 测试标识 | 验证结论 |
+  |---|---|---|
+  | **A. 4角色体系** | `[CR-01]` normalizeRoles 去重排序过滤 | ✅ ADMIN→JUDGE→ORGANIZER→RIDER |
+  | | `[CR-02]` hasRole 正反判断 | ✅ 含/不含正确 |
+  | | `[CR-03]` parseRolesJson 合法/非法/往返 | ✅ JSON解析+兜底 |
+  | | `[CR-04]` serializeRoles 序列化 | ✅ 往返一致 |
+  | **B. 入口控制** | getRoleCapabilities 5种角色 | ✅ 能力映射正确 |
+  | | getConsoleHomeSections | ✅ 各角色板块对应 |
+  | | getConsoleDefaultHref | ✅ 默认路由正确 |
+  | | getConsoleEntryTarget | ✅ 已登录/未登录 |
+  | | getCreateRacePageAccess | ✅ ORGANIZER允许 |
+  | | getConsoleRaceViewAccess | ✅ 含race范围约束 |
+  | | getConsoleScreenAccess | ✅ ADMIN/ORGANIZER |
+  | **C. 列表路由** | rider console race list | ✅ access=rider |
+  | | judge console race list | ✅ access=judge |
+  | **D. 中文化渲染** | screen console | ✅ 中文标题 |
+  | | judge console | ✅ 中文标签 |
+  | | console home | ✅ 中文文案 |
+
+  **修改代码清单**
+
+  | 文件 | 操作 | 关联验收点 |
+  |---|---|---|
+  | `src/lib/user-roles.ts` | 新增 | A |
+  | `src/lib/viewer-access.ts` | 新增 11 个入口控制函数 | B |
+  | `src/lib/services/console-routes.ts` | 新增赛事/大屏列表+slug解析 | C |
+  | `src/app/_components/console/console-shell.tsx` | 新增 Shell + 5套导航常量 | B |
+  | `src/app/console/layout.tsx` | 新增根布局 | B |
+  | `src/app/console/page.tsx` | 新增首页 | B |
+  | `src/app/console/races/page.tsx` | 新增赛事控制台列表 | C |
+  | `src/app/console/screen/page.tsx` | 新增大屏控制台列表 | C |
+  | `src/lib/services/console-routes-convergence.test.ts` | 新增 4 项 | A |
+  | `src/lib/services/console-routes.test.ts` | 修复 2 项（seed解耦） | C |
 
 - 公开页相关
   - `node --import tsx --test src/app/_components/public/live-hall.test.tsx src/app/_components/public/race-page.test.tsx src/app/_components/public/results-page.test.tsx src/app/_components/public/review-page.test.tsx src/app/_components/public/work-page.test.tsx src/app/_components/public/rider-profile-page.test.tsx src/app/_components/public/works-page.test.tsx src/app/_components/public/home-copy.test.tsx src/app/_components/public/copy-sanity.test.tsx`

@@ -40,20 +40,20 @@ export async function buildPublicResultsModel(raceId: string) {
   };
 }
 
-function mapAwardToSkillLabel(awardName: string): string {
+export function mapAwardToSkillLabel(awardName: string): string {
   if (/cost/i.test(awardName)) return "成本控制";
   if (/recovery/i.test(awardName)) return "风险处理";
   if (/retrospective/i.test(awardName)) return "复盘表达";
   return "综合表现";
 }
 
-function inferSkillLabelFromJudgingComment(comment: string): string {
+export function inferSkillLabelFromJudgingComment(comment: string): string {
   if (/cost|efficiency/i.test(comment)) return "成本控制";
   if (/recovery|correction|risk/i.test(comment)) return "风险处理";
   return "复盘表达";
 }
 
-function dedupeHighlights(
+export function dedupeHighlights(
   items: Array<{ label: string; riderName: string }>,
 ): Array<{ label: string; riderName: string }> {
   const seen = new Set<string>();
