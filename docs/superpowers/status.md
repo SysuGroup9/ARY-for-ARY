@@ -24,8 +24,8 @@
   - 过程榜单改为读取 `CURRENT_LEADERBOARD`。
   - 事件流改为读取 `EVENT_STREAM_READ_MODEL`。
   - 不再回退到旧的 `leaderboardEntries`。
-- 验证
-  - `node --import tsx --test src/lib/jumbotron-adapter.test.ts src/app/_components/public/live-hall.test.tsx`
+- 验证 ✅
+  - `node --import tsx --test src/lib/jumbotron-adapter.test.ts src/app/_components/public/live-hall.test.tsx src/lib/services/projections-convergence.test.ts`（48 项通过）
 
 ## 2026-06-19 公开结果链收口
 
@@ -167,6 +167,73 @@
   - `node --import tsx --test src/app/_components/console/organizer-console-page.test.tsx src/app/console/races/new/page.test.tsx`
 
 ## 当前验证证据
+
+### 过程投影收口 — 统一验收（48 项全部通过）
+
+  运行命令（三套测试一并发起）：
+
+  ```bash
+  node --import tsx --test \
+    src/lib/services/projections-convergence.test.ts \
+    src/lib/jumbotron-adapter.test.ts \
+    src/app/_components/public/live-hall.test.tsx
+  ```
+
+  | 验收功能点 | 测试标识 | 验证结论 |
+  |---|---|---|
+  | **A. adapter 不再伪造骑行消息** | `[A-01]` 无真实消息源 → 空数组 | ✅ 零条伪造消息 |
+  | | `[A-02]` feedback 来源正确 | ✅ 消息内容 = 真实 feedback |
+  | | `[A-03]` SCREEN_FEED projection 优先 | ✅ source = projection |
+  | | `[A-04]` session latestActivity 后备 | ✅ 后备源可用 |
+  | **B. adapter 不再伪造低风险提醒** | `[B-01]` 无风险源 → 空数组 | ✅ 零条伪造风险项 |
+  | | `[B-02]` FAILED → risk item | ✅ severity=medium |
+  | | `[B-03]` antiCheatPenalty → violation | ✅ 诱导词检测生效 |
+  | **C. KPI 优先 Registration** | `[C-01]` onlineRiders/activeRiders 来源 | ✅ Registration，非 leaderboard |
+  | | `[C-02]` 无 Registration 回退 teams | ✅ 兼容回退路径 |
+  | | `[C-03]` Session token 优先 Archive | ✅ totalTokens=Session 总和 |
+  | | `[C-04]` roster 来自 registration | ✅ entryId=reg id |
+  | | `[C-05]` costTokens 字段来源 | ✅ Session tokenCost |
+  | **D. projections helper** | `[D-01]` EVENT_STREAM 结构 | ✅ items + raceId |
+  | | `[D-02]` EVENT_STREAM risk 条目 | ✅ type=risk, severity=warning |
+  | | `[D-03]` EVENT_STREAM 排序 | ✅ createdAt 降序 |
+  | | `[D-04]` LEADERBOARD progress 排序 | ✅ progressPercent 降序 |
+  | | `[D-05]` LEADERBOARD tokenCost 排序 | ✅ 低 token 排前 |
+  | | `[D-06]` LEADERBOARD username 排序 | ✅ 字母序 |
+  | | `[D-07]` RACE_PROGRESS 维度完整 | ✅ 5 维度齐全 |
+  | | `[D-08]` REGISTRATION_STATUS 字段 | ✅ 接入状态字段完整 |
+  | | `[D-09]` SCREEN_FEED 结构 | ✅ items + raceId |
+  | **E. session 过程数据优先** | session tokenCost 优先 Archive | ✅ 正确聚合 |
+  | | caProvider 优先 CAConnection.caType | ✅ codex/claude 区分 |
+  | | lastMessage 优先 session latestActivity | ✅ 真实过程消息 |
+  | | progress 优先 CURRENT_LEADERBOARD | ✅ 投影进度驱动 |
+  | | 零 progress 占位不压塌整批赛车位置 | ✅ 分数分布驱动 |
+  | | registration 存在时 entryId 用 reg id | ✅ 不回落 team id |
+  | **F. 公开端 live-hall 渲染** | `[LH-1]` CURRENT_LEADERBOARD 渲染排名与进度 | ✅ DOM 输出正确 |
+  | | `[LH-2]` 不回退 legacy leaderboardEntries | ✅ 旧数据不污染页面 |
+  | | `[LH-3]` EVENT_STREAM_READ_MODEL 渲染 | ✅ SCREEN_FEED 不混入 |
+  | | `[LH-4]` 中文标题与按钮收口 | ✅ 无英文残留 |
+  | **边界异常** | `[Edge-01]` 空 registrations + 空 teams | ✅ 返回空数组不崩溃 |
+  | | `[Edge-02]` projection 多余字段 | ✅ 不影响解析 |
+  | | `[Edge-03]` projection JSON 解析失败 | ✅ 回退不崩溃 |
+  | | `[Edge-04]` 全部 projection 缺失不崩溃 | ✅ 空态正常 |
+  | **综合验收** | 无真实来源零条伪数据 | ✅ messages=0, items=0 |
+  | | Registration 优先后备链路 | ✅ Session token > Archive |
+  | | EVENT_STREAM_READ_MODEL 产出 | ✅ items > 0 |
+
+  **修改代码清单**
+
+  | 文件 | 操作 | 变更摘要 | 关联验收点 |
+  |---|---|---|---|
+  | `src/lib/jumbotron/adapter.ts` | 修改 | `generateMessages()` 优先读 SCREEN_FEED projection / session latestActivity / feedback，不再生成 mock 短语。 | A |
+  | | 修改 | `generateAttentionItems()` 检查 CA ingestion FAILED 和 antiCheatPenalty，无真实来源时返回空数组。 | B |
+  | | 修改 | `calculateKPIs()` 优先按 `Registration.count → RaceProject.aggregateIngestionStatus` 统计 onlineRiders / activeRiders / cockpits；Session tokenCost 优先于 TeamArchive。 | C |
+  | | 修改 | `mapToRacingEntries()` roster 优先取自 Registration；costTokens / caProvider / lastMessage 优先取自 CA Session；整批零 progress 占位不压塌赛车位置。 | C, E |
+  | `src/lib/services/projections.ts` | 新增 | 新增 `rebuildRaceProcessProjections()`，产出 7 类 Projection，通过 `projection.upsert()` 写入数据库。 | D |
+  | `src/lib/evidence-projection-helpers.ts` | 新增 | 新增 5 个投影数据构造函数，支撑 projections.ts 的数据组装。 | D |
+  | `src/app/_components/public/live-hall.tsx` | 新增 | `LiveHallView` 组件读取 6 类投影，过程榜单不回落 leaderboardEntries。 | F |
+  | `src/lib/jumbotron-adapter.test.ts` | 扩展 | 17 项回归 + 本次新增测试。 | A~E |
+  | `src/app/_components/public/live-hall.test.tsx` | 新增 | 4 项渲染测试：过程榜渲染、不回退旧数据、事件流渲染、中文界面。 | F |
+  | `src/lib/services/projections-convergence.test.ts` | 新增 | 27 项验收测试，覆盖 A~E 全部功能点及边界异常。 | A~Edge |
 
 - 公开页相关
   - `node --import tsx --test src/app/_components/public/live-hall.test.tsx src/app/_components/public/race-page.test.tsx src/app/_components/public/results-page.test.tsx src/app/_components/public/review-page.test.tsx src/app/_components/public/work-page.test.tsx src/app/_components/public/rider-profile-page.test.tsx src/app/_components/public/works-page.test.tsx src/app/_components/public/home-copy.test.tsx src/app/_components/public/copy-sanity.test.tsx`
