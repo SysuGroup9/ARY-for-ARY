@@ -1,6 +1,10 @@
-import { getConsoleEntryTarget } from "@/lib/viewer-access";
+import type { AppRole } from "@/lib/user-roles";
+import { getConsoleEntryTarget, getPublicAuthAction } from "@/lib/viewer-access";
 
-export function PublicHeader({ hasSession }: { hasSession: boolean }) {
+export function PublicHeader({ roles }: { roles: readonly AppRole[] | null }) {
+  const authAction = getPublicAuthAction({ roles });
+  const consoleHref = getConsoleEntryTarget(roles);
+
   return (
     <header className="public-header">
       <div className="public-header__brand">
@@ -13,9 +17,14 @@ export function PublicHeader({ hasSession }: { hasSession: boolean }) {
         <a href="/cooperation">合作</a>
       </nav>
       <div className="public-header__actions">
-        <a className="button-secondary" href={getConsoleEntryTarget(hasSession)}>
-          {hasSession ? "进入控制台" : "登录"}
+        <a className="button-secondary" href={authAction.href}>
+          {authAction.label}
         </a>
+        {consoleHref ? (
+          <a className="button-secondary" href={consoleHref}>
+            进入控制台
+          </a>
+        ) : null}
       </div>
     </header>
   );

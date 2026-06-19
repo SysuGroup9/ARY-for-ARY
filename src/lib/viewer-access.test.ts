@@ -11,6 +11,7 @@ import {
   getCreateRacePageAccess,
   getHomeRedirectTarget,
   getLoginRedirectTarget,
+  getPublicAuthAction,
   getRoleCapabilities,
 } from "./viewer-access";
 
@@ -79,9 +80,21 @@ test("uses the home page as the back target for create-race flow", () => {
   assert.equal(getCreateRaceBackTarget(), "/");
 });
 
-test("uses a dedicated console entry target based on session state", () => {
-  assert.equal(getConsoleEntryTarget(false), "/login");
-  assert.equal(getConsoleEntryTarget(true), "/console");
+test("keeps the public auth action understandable", () => {
+  assert.deepEqual(getPublicAuthAction({ roles: null }), {
+    href: "/login",
+    label: "登录 / 注册",
+  });
+  assert.deepEqual(getPublicAuthAction({ roles: ["RIDER"] }), {
+    href: "/login",
+    label: "身份入口",
+  });
+});
+
+test("shows console entry only for users with actual console sections", () => {
+  assert.equal(getConsoleEntryTarget(null), null);
+  assert.equal(getConsoleEntryTarget(["RIDER"]), "/console");
+  assert.equal(getConsoleEntryTarget(["ORGANIZER"]), "/console");
 });
 
 test("maps console home sections from the current role", () => {

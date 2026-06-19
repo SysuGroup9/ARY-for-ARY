@@ -1,6 +1,17 @@
+import JumbotronInline from "@/app/JumbotronInline";
+import type { TrackProfile, RaceSnapshot } from "@/lib/jumbotron/track-runtime/types";
 import type { RaceListItem } from "@/lib/services/races";
 
-export function LiveHallView({ race }: { race: RaceListItem }) {
+export function LiveHallView({
+  race,
+  jumbotronPreview,
+}: {
+  race: RaceListItem;
+  jumbotronPreview?: {
+    snapshot: RaceSnapshot | null;
+    trackProfile: TrackProfile | null;
+  };
+}) {
   const raceProgress = parseProjection<{
     activeConnections: number;
     activeRegistrations: number;
@@ -166,6 +177,18 @@ export function LiveHallView({ race }: { race: RaceListItem }) {
           该页读取基于 `Registration / RaceProject / CAConnection / Session`
           聚合出的过程投影数据，用于公开实况展示。
         </p>
+        <div className="button-row-inline" style={{ marginTop: 12 }}>
+          <a className="button-secondary" href={`/jumbotron/${race.id}`}>
+            打开大屏
+          </a>
+        </div>
+        {jumbotronPreview ? (
+          <JumbotronInline
+            raceId={race.id}
+            snapshot={jumbotronPreview.snapshot}
+            trackProfile={jumbotronPreview.trackProfile}
+          />
+        ) : null}
       </section>
 
       <section className="grid">
@@ -219,21 +242,6 @@ export function LiveHallView({ race }: { race: RaceListItem }) {
           </div>
         </section>
 
-        <section className="panel">
-          <p className="eyebrow">大屏入口</p>
-          <h2>当前输出</h2>
-          <div className="button-row-inline">
-            <a className="button-secondary" href={`/jumbotron/${race.id}`}>
-              打开大屏
-            </a>
-            <a
-              className="button-secondary"
-              href={`/console/screen/${race.id}--${slugifyTitle(race.title)}/jumbotron`}
-            >
-              打开大屏控制台
-            </a>
-          </div>
-        </section>
       </section>
 
       <section className="grid">

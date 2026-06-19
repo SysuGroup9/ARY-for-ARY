@@ -48,6 +48,7 @@ test("骑手工作台在报名与提交区块中不再暴露 compatibility 层�
   assert.doesNotMatch(html, /compatibility team creation/);
   assert.doesNotMatch(html, /No compatibility submission container yet\./);
   assert.match(html, /报名状态/);
+  assert.match(html, /你已经进入骑手工作台；下一步是对当前赛事提交正式报名/);
   assert.match(html, /提交已锁定/);
 });
 

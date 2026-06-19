@@ -73,7 +73,9 @@ test("home gallery renders readable Chinese public copy instead of mojibake text
   assert.match(html, /优秀骑手/);
   assert.match(html, /合作入口/);
   assert.match(html, /往届赛事/);
-  assert.match(html, /报名 \/ 办赛 \/ 赞助 \/ 合作/);
+  assert.match(html, /骑手注册 \/ 报名 \/ 办赛 \/ 合作/);
+  assert.match(html, /骑手注册 \/ 登录/);
+  assert.match(html, /查看赛事报名页/);
   assert.match(html, /进入赛事页/);
   assert.doesNotMatch(html, /鏆|杩|浣|璧|鍚|鎴|寰|绮/);
 });

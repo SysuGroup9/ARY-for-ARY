@@ -1,24 +1,5 @@
 {
-  "attentionItems": [
-    {
-      "itemId": "risk-mock-team_signup_0",
-      "entryId": "team_signup_0",
-      "category": "risk",
-      "severity": "low",
-      "summary": "Interface Artist: 提交间隔即将到期，请尽快提交",
-      "status": "active",
-      "createdAt": "2026-06-18T21:00:01.169Z"
-    },
-    {
-      "itemId": "risk-mock-team_signup_1",
-      "entryId": "team_signup_1",
-      "category": "risk",
-      "severity": "low",
-      "summary": "REST Master: 提交间隔即将到期，请尽快提交",
-      "status": "active",
-      "createdAt": "2026-06-18T21:00:01.169Z"
-    }
-  ],
+  "attentionItems": [],
   "competition": {
     "competitionId": "race_signup",
     "title": "API Design Race",
@@ -30,13 +11,13 @@
     "currentRound": 1,
     "nextPhase": "比赛中",
     "elapsedTime": 0,
-    "systemTime": "2026-06-18T21:00:01.169Z"
+    "systemTime": "2026-06-19T08:34:22.162Z"
   },
   "entries": [
     {
-      "entryId": "team_signup_0",
+      "entryId": "cmqkoa7ie001oyws3p5fg1tyy",
       "riderName": "rider_iris",
-      "projectName": "Interface Artist",
+      "projectName": "rider_iris",
       "caProvider": "other",
       "rank": 1,
       "score": 0,
@@ -51,12 +32,12 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-18T21:00:01.169Z"
+      "updatedAt": "2026-06-19T08:34:22.162Z"
     },
     {
-      "entryId": "team_signup_1",
+      "entryId": "cmqkoa7ip001qyws3voai8cfq",
       "riderName": "rider_jack",
-      "projectName": "REST Master",
+      "projectName": "rider_jack",
       "caProvider": "other",
       "rank": 2,
       "score": 0,
@@ -71,12 +52,12 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-18T21:00:01.169Z"
+      "updatedAt": "2026-06-19T08:34:22.162Z"
     },
     {
-      "entryId": "team_signup_2",
+      "entryId": "cmqkoa7j1001syws3axr3qd5g",
       "riderName": "rider_kate",
-      "projectName": "API Builder",
+      "projectName": "rider_kate",
       "caProvider": "other",
       "rank": 3,
       "score": 0,
@@ -91,10 +72,10 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-18T21:00:01.169Z"
+      "updatedAt": "2026-06-19T08:34:22.162Z"
     }
   ],
-  "generatedAt": "2026-06-18T21:00:01.169Z",
+  "generatedAt": "2026-06-19T08:34:22.162Z",
   "kpis": {
     "completionRate": 0,
     "totalTokens": 0,
@@ -117,7 +98,7 @@
       "type": "milestone",
       "severity": "info",
       "summary": "Current process leaderboard is available.",
-      "createdAt": "2026-06-18T21:00:01.169Z",
+      "createdAt": "2026-06-19T08:34:22.162Z",
       "displayMode": "ticker"
     }
   ],

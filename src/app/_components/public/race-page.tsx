@@ -10,7 +10,7 @@ export function RacePageView({
 }) {
   const primaryCta =
     race.phase === "registration" || race.phase === "preparation"
-      ? { href: "/login", label: "立即报名" }
+      ? { href: `/races/${raceSlug}/register`, label: "进入报名页面" }
       : race.phase === "active" || race.phase === "frozen"
         ? { href: `/races/${raceSlug}/live`, label: "进入实况大厅" }
         : { href: `/races/${raceSlug}/results`, label: "查看赛果" };
@@ -76,6 +76,11 @@ export function RacePageView({
       <section className="panel">
         <p className="eyebrow">公开入口</p>
         <h2>公开入口</h2>
+        {(race.phase === "registration" || race.phase === "preparation") ? (
+          <p className="muted">
+            先登录或注册骑手账号，再进入该赛事完成正式报名。
+          </p>
+        ) : null}
         <div className="button-row-inline">
           <a className="button" href={primaryCta.href}>
             {primaryCta.label}

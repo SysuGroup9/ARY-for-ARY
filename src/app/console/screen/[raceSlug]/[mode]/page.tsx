@@ -5,7 +5,9 @@ import {
 } from "@/app/_components/console/console-shell";
 import { ScreenConsolePageView } from "@/app/_components/console/screen-console-page";
 import { loadDatabaseUser } from "@/lib/auth";
+import { getEffectiveTrackProfileFromSnapshot } from "@/lib/jumbotron/track-config";
 import { getConsoleRaceBySlug } from "@/lib/services/console-routes";
+import { buildRaceSnapshot } from "@/lib/services/race-snapshot";
 import { getConsoleScreenAccess } from "@/lib/viewer-access";
 import { notFound, redirect } from "next/navigation";
 
@@ -43,6 +45,11 @@ export default async function ScreenConsoleModePage({ params }: Props) {
     notFound();
   }
 
+  const jumbotronPreview =
+    mode === "jumbotron"
+      ? await buildJumbotronPreview(context.race.id)
+      : undefined;
+
   return (
     <ConsoleShell
       breadcrumbs={[
@@ -63,7 +70,14 @@ export default async function ScreenConsoleModePage({ params }: Props) {
         mode={mode as (typeof screenConsoleModes)[number]}
         race={context.race}
         raceSlug={raceSlug}
+        jumbotronPreview={jumbotronPreview}
       />
     </ConsoleShell>
   );
+}
+
+async function buildJumbotronPreview(raceId: string) {
+  const snapshot = await buildRaceSnapshot(raceId);
+  const trackProfile = getEffectiveTrackProfileFromSnapshot(snapshot);
+  return { snapshot, trackProfile };
 }

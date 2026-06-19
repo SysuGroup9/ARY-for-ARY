@@ -151,6 +151,12 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
     }).filter((p): p is NonNullable<typeof p> => p !== null);
   }, [sorted, trackProfile, path, displayS]);
 
+  const visibleEntries = poses.map((pose) => pose.entry);
+  const onlineRiderCount = visibleEntries.filter((entry) => {
+    const state = resolveMotionState(entry.status, entry.updatedAt);
+    return state !== "stale";
+  }).length;
+  const totalVisibleRiders = visibleEntries.length;
   const top3 = entries.filter((e) => e.rank && e.rank <= 3).sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
   const activeRiders = [...entries]
     .sort((a, b) => (b.submissionCount ?? 0) - (a.submissionCount ?? 0) || (a.rank ?? 999) - (b.rank ?? 999))
@@ -169,7 +175,7 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
         </div>
         <div className="jt-hdr__right">
           {showClock ? <span>⏱ {formatTime(elapsed)}</span> : null}
-          <span className="jt-hdr__online">在线 {kpis.onlineRiders}/{entries.length}</span>
+          <span className="jt-hdr__online">在线 {onlineRiderCount}/{totalVisibleRiders}</span>
         </div>
       </header>
 

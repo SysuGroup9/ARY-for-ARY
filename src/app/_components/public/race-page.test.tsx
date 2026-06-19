@@ -47,3 +47,16 @@ test("race page uses Chinese public entry and next-step labels", () => {
   assert.doesNotMatch(html, /Review/);
   assert.doesNotMatch(html, /Next Step/);
 });
+
+test("race page explains login-before-registration during signup phases", () => {
+  const html = renderToStaticMarkup(
+    <RacePageView
+      race={buildRace({ phase: "registration" })}
+      raceSlug="race_active--sorting-challenge"
+    />,
+  );
+
+  assert.match(html, /进入报名页面/);
+  assert.match(html, /\/races\/race_active--sorting-challenge\/register/);
+  assert.match(html, /先登录或注册骑手账号，再进入该赛事完成正式报名/);
+});

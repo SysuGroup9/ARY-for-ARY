@@ -1,4 +1,6 @@
 import { LiveHallView } from "@/app/_components/public/live-hall";
+import { getEffectiveTrackProfileFromSnapshot } from "@/lib/jumbotron/track-config";
+import { buildRaceSnapshot } from "@/lib/services/race-snapshot";
 import { getRaceBySlug } from "@/lib/services/public-routes";
 import { notFound } from "next/navigation";
 
@@ -16,5 +18,13 @@ export default async function RaceLivePage({ params }: Props) {
     notFound();
   }
 
-  return <LiveHallView race={race} />;
+  const snapshot = await buildRaceSnapshot(race.id);
+  const trackProfile = getEffectiveTrackProfileFromSnapshot(snapshot);
+
+  return (
+    <LiveHallView
+      race={race}
+      jumbotronPreview={{ snapshot, trackProfile }}
+    />
+  );
 }

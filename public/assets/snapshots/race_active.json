@@ -7,25 +7,7 @@
       "severity": "medium",
       "summary": "Late Night Commit: 检测到诱导词，扣 10 分",
       "status": "active",
-      "createdAt": "2026-06-18T21:00:01.138Z"
-    },
-    {
-      "itemId": "risk-mock-team_active_0",
-      "entryId": "team_active_0",
-      "category": "risk",
-      "severity": "low",
-      "summary": "Fast Sort Squad: 提交间隔即将到期，请尽快提交",
-      "status": "active",
-      "createdAt": "2026-06-18T21:00:01.138Z"
-    },
-    {
-      "itemId": "risk-mock-team_active_1",
-      "entryId": "team_active_1",
-      "category": "risk",
-      "severity": "low",
-      "summary": "Milk Tea Coder: 提交间隔即将到期，请尽快提交",
-      "status": "active",
-      "createdAt": "2026-06-18T21:00:01.138Z"
+      "createdAt": "2026-06-19T08:34:22.127Z"
     }
   ],
   "competition": {
@@ -38,14 +20,14 @@
     "currentPhase": "active",
     "currentRound": 1,
     "nextPhase": "封榜中",
-    "elapsedTime": 72001,
-    "systemTime": "2026-06-18T21:00:01.137Z"
+    "elapsedTime": 113662,
+    "systemTime": "2026-06-19T08:34:22.124Z"
   },
   "entries": [
     {
-      "entryId": "team_active_0",
+      "entryId": "cmqkoa74t0000yws3byritbf2",
       "riderName": "rider_alice",
-      "projectName": "Fast Sort Squad",
+      "projectName": "rider_alice",
       "caProvider": "codex",
       "rank": 1,
       "score": 92.5,
@@ -61,21 +43,21 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-team_active_0-session",
-        "entryId": "team_active_0",
+        "messageId": "msg-cmqkoa74t0000yws3byritbf2-session",
+        "entryId": "cmqkoa74t0000yws3byritbf2",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "rider_alice is pushing the active race implementation forward.",
-        "createdAt": "2026-06-18T21:00:01.138Z",
+        "createdAt": "2026-06-19T08:34:22.126Z",
         "displayMode": "ticker"
       },
-      "updatedAt": "2026-06-18T21:00:00.128Z"
+      "updatedAt": "2026-06-19T02:00:00.000Z"
     },
     {
-      "entryId": "team_active_1",
+      "entryId": "cmqkoa7830008yws3irsnzisa",
       "riderName": "rider_bob",
-      "projectName": "Milk Tea Coder",
+      "projectName": "rider_bob",
       "caProvider": "codex",
       "rank": 2,
       "score": 87.3,
@@ -91,21 +73,21 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-team_active_1-session",
-        "entryId": "team_active_1",
+        "messageId": "msg-cmqkoa7830008yws3irsnzisa-session",
+        "entryId": "cmqkoa7830008yws3irsnzisa",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "rider_bob is pushing the active race implementation forward.",
-        "createdAt": "2026-06-18T21:00:01.138Z",
+        "createdAt": "2026-06-19T08:34:22.126Z",
         "displayMode": "ticker"
       },
-      "updatedAt": "2026-06-18T21:00:00.180Z"
+      "updatedAt": "2026-06-19T02:00:00.000Z"
     },
     {
-      "entryId": "team_active_2",
+      "entryId": "cmqkoa79v000gyws3bll5bsft",
       "riderName": "rider_charlie",
-      "projectName": "Bug Crusher",
+      "projectName": "rider_charlie",
       "caProvider": "codex",
       "rank": 3,
       "score": 81,
@@ -121,21 +103,21 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-team_active_2-session",
-        "entryId": "team_active_2",
+        "messageId": "msg-cmqkoa79v000gyws3bll5bsft-session",
+        "entryId": "cmqkoa79v000gyws3bll5bsft",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "rider_charlie is pushing the active race implementation forward.",
-        "createdAt": "2026-06-18T21:00:01.138Z",
+        "createdAt": "2026-06-19T08:34:22.126Z",
         "displayMode": "ticker"
       },
-      "updatedAt": "2026-06-18T21:00:00.232Z"
+      "updatedAt": "2026-06-19T02:00:00.000Z"
     },
     {
-      "entryId": "team_active_3",
+      "entryId": "cmqkoa7bj000oyws379uvs2jm",
       "riderName": "rider_diana",
-      "projectName": "Late Night Commit",
+      "projectName": "rider_diana",
       "caProvider": "codex",
       "rank": 4,
       "score": 75.8,
@@ -143,19 +125,19 @@
       "roundProgress": 0.8194594594594594,
       "phaseProgress": 0.8194594594594594,
       "currentPhase": "DEV",
-      "costTokens": 2900,
+      "costTokens": 0,
       "submissionCount": 1,
-      "costUsd": 0.29000000000000004,
-      "riskLevel": "medium",
+      "costUsd": 0,
+      "riskLevel": "low",
       "obstacleCount": 0,
-      "violationCount": 1,
+      "violationCount": 0,
       "status": "running",
-      "updatedAt": "2026-06-18T21:00:00.286Z"
+      "updatedAt": "2026-06-19T08:34:21.247Z"
     },
     {
-      "entryId": "team_active_4",
+      "entryId": "cmqkoa7d7000vyws31c2sv6cc",
       "riderName": "rider_eve",
-      "projectName": "Requirement Master",
+      "projectName": "rider_eve",
       "caProvider": "codex",
       "rank": 5,
       "score": 68.2,
@@ -163,19 +145,19 @@
       "roundProgress": 0.7372972972972973,
       "phaseProgress": 0.7372972972972973,
       "currentPhase": "DEV",
-      "costTokens": 3500,
+      "costTokens": 0,
       "submissionCount": 1,
-      "costUsd": 0.35000000000000003,
+      "costUsd": 0,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "running",
-      "updatedAt": "2026-06-18T21:00:00.337Z"
+      "updatedAt": "2026-06-19T08:34:21.290Z"
     },
     {
-      "entryId": "team_active_5",
+      "entryId": "cmqkoa7ea0012yws3i4yg90r3",
       "riderName": "rider_frank",
-      "projectName": "Boundary Test Crew",
+      "projectName": "rider_frank",
       "caProvider": "codex",
       "rank": 6,
       "score": 60.4,
@@ -183,19 +165,19 @@
       "roundProgress": 0.652972972972973,
       "phaseProgress": 0.652972972972973,
       "currentPhase": "DEV",
-      "costTokens": 4200,
+      "costTokens": 0,
       "submissionCount": 1,
-      "costUsd": 0.42000000000000004,
+      "costUsd": 0,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "running",
-      "updatedAt": "2026-06-18T21:00:00.381Z"
+      "updatedAt": "2026-06-19T08:34:21.334Z"
     },
     {
-      "entryId": "team_active_6",
+      "entryId": "cmqkoa7fj0019yws3baqj3tmb",
       "riderName": "rider_grace",
-      "projectName": "Refactor Pioneer",
+      "projectName": "rider_grace",
       "caProvider": "codex",
       "rank": 7,
       "score": 52.1,
@@ -203,19 +185,19 @@
       "roundProgress": 0.5632432432432433,
       "phaseProgress": 0.5632432432432433,
       "currentPhase": "DEV",
-      "costTokens": 1680,
+      "costTokens": 0,
       "submissionCount": 1,
-      "costUsd": 0.168,
+      "costUsd": 0,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "running",
-      "updatedAt": "2026-06-18T21:00:00.425Z"
+      "updatedAt": "2026-06-19T08:34:21.375Z"
     },
     {
-      "entryId": "team_active_7",
+      "entryId": "cmqkoa7gn001gyws37ubcu75u",
       "riderName": "rider_henry",
-      "projectName": "Performance Hunter",
+      "projectName": "rider_henry",
       "caProvider": "codex",
       "rank": 8,
       "score": 38.9,
@@ -223,17 +205,17 @@
       "roundProgress": 0.4205405405405405,
       "phaseProgress": 0.4205405405405405,
       "currentPhase": "DEV",
-      "costTokens": 5100,
+      "costTokens": 0,
       "submissionCount": 1,
-      "costUsd": 0.51,
+      "costUsd": 0,
       "riskLevel": "low",
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "running",
-      "updatedAt": "2026-06-18T21:00:00.463Z"
+      "updatedAt": "2026-06-19T08:34:21.431Z"
     }
   ],
-  "generatedAt": "2026-06-18T21:00:01.137Z",
+  "generatedAt": "2026-06-19T08:34:22.124Z",
   "kpis": {
     "completionRate": 100,
     "totalTokens": 5270,
@@ -256,7 +238,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "Sorting Challenge is live. Teams should submit current progress for evaluation.",
-      "createdAt": "2026-06-18T21:00:01.138Z",
+      "createdAt": "2026-06-19T08:34:22.126Z",
       "displayMode": "ticker"
     },
     {
@@ -266,7 +248,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "rider_alice is pushing the active race implementation forward.",
-      "createdAt": "2026-06-18T21:00:01.138Z",
+      "createdAt": "2026-06-19T08:34:22.126Z",
       "displayMode": "ticker"
     },
     {
@@ -276,7 +258,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "rider_bob is pushing the active race implementation forward.",
-      "createdAt": "2026-06-18T21:00:01.138Z",
+      "createdAt": "2026-06-19T08:34:22.126Z",
       "displayMode": "ticker"
     },
     {
@@ -286,7 +268,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "rider_charlie is pushing the active race implementation forward.",
-      "createdAt": "2026-06-18T21:00:01.138Z",
+      "createdAt": "2026-06-19T08:34:22.126Z",
       "displayMode": "ticker"
     },
     {
@@ -296,7 +278,7 @@
       "type": "milestone",
       "severity": "info",
       "summary": "Current process leaderboard is available.",
-      "createdAt": "2026-06-18T21:00:01.138Z",
+      "createdAt": "2026-06-19T08:34:22.126Z",
       "displayMode": "ticker"
     }
   ],

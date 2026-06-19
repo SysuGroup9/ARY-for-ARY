@@ -1,4 +1,6 @@
+import JumbotronInline from "@/app/JumbotronInline";
 import { Panel } from "@/app/_components/ary-shared";
+import type { TrackProfile, RaceSnapshot } from "@/lib/jumbotron/track-runtime/types";
 import type { RaceListItem } from "@/lib/services/races";
 
 export function ScreenConsolePageView({
@@ -6,11 +8,16 @@ export function ScreenConsolePageView({
   race,
   raceSlug,
   races,
+  jumbotronPreview,
 }: {
   mode?: "announcement" | "billboard" | "calibration" | "jumbotron" | "leaderboard" | "live" | "works";
   race?: RaceListItem;
   raceSlug?: string;
   races?: Array<{ defaultHref: string; race: RaceListItem; slug: string }>;
+  jumbotronPreview?: {
+    snapshot: RaceSnapshot | null;
+    trackProfile: TrackProfile | null;
+  };
 }) {
   if (!race) {
     return (
@@ -53,6 +60,13 @@ export function ScreenConsolePageView({
               打开公开赛事页
             </a>
           </div>
+          {mode === "jumbotron" && jumbotronPreview ? (
+            <JumbotronInline
+              raceId={race.id}
+              snapshot={jumbotronPreview.snapshot}
+              trackProfile={jumbotronPreview.trackProfile}
+            />
+          ) : null}
         </Panel>
         <Panel title="模式说明" eyebrow="过渡输出">
           <p className="muted">{screenModeDescription[mode ?? "jumbotron"]}</p>

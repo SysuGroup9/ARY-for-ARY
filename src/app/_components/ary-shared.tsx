@@ -39,12 +39,12 @@ export function HeroSection({
     },
     auth: {
       items: [
-        "Public signup creates Rider accounts only.",
-        "Organizer, Judge, and Admin access is assigned from Console.",
-        "Public browsing stays on the public site after login flows are separated.",
+        "公开注册只创建骑手账号。",
+        "主办方、评委、管理员权限由既有角色分配决定。",
+        "公开浏览、身份入口和控制台入口现在分开显示。",
       ],
       lede:
-        "This page is the identity entry for ARY. Public browsing stays on the public site; workspace access starts from login.",
+        "这里是 ARY 的公开身份入口：登录已有账号，或注册骑手身份，再进入对应赛事完成报名。",
     },
     member: {
       items: [
@@ -85,9 +85,11 @@ export function HeroSection({
 export function AuthTabsPanel({
   loginAction,
   registerAction,
+  returnTo,
 }: {
   loginAction: FormAction;
   registerAction: FormAction;
+  returnTo?: string;
 }) {
   return (
     <div className="auth-tabs">
@@ -107,28 +109,30 @@ export function AuthTabsPanel({
 
       <div className="auth-tabs__switches">
         <label className="auth-tabs__switch" htmlFor="auth-tab-login">
-          Login
+          登录
         </label>
         <label className="auth-tabs__switch" htmlFor="auth-tab-register">
-          Register
+          骑手注册
         </label>
       </div>
 
       <div className="auth-tabs__panel auth-tabs__panel--login">
         <AuthForm
           action={loginAction}
-          description="Use an existing ARY account to enter Console or continue participating in races."
-          submitLabel="Login"
-          title="Login"
+          description="使用已有 ARY 账号继续报名、提交作品，或在已分配角色后进入对应控制台。"
+          returnTo={returnTo}
+          submitLabel="登录"
+          title="已有账号登录"
         />
       </div>
 
       <div className="auth-tabs__panel auth-tabs__panel--register">
         <AuthForm
           action={registerAction}
-          description="Public signup creates a Rider account only. Organizer, Judge, and Admin roles are assigned from Console."
-          submitLabel="Register"
-          title="Register"
+          description="公开注册只创建 Rider 身份账号；赛事报名仍需登录后进入对应赛事完成。"
+          returnTo={returnTo}
+          submitLabel="注册骑手账号"
+          title="创建骑手账号"
         />
       </div>
     </div>
@@ -160,11 +164,13 @@ export function CreateRaceForm({ action }: { action: FormAction }) {
 function AuthForm({
   action,
   description,
+  returnTo,
   submitLabel,
   title,
 }: {
   action: FormAction;
   description: string;
+  returnTo?: string;
   submitLabel: string;
   title: string;
 }) {
@@ -174,6 +180,7 @@ function AuthForm({
         <strong>{title}</strong>
         <p className="muted">{description}</p>
       </div>
+      {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
       <label>
         Username
         <input name="username" placeholder="username" required />

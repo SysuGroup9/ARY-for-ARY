@@ -25,6 +25,7 @@ test("screen console uses Chinese titles, buttons, and notes", () => {
       mode="jumbotron"
       race={buildRace()}
       raceSlug="race_active--sorting-challenge"
+      jumbotronPreview={{ snapshot: null, trackProfile: null }}
     />,
   );
 
