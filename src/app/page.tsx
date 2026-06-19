@@ -19,7 +19,7 @@ export default async function HomePage() {
 
   return (
     <main>
-      <PublicHeader hasSession={!!sessionUser} />
+      <PublicHeader roles={sessionUser?.roles ?? null} />
       <PublicHomeHero model={publicModel} />
 
       <section className="shell shell--public-only">

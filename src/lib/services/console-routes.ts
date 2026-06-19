@@ -143,9 +143,11 @@ export async function getConsoleRaceBySlug(raceSlug: string): Promise<{
   race: RaceListItem;
   slug: string;
 } | null> {
-  const raceId = getRaceIdFromSlug(raceSlug);
   const races = await listRaces();
-  const race = races.find((item) => item.id === raceId);
+  const exactMatch = races.find(
+    (item) => buildRaceSlug(item.id, item.title) === raceSlug,
+  );
+  const race = exactMatch ?? races.find((item) => item.id === getRaceIdFromSlug(raceSlug));
 
   if (!race) {
     return null;

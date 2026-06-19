@@ -32,12 +32,14 @@ import { normalizeRoles } from "@/lib/user-roles";
 
 export async function registerAction(formData: FormData) {
   await registerUser(formData);
-  redirect("/");
+  const returnTo = String(formData.get("returnTo") ?? "");
+  redirect(returnTo || "/");
 }
 
 export async function loginAction(formData: FormData) {
   await loginUser(formData);
-  redirect("/");
+  const returnTo = String(formData.get("returnTo") ?? "");
+  redirect(returnTo || "/");
 }
 
 export async function logoutAction() {

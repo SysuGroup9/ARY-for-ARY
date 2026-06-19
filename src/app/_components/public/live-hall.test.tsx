@@ -108,14 +108,18 @@ test("renders event stream items from the event-stream read model instead of scr
 });
 
 test("uses Chinese live-hall headings and actions for public viewers", () => {
-  const html = renderToStaticMarkup(<LiveHallView race={buildRace()} />);
+  const html = renderToStaticMarkup(
+    <LiveHallView
+      race={buildRace()}
+      jumbotronPreview={{ snapshot: null, trackProfile: null }}
+    />,
+  );
 
   assert.match(html, /实况大厅/);
   assert.match(html, /过程总览/);
   assert.match(html, /过程指标/);
-  assert.match(html, /当前输出/);
   assert.match(html, /打开大屏/);
-  assert.match(html, /打开大屏控制台/);
+  assert.doesNotMatch(html, /打开大屏控制台/);
   assert.doesNotMatch(html, /Live Hall/);
   assert.doesNotMatch(html, /Process Summary/);
   assert.doesNotMatch(html, /Open Jumbotron/);

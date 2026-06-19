@@ -58,8 +58,27 @@ export function getCreateRaceBackTarget(): "/" | "/console/races" {
   return "/";
 }
 
-export function getConsoleEntryTarget(hasSession: boolean): "/console" | "/login" {
-  return hasSession ? "/console" : "/login";
+export function getPublicAuthAction(input: {
+  roles: readonly AppRole[] | null;
+}): {
+  href: "/login";
+  label: string;
+} {
+  return input.roles
+    ? {
+        href: "/login",
+        label: "身份入口",
+      }
+    : {
+        href: "/login",
+        label: "登录 / 注册",
+      };
+}
+
+export function getConsoleEntryTarget(
+  roles: readonly AppRole[] | null,
+): null | "/console" {
+  return getConsoleHomeSections(roles).length > 0 ? "/console" : null;
 }
 
 export function getConsoleHomeSections(

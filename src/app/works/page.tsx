@@ -14,7 +14,7 @@ export default async function WorksIndexPage() {
 
   return (
     <main>
-      <PublicHeader hasSession={!!sessionUser} />
+      <PublicHeader roles={sessionUser?.roles ?? null} />
       <section className="shell shell--public-only">
         <section className="content content--public">
           <Panel title="Works" eyebrow="Public Works">

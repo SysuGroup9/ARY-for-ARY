@@ -43,9 +43,11 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
                   sessions: {
                     select: {
                       id: true,
+                      lastActiveAt: true,
                       latestActivity: true,
                       progressPercent: true,
                       tokenCost: true,
+                      updatedAt: true,
                     },
                   },
                 },
@@ -113,9 +115,11 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
                 caType: connection.caType,
                 sessions: connection.sessions.map((session) => ({
                   id: session.id,
+                  lastActiveAt: session.lastActiveAt ?? undefined,
                   latestActivity: session.latestActivity ?? undefined,
                   progressPercent: session.progressPercent ?? undefined,
                   tokenCost: session.tokenCost,
+                  updatedAt: session.updatedAt,
                 })),
               }),
             ),

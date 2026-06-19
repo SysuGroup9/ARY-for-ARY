@@ -41,9 +41,11 @@ export interface AryRaceData {
         caType?: string;
         sessions?: Array<{
           id: string;
+          lastActiveAt?: Date;
           latestActivity?: string;
           progressPercent?: number;
           tokenCost?: number;
+          updatedAt?: Date;
         }>;
       }>;
       id: string;
@@ -257,7 +259,7 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
         ?.flatMap((connection) => connection.sessions ?? [])
         .sort(
           (left, right) =>
-            (right.progressPercent ?? 0) - (left.progressPercent ?? 0),
+            getSessionActivityTime(right) - getSessionActivityTime(left),
         )[0] ?? null;
     const effectiveTokenCost =
       sessionTokenCost > 0 ? sessionTokenCost : (archive?.tokenUsed ?? 0);
@@ -351,7 +353,11 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
           : status,
       laneId: undefined,            // 由 track-runtime lane-manager 分配
       lastMessage,
-      updatedAt: entry?.createdAt.toISOString() ?? new Date().toISOString(),
+      updatedAt:
+        latestSession?.lastActiveAt?.toISOString() ??
+        latestSession?.updatedAt?.toISOString() ??
+        entry?.createdAt.toISOString() ??
+        new Date().toISOString(),
     };
   });
 }
@@ -554,6 +560,17 @@ function mapCAType(caType?: string): "codex" | "claude" | "other" | null {
     default:
       return null;
   }
+}
+
+function getSessionActivityTime(session: {
+  lastActiveAt?: Date;
+  updatedAt?: Date;
+}): number {
+  return (
+    session.lastActiveAt?.getTime() ??
+    session.updatedAt?.getTime() ??
+    0
+  );
 }
 
 function deriveStatus(

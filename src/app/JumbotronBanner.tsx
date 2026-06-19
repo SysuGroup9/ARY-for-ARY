@@ -12,11 +12,12 @@ interface JumbotronData {
 }
 
 interface Props {
+  initialIndex?: number;
   items: JumbotronData[];
 }
 
-export default function JumbotronBanner({ items }: Props) {
-  const [current, setCurrent] = useState(0);
+export default function JumbotronBanner({ initialIndex = 0, items }: Props) {
+  const [current, setCurrent] = useState(initialIndex);
   const [isPaused, setIsPaused] = useState(false);
 
   const next = useCallback(() => {

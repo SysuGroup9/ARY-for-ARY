@@ -93,10 +93,15 @@ function renderRiderSection({
               {riderTeam ? <span>当前提交容器：{riderTeam.name}</span> : null}
             </div>
           ) : (
-            <form action={registerForRaceAction} className="form-grid">
-              <input name="raceId" type="hidden" value={race.id} />
-              <button type="submit">报名参赛</button>
-            </form>
+            <div className="stack">
+              <p className="muted">
+                你已经进入骑手工作台；下一步是对当前赛事提交正式报名，报名成功后才会生成后续参赛上下文。
+              </p>
+              <form action={registerForRaceAction} className="form-grid">
+                <input name="raceId" type="hidden" value={race.id} />
+                <button type="submit">报名参赛</button>
+              </form>
+            </div>
           )}
         </Panel>
       );

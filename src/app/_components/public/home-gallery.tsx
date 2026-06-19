@@ -141,20 +141,28 @@ export function HomeGallery({
 
       <section className="panel">
         <p className="eyebrow">行动入口</p>
-        <h2>报名 / 办赛 / 赞助 / 合作</h2>
-        <div className="button-row-inline">
-          <a className="button-secondary" href="/login">
-            我要报名
-          </a>
-          <a className="button-secondary" href="/races/new">
-            我要办赛
-          </a>
-          <a className="button-secondary" href="/cooperation">
-            我要赞助
-          </a>
-          <a className="button-secondary" href="/cooperation">
-            我要合作
-          </a>
+        <h2>骑手注册 / 报名 / 办赛 / 合作</h2>
+        <div className="stack">
+          <p className="muted">
+            公开站先完成骑手注册或登录，再进入具体赛事执行报名；控制台入口只对具备对应角色的用户显示。
+          </p>
+          <div className="button-row-inline">
+            <a className="button-secondary" href="/login">
+              骑手注册 / 登录
+            </a>
+            <a className="button-secondary" href="/races">
+              查看赛事报名页
+            </a>
+            <a className="button-secondary" href="/races/new">
+              我要办赛
+            </a>
+            <a className="button-secondary" href="/cooperation">
+              我要赞助
+            </a>
+            <a className="button-secondary" href="/cooperation">
+              我要合作
+            </a>
+          </div>
         </div>
       </section>
     </div>
