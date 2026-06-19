@@ -125,8 +125,16 @@
 - `src/app/_components/console/rider-console-page.tsx`
   - 视图语义改为 `报名 / 作品提交 / 评审结果 / 骑手报告`。
   - 不再直接暴露 compatibility 层概念。
-- 验证
-  - `node --import tsx --test src/lib/services/rider-console.test.ts src/app/_components/console/rider-console-page.test.tsx`
+- 验证 ✅
+  - 语义检查：`node --import tsx --test src/app/_components/console/rider-console-semantics.test.tsx`（3 项通过）
+
+  **修改代码清单**
+
+  | 文件 | 操作 | 变更摘要 |
+  |---|---|---|
+  | `src/lib/services/rider-console.ts` | 新增 | `buildRiderConsoleReportModel()` |
+  | `src/app/_components/console/rider-console-page.tsx` | 修改 | 视图语义改为报名/作品提交/评审结果/骑手报告；不暴露 compatibility 层 |
+  | `src/app/_components/console/rider-console-semantics.test.tsx` | 新增 | 3 项验收测试（6 section 中文+compatibility 隔离+report 语义） |
 
 ## 2026-06-19 Admin Console 最小账号治理中文化收口
 
@@ -410,6 +418,29 @@
   | `src/lib/services/submissions.ts` | 修改 | 先查 Registration 再查兼容 team | A~D |
   | `src/lib/services/rider-bridge.ts` | 新增 | 兼容层查询 | B, C |
   | `src/lib/services/submission-registration-first.test.ts` | 新增 18 项 | A~D |
+
+### Rider Console 语义收口 — 验收（3 项全部通过）
+
+  运行命令：
+
+  ```bash
+  node --import tsx --test src/app/_components/console/rider-console-semantics.test.tsx
+  ```
+
+  | 验收功能点 | 验证结论 |
+  |---|---|
+  | 6 section 全中文：报名/作品提交/评审结果/骑手报告/CA 接入/骑行状态 | ✅ |
+  | 不暴露 compatibility 层文案 | ✅ |
+  | report 区块不暴露过渡层（Transitional/Highlight） | ✅ |
+  | 赛事上下文始终保留在当前页面 | ✅ |
+
+  **修改代码清单**
+
+  | 文件 | 操作 |
+  |---|---|
+  | `src/lib/services/rider-console.ts` | 新增 buildRiderConsoleReportModel |
+  | `src/app/_components/console/rider-console-page.tsx` | 修改 6 section 语义 |
+  | `src/app/_components/console/rider-console-semantics.test.tsx` | 新增 3 项 |
 
 - 公开页相关
   - `node --import tsx --test src/app/_components/public/live-hall.test.tsx src/app/_components/public/race-page.test.tsx src/app/_components/public/results-page.test.tsx src/app/_components/public/review-page.test.tsx src/app/_components/public/work-page.test.tsx src/app/_components/public/rider-profile-page.test.tsx src/app/_components/public/works-page.test.tsx src/app/_components/public/home-copy.test.tsx src/app/_components/public/copy-sanity.test.tsx`
