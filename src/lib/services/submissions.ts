@@ -4,6 +4,8 @@ import {
 } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { getRacePhase } from "@/lib/race-phase";
+import { getRegistrationForUser } from "@/lib/services/registrations";
+import { getCompatibilityContainerForRegistration } from "@/lib/services/rider-bridge";
 import {
   enqueueHarnessEvalTaskForArtifact,
   enqueueSubmissionTestTask,
@@ -22,15 +24,18 @@ export async function createSubmission(riderId: string, formData: FormData) {
     agentType: formData.get("agentType"),
   });
 
-  const team = await prisma.team.findFirst({
-    where: {
-      captainId: riderId,
-      raceId: parsed.raceId,
-    },
+  const registration = await getRegistrationForUser(parsed.raceId, riderId);
+  if (!registration) {
+    throw new Error("请先完成个人报名");
+  }
+
+  const team = await getCompatibilityContainerForRegistration({
+    raceId: parsed.raceId,
+    userId: riderId,
   });
 
   if (!team) {
-    throw new Error("请先报名参赛");
+    throw new Error("当前报名尚未生成可用的提交容器");
   }
 
   const race = await prisma.race.findUnique({
@@ -45,7 +50,7 @@ export async function createSubmission(riderId: string, formData: FormData) {
 
   const phase = getRacePhase(race);
   if (phase !== "active" && phase !== "frozen") {
-    throw new Error("只有比赛中或封榜期才能提交");
+    throw new Error("只有比赛中或封榜期才能提交作品");
   }
 
   const lastSubmission = await prisma.submission.findFirst({
@@ -118,15 +123,18 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
     agentType: formData.get("agentType"),
   });
 
-  const team = await prisma.team.findFirst({
-    where: {
-      captainId: riderId,
-      raceId: parsed.raceId,
-    },
+  const registration = await getRegistrationForUser(parsed.raceId, riderId);
+  if (!registration) {
+    throw new Error("请先完成个人报名");
+  }
+
+  const team = await getCompatibilityContainerForRegistration({
+    raceId: parsed.raceId,
+    userId: riderId,
   });
 
   if (!team) {
-    throw new Error("请先报名参赛");
+    throw new Error("当前报名尚未生成可用的提交容器");
   }
 
   const race = await prisma.race.findUnique({

@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearSession, requireRole } from "@/lib/auth";
 import { replyFeedback, sendFeedback } from "@/lib/services/feedback";
+import { createCAConnectionForRaceProject } from "@/lib/services/ca-connections";
+import { rebuildSessionSummaryEvidenceForRace } from "@/lib/services/evidence";
+import { assignJudgeToWork, upsertJudgingRecord } from "@/lib/services/judging";
 import {
   clearRace,
   createRace,
@@ -21,8 +24,11 @@ import {
   enqueueHarnessEvalTasks,
   enqueueProgressEvalTasks,
 } from "@/lib/services/runner";
+import { rebuildRaceProcessProjections } from "@/lib/services/projections";
 import { registerTeam, updateTeamComment } from "@/lib/services/teams";
-import { loginUser, registerUser } from "@/lib/services/users";
+import { registerForRace } from "@/lib/services/registrations";
+import { loginUser, registerUser, updateUserRoles } from "@/lib/services/users";
+import { normalizeRoles } from "@/lib/user-roles";
 
 export async function registerAction(formData: FormData) {
   await registerUser(formData);
@@ -37,6 +43,18 @@ export async function loginAction(formData: FormData) {
 export async function logoutAction() {
   await clearSession();
   redirect("/");
+}
+
+export async function updateUserRolesAction(formData: FormData) {
+  await requireRole("ADMIN");
+  await updateUserRoles({
+    userId: String(formData.get("userId") ?? ""),
+    roles: normalizeRoles(
+      formData.getAll("roles").map((value) => String(value)),
+    ),
+  });
+  revalidatePath("/console/admin/users");
+  revalidatePath("/console/admin/roles");
 }
 
 export async function createRaceAction(formData: FormData) {
@@ -99,6 +117,67 @@ export async function registerTeamAction(formData: FormData) {
   const user = await requireRole("RIDER");
   await registerTeam(user.id, formData);
   revalidatePath("/");
+}
+
+export async function registerForRaceAction(formData: FormData) {
+  const user = await requireRole("RIDER");
+  const raceId = String(formData.get("raceId") ?? "");
+  await registerForRace(user.id, raceId);
+  await rebuildRaceProcessProjections(raceId);
+  revalidatePath("/");
+  revalidatePath("/console/races");
+}
+
+export async function registerCAConnectionAction(formData: FormData) {
+  const user = await requireRole("RIDER");
+  const raceId = String(formData.get("raceId") ?? "");
+  await createCAConnectionForRaceProject({
+    caProjectId: String(formData.get("caProjectId") ?? ""),
+    caType: String(formData.get("caType") ?? "OTHER") as
+      | "CLAUDE_CODE"
+      | "CODEX"
+      | "OTHER",
+    connectorBaseUrl: String(formData.get("connectorBaseUrl") ?? ""),
+    connectorId: String(formData.get("connectorId") ?? ""),
+    connectorVersion: String(formData.get("connectorVersion") ?? ""),
+    raceProjectId: String(formData.get("raceProjectId") ?? ""),
+    userId: user.id,
+  });
+  await rebuildSessionSummaryEvidenceForRace(raceId);
+  await rebuildRaceProcessProjections(raceId);
+  revalidatePath("/console/races");
+}
+
+export async function rebuildProcessModelsAction(formData: FormData) {
+  await requireRole("ORGANIZER");
+  const raceId = String(formData.get("raceId") ?? "");
+  await rebuildSessionSummaryEvidenceForRace(raceId);
+  await rebuildRaceProcessProjections(raceId);
+  revalidatePath("/console/races");
+  revalidatePath(`/jumbotron/${raceId}`);
+}
+
+export async function assignJudgeToWorkAction(formData: FormData) {
+  const user = await requireRole("ORGANIZER");
+  await assignJudgeToWork({
+    assignedByUserId: user.id,
+    judgeId: String(formData.get("judgeId") ?? ""),
+    workId: String(formData.get("workId") ?? ""),
+  });
+  revalidatePath("/console/races");
+}
+
+export async function submitJudgingRecordAction(formData: FormData) {
+  const user = await requireRole("JUDGE");
+  await upsertJudgingRecord({
+    assignmentId: String(formData.get("assignmentId") ?? ""),
+    comments: String(formData.get("comments") ?? ""),
+    judgeUserId: user.id,
+    scoreResultTotal: Number(formData.get("scoreResultTotal") ?? 0),
+    scoreRidingTotal: Number(formData.get("scoreRidingTotal") ?? 0),
+    submit: formData.get("submit") === "true",
+  });
+  revalidatePath("/console/races");
 }
 
 export async function submitEntryAction(formData: FormData) {

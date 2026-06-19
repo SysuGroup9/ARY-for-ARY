@@ -6,17 +6,17 @@ import {
   buildRiderSlug,
   buildWorkSlug,
   getRacePrimaryCta,
-  groupPublicRacesByPhase,
   getRaceIdFromSlug,
   getRiderIdFromSlug,
   getWorkPartsFromSlug,
+  groupPublicRacesByPhase,
   sortFeaturedWorks,
 } from "./public-site";
 
 const sampleRaces = [
   {
     id: "race_active",
-    title: "排序算法挑战赛",
+    title: "Sorting Challenge",
     summary: "active race",
     phase: "active",
     raceStart: new Date("2026-06-18T18:43:00.000Z"),
@@ -24,8 +24,23 @@ const sampleRaces = [
     teams: [
       {
         id: "team_a",
-        name: "极速排序队",
+        name: "Fast Sort Squad",
         captain: { id: "rider_01", username: "rider_alice" },
+      },
+    ],
+    registrations: [
+      {
+        id: "reg_a",
+        userId: "rider_01",
+        user: { id: "rider_01", username: "rider_alice" },
+        raceProject: {
+          id: "project_a",
+          aggregateIngestionStatus: "ACTIVE",
+          caConnections: [{ sessions: [{ id: "session_a" }] }],
+        },
+        awards: [],
+        evidences: [],
+        work: null,
       },
     ],
     highlights: [],
@@ -33,7 +48,7 @@ const sampleRaces = [
       {
         id: "archive_a",
         teamId: "team_a",
-        team: { id: "team_a", name: "极速排序队" },
+        team: { id: "team_a", name: "Fast Sort Squad" },
         agentType: "CLAUDE",
         totalScore: 92.5,
       },
@@ -42,7 +57,7 @@ const sampleRaces = [
       {
         id: "leader_a",
         teamId: "team_a",
-        team: { id: "team_a", name: "极速排序队" },
+        team: { id: "team_a", name: "Fast Sort Squad" },
         totalScore: 92.5,
         rank: 1,
         agentType: "CLAUDE",
@@ -51,7 +66,7 @@ const sampleRaces = [
   },
   {
     id: "race_finished",
-    title: "性能优化马拉松",
+    title: "Performance Marathon",
     summary: "finished race",
     phase: "finished",
     raceStart: new Date("2026-06-17T19:43:00.000Z"),
@@ -59,26 +74,48 @@ const sampleRaces = [
     teams: [
       {
         id: "team_b",
-        name: "渲染超快队",
+        name: "Render Rocket",
         captain: { id: "rider_02", username: "rider_bob" },
+      },
+    ],
+    registrations: [
+      {
+        id: "reg_b",
+        userId: "rider_02",
+        user: { id: "rider_02", username: "rider_bob" },
+        raceProject: {
+          id: "project_b",
+          aggregateIngestionStatus: "ACTIVE",
+          caConnections: [{ sessions: [{ id: "session_b" }] }],
+        },
+        awards: [
+          { awardName: "Best Overall", rank: 1 },
+          { awardName: "Best Cost Control", rank: 1 },
+        ],
+        evidences: [{ id: "ev_b", summary: "session summary" }],
+        work: {
+          id: "work_b",
+          title: "Render Rocket",
+          summary: "asset-backed work summary",
+        },
       },
     ],
     highlights: [
       {
         id: "highlight_b",
         teamId: "team_b",
-        team: { id: "team_b", name: "渲染超快队" },
+        team: { id: "team_b", name: "Legacy Highlight Name" },
         agentType: "CLAUDE",
         score: 94.1,
-        excerpt: "性能优化亮点",
-        codeSnippet: "// code",
+        excerpt: "legacy highlight excerpt",
+        codeSnippet: "// legacy code",
       },
     ],
     teamArchives: [
       {
         id: "archive_b",
         teamId: "team_b",
-        team: { id: "team_b", name: "渲染超快队" },
+        team: { id: "team_b", name: "Render Rocket" },
         agentType: "CLAUDE",
         totalScore: 94.1,
       },
@@ -87,7 +124,7 @@ const sampleRaces = [
       {
         id: "leader_b",
         teamId: "team_b",
-        team: { id: "team_b", name: "渲染超快队" },
+        team: { id: "team_b", name: "Render Rocket" },
         totalScore: 94.1,
         rank: 1,
         agentType: "CLAUDE",
@@ -97,32 +134,100 @@ const sampleRaces = [
 ] as const;
 
 test("builds stable race, work, and rider slugs", () => {
-  const raceSlug = buildRaceSlug("race_active", "排序算法挑战赛");
-  const workSlug = buildWorkSlug("race_finished", "team_b", "渲染超快队");
+  const raceSlug = buildRaceSlug("race_active", "Sorting Challenge");
+  const workSlug = buildWorkSlug("race_finished", "work_b", "Render Rocket");
   const riderSlug = buildRiderSlug("rider_01", "rider_alice");
 
   assert.equal(getRaceIdFromSlug(raceSlug), "race_active");
   assert.deepEqual(getWorkPartsFromSlug(workSlug), {
     raceId: "race_finished",
-    teamId: "team_b",
+    workId: "work_b",
   });
   assert.equal(getRiderIdFromSlug(riderSlug), "rider_01");
 });
 
-test("builds a public site model with featured races, latest results, works, and riders", () => {
+test("builds a public site model that prefers work and registration data over legacy highlights", () => {
   const model = buildPublicSiteModel(sampleRaces);
 
   assert.equal(model.featuredRaces.length, 2);
   assert.equal(model.featuredRaces[0].id, "race_active");
   assert.equal(model.latestResults[0].id, "race_finished");
   assert.equal(model.featuredWorks.length, 1);
-  assert.equal(model.featuredWorks[0].title, "渲染超快队");
+  assert.equal(model.featuredWorks[0].title, "Render Rocket");
+  assert.equal(model.featuredWorks[0].excerpt, "asset-backed work summary");
   assert.equal(model.featuredRiders.length, 2);
   assert.equal(model.featuredRiders[0].id, "rider_02");
   assert.equal(model.liveRaces.length, 1);
   assert.equal(model.liveRaces[0].id, "race_active");
   assert.equal(model.featuredRaces[0].activeRiderCount, 1);
   assert.equal(model.featuredRaces[0].currentProgressPercent, 100);
+  assert.equal(
+    model.featuredWorks[0].id,
+    buildWorkSlug("race_finished", "work_b", "Render Rocket"),
+  );
+  assert.equal(
+    model.featuredRiders.find((item) => item.id === "rider_02")?.publicWorkLinks[0]?.href,
+    `/works/${buildWorkSlug("race_finished", "work_b", "Render Rocket")}`,
+  );
+});
+
+test("uses CURRENT_LEADERBOARD projection progress when legacy leaderboard rows are absent", () => {
+  const model = buildPublicSiteModel([
+    {
+      ...sampleRaces[0],
+      leaderboardEntries: [],
+      projections: [
+        {
+          id: "proj_current",
+          type: "CURRENT_LEADERBOARD",
+          payloadJson: JSON.stringify([
+            {
+              entryId: "reg_a",
+              progressPercent: 80,
+              rank: 1,
+              username: "rider_alice",
+            },
+            {
+              entryId: "reg_b",
+              progressPercent: 40,
+              rank: 2,
+              username: "rider_bob",
+            },
+          ]),
+        },
+      ],
+    },
+  ]);
+
+  assert.equal(model.featuredRaces[0]?.currentProgressPercent, 60);
+});
+
+test("does not treat legacy highlights as public work assets when no Work entity exists", () => {
+  const model = buildPublicSiteModel([
+    {
+      ...sampleRaces[1],
+      registrations: [
+        {
+          ...sampleRaces[1].registrations[0],
+          work: null,
+        },
+      ],
+    },
+  ]);
+
+  assert.equal(model.featuredWorks.length, 0);
+  assert.equal(model.featuredRiders[0]?.workCount ?? 0, 0);
+});
+
+test("does not synthesize featured works from highlight-only races", () => {
+  const model = buildPublicSiteModel([
+    {
+      ...sampleRaces[1],
+      registrations: [],
+    },
+  ]);
+
+  assert.equal(model.featuredWorks.length, 0);
 });
 
 test("groups public races by phase for the races index page", () => {
@@ -136,53 +241,59 @@ test("groups public races by phase for the races index page", () => {
 });
 
 test("sorts featured works by score and title", () => {
-  const works = sortFeaturedWorks([
-    {
-      id: "work_c",
-      raceId: "r1",
-      raceSlug: "r1--race",
-      title: "C Work",
-      author: "charlie",
-      excerpt: "c",
-      score: 50,
-      agentType: "CLAUDE",
-    },
-    {
-      id: "work_a",
-      raceId: "r1",
-      raceSlug: "r1--race",
-      title: "A Work",
-      author: "alice",
-      excerpt: "a",
-      score: 90,
-      agentType: "OPENAI",
-    },
-  ], "score");
+  const works = sortFeaturedWorks(
+    [
+      {
+        id: "work_c",
+        raceId: "r1",
+        raceSlug: "r1--race",
+        title: "C Work",
+        author: "charlie",
+        excerpt: "c",
+        score: 50,
+        agentType: "CLAUDE",
+      },
+      {
+        id: "work_a",
+        raceId: "r1",
+        raceSlug: "r1--race",
+        title: "A Work",
+        author: "alice",
+        excerpt: "a",
+        score: 90,
+        agentType: "OPENAI",
+      },
+    ],
+    "score",
+  );
 
   assert.equal(works[0].id, "work_a");
 
-  const byTitle = sortFeaturedWorks([
-    {
-      id: "work_c",
-      raceId: "r1",
-      raceSlug: "r1--race",
-      title: "C Work",
-      author: "charlie",
-      excerpt: "c",
-      score: 50,
-      agentType: "CLAUDE",
-    },
-    {
-      id: "work_a",
-      raceId: "r1",
-      raceSlug: "r1--race",
-      title: "A Work",
-      author: "alice",
-      excerpt: "a",
-      score: 90,
-      agentType: "OPENAI",
-    },
-  ], "title");
+  const byTitle = sortFeaturedWorks(
+    [
+      {
+        id: "work_c",
+        raceId: "r1",
+        raceSlug: "r1--race",
+        title: "C Work",
+        author: "charlie",
+        excerpt: "c",
+        score: 50,
+        agentType: "CLAUDE",
+      },
+      {
+        id: "work_a",
+        raceId: "r1",
+        raceSlug: "r1--race",
+        title: "A Work",
+        author: "alice",
+        excerpt: "a",
+        score: 90,
+        agentType: "OPENAI",
+      },
+    ],
+    "title",
+  );
 
   assert.equal(byTitle[0].id, "work_a");
 });

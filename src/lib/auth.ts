@@ -2,8 +2,14 @@ import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import type { UserRole } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
+import type { AppRole } from "@/lib/user-roles";
+import {
+  getDefaultActiveRole,
+  hasRole,
+  normalizeRoles,
+  parseRolesJson,
+} from "@/lib/user-roles";
 
 const SESSION_COOKIE = "ary_session";
 const SESSION_SECRET = process.env.SESSION_SECRET ?? "ary-dev-secret-change-me";
@@ -11,13 +17,15 @@ const encoder = new TextEncoder();
 
 export interface SessionUser {
   id: string;
+  role: AppRole;
+  roles: AppRole[];
   username: string;
-  role: UserRole;
 }
 
 interface SessionPayload {
+  role: AppRole;
+  roles: AppRole[];
   sub: string;
-  role: UserRole;
   username: string;
 }
 
@@ -33,8 +41,10 @@ export async function verifyPassword(
 }
 
 export async function createSession(user: SessionUser): Promise<void> {
+  const normalizedRoles = normalizeRoles(user.roles);
   const token = await new SignJWT({
     role: user.role,
+    roles: normalizedRoles,
     username: user.username,
   } satisfies Omit<SessionPayload, "sub">)
     .setProtectedHeader({ alg: "HS256" })
@@ -68,9 +78,11 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   try {
     const verified = await jwtVerify(token, encoder.encode(SESSION_SECRET));
     const payload = verified.payload as unknown as SessionPayload;
+    const roles = normalizeRoles(payload.roles ?? [payload.role]);
     return {
       id: payload.sub,
-      role: payload.role,
+      role: payload.role ?? getDefaultActiveRole(roles),
+      roles,
       username: payload.username,
     };
   } catch {
@@ -86,9 +98,9 @@ export async function requireSession(): Promise<SessionUser> {
   return user;
 }
 
-export async function requireRole(role: UserRole): Promise<SessionUser> {
+export async function requireRole(role: AppRole): Promise<SessionUser> {
   const user = await requireSession();
-  if (user.role !== role) {
+  if (!hasRole(user.roles, role)) {
     redirect("/");
   }
   return user;
@@ -110,9 +122,14 @@ export async function loadDatabaseUser(): Promise<SessionUser | null> {
     return null;
   }
 
+  const roles = parseRolesJson(user.rolesJson);
+
   return {
     id: user.id,
+    role: hasRole(roles, user.role)
+      ? user.role
+      : getDefaultActiveRole(roles),
+    roles,
     username: user.username,
-    role: user.role,
   };
 }

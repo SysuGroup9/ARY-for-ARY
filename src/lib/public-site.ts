@@ -7,6 +7,26 @@ type RaceSummaryLike = {
   phase: string;
   raceStart: Date;
   raceEnd: Date;
+  projections?: Array<{
+    id: string;
+    payloadJson: string;
+    type: string;
+  }>;
+  registrations?: Array<{
+    id: string;
+    userId: string;
+    user: { id: string; username: string };
+    awards?: Array<{ awardName: string; rank: number }>;
+    raceProject?: null | {
+      aggregateIngestionStatus: string;
+      id: string;
+    };
+    work?: null | {
+      id: string;
+      summary: string;
+      title: string;
+    };
+  }>;
   teams: Array<{
     id: string;
     name: string;
@@ -38,7 +58,18 @@ type RaceSummaryLike = {
   }>;
 };
 
-function getCurrentProgressPercent(race: Pick<RaceSummaryLike, "leaderboardEntries">): number {
+function getCurrentProgressPercent(
+  race: Pick<RaceSummaryLike, "leaderboardEntries" | "projections">,
+): number {
+  const currentLeaderboard = parseCurrentLeaderboardProjection(race.projections);
+  if (currentLeaderboard.length > 0) {
+    const total = currentLeaderboard.reduce(
+      (sum, entry) => sum + clampPercent(entry.progressPercent ?? 0),
+      0,
+    );
+    return Math.round(total / currentLeaderboard.length);
+  }
+
   if (race.leaderboardEntries.length === 0) return 0;
   const top = race.leaderboardEntries[0]?.totalScore ?? 0;
   if (top <= 0) return 0;
@@ -47,6 +78,29 @@ function getCurrentProgressPercent(race: Pick<RaceSummaryLike, "leaderboardEntri
     0,
   );
   return Math.round((total / race.leaderboardEntries.length) * 100);
+}
+
+function parseCurrentLeaderboardProjection(
+  projections: RaceSummaryLike["projections"],
+): Array<{ progressPercent?: number }> {
+  const payloadJson = projections?.find(
+    (projection) => projection.type === "CURRENT_LEADERBOARD",
+  )?.payloadJson;
+
+  if (!payloadJson) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(payloadJson) as Array<{ progressPercent?: number }>;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function clampPercent(value: number): number {
+  return Math.max(0, Math.min(value, 100));
 }
 
 function slugify(label: string): string {
@@ -67,19 +121,19 @@ export function getRaceIdFromSlug(slug: string): string {
 
 export function buildWorkSlug(
   raceId: string,
-  teamId: string,
+  workId: string,
   workTitle: string,
 ): string {
-  return `${raceId}__${teamId}--${slugify(workTitle)}`;
+  return `${raceId}__${workId}--${slugify(workTitle)}`;
 }
 
 export function getWorkPartsFromSlug(slug: string): {
   raceId: string;
-  teamId: string;
+  workId: string;
 } {
   const [composite] = slug.split("--");
-  const [raceId, teamId] = composite.split("__");
-  return { raceId, teamId };
+  const [raceId, workId] = composite.split("__");
+  return { raceId, workId };
 }
 
 export function buildRiderSlug(riderId: string, username: string): string {
@@ -93,23 +147,26 @@ export function getRiderIdFromSlug(slug: string): string {
 export function buildPublicSiteModel<T extends RaceSummaryLike>(
   races: readonly T[],
 ): ReturnTypeOfBuildPublicSiteModel {
-  const featuredRaces = [...races].sort((a, b) => {
-    const phaseScore = phasePriority(a.phase) - phasePriority(b.phase);
-    if (phaseScore !== 0) return phaseScore;
-    return b.raceStart.getTime() - a.raceStart.getTime();
-  }).map((race) => ({
-    id: race.id,
-    slug: buildRaceSlug(race.id, race.title),
-    title: race.title,
-    summary: race.summary,
-    phase: race.phase,
-    raceStart: race.raceStart,
-    raceEnd: race.raceEnd,
-    teamCount: race.teams.length,
-    workCount: race.highlights.length,
-    activeRiderCount: race.teams.length,
-    currentProgressPercent: getCurrentProgressPercent(race),
-  }));
+  const featuredRaces = [...races]
+    .sort((a, b) => {
+      const phaseScore = phasePriority(a.phase) - phasePriority(b.phase);
+      if (phaseScore !== 0) return phaseScore;
+      return b.raceStart.getTime() - a.raceStart.getTime();
+    })
+    .map((race) => ({
+      id: race.id,
+      slug: buildRaceSlug(race.id, race.title),
+      title: race.title,
+      summary: race.summary,
+      phase: race.phase,
+      raceStart: race.raceStart,
+      raceEnd: race.raceEnd,
+      teamCount: race.teams.length,
+      workCount: race.registrations?.filter((registration) => registration.work).length ?? 0,
+      activeRiderCount: race.registrations?.length ?? race.teams.length,
+      currentProgressPercent: getCurrentProgressPercent(race),
+    }));
+
   const liveRaces = featuredRaces.filter(
     (race) => race.phase === "active" || race.phase === "frozen",
   );
@@ -132,21 +189,34 @@ export function buildPublicSiteModel<T extends RaceSummaryLike>(
     summary: race.summary,
   }));
 
-  const featuredWorks = finishedRaces.flatMap((race) =>
-    race.highlights.map((highlight) => ({
-      id: buildWorkSlug(race.id, highlight.teamId, highlight.team.name),
-      raceId: race.id,
-      raceSlug: buildRaceSlug(race.id, race.title),
-      raceTitle: race.title,
-      title: highlight.team.name,
-      author:
-        race.teams.find((team) => team.id === highlight.teamId)?.captain.username ??
-        highlight.team.name,
-      excerpt: highlight.excerpt,
-      score: highlight.score,
-      agentType: highlight.agentType,
-    })),
-  );
+  const featuredWorks = finishedRaces.flatMap((race) => {
+    return (race.registrations ?? [])
+      .filter((registration) => registration.work)
+      .map((registration) => ({
+        id: buildWorkSlug(
+          race.id,
+          registration.work!.id,
+          registration.work!.title,
+        ),
+        raceId: race.id,
+        raceSlug: buildRaceSlug(race.id, race.title),
+        raceTitle: race.title,
+        title: registration.work!.title,
+        author: registration.user.username,
+        excerpt: registration.work!.summary,
+        score: registration.awards?.length
+          ? 100 - (registration.awards[0]!.rank - 1)
+          : race.leaderboardEntries.find((entry) =>
+              race.teams.find((team) => team.id === entry.teamId)?.captain.id ===
+              registration.userId,
+            )?.totalScore ?? 0,
+        agentType:
+          race.highlights.find((highlight) =>
+            race.teams.find((team) => team.id === highlight.teamId)?.captain.id ===
+            registration.userId,
+          )?.agentType ?? "CUSTOM",
+      }));
+  });
 
   const riderMap = new Map<
     string,
@@ -167,13 +237,53 @@ export function buildPublicSiteModel<T extends RaceSummaryLike>(
   >();
 
   for (const race of races) {
+    if (race.registrations?.length) {
+      for (const registration of race.registrations) {
+        const existing = riderMap.get(registration.user.id);
+        const publicWorkLink = registration.work
+          ? {
+              title: registration.work.title,
+              href: `/works/${buildWorkSlug(
+                race.id,
+                registration.work.id,
+                registration.work.title,
+              )}`,
+            }
+          : null;
+
+        if (existing) {
+          existing.raceCount += 1;
+          if (publicWorkLink) {
+            existing.workCount += 1;
+            existing.publicWorkLinks.push(publicWorkLink);
+            if (!existing.featuredWorkTitle) {
+              existing.featuredWorkTitle = registration.work!.title;
+            }
+          }
+        } else {
+          riderMap.set(registration.user.id, {
+            id: registration.user.id,
+            riderSlug: buildRiderSlug(
+              registration.user.id,
+              registration.user.username,
+            ),
+            username: registration.user.username,
+            orgLabel: "ARY",
+            featuredRaceTitle: race.title,
+            featuredWorkTitle: registration.work?.title ?? null,
+            raceCount: 1,
+            workCount: registration.work ? 1 : 0,
+            publicWorkLinks: publicWorkLink ? [publicWorkLink] : [],
+          });
+        }
+      }
+      continue;
+    }
+
     for (const team of race.teams) {
       const existing = riderMap.get(team.captain.id);
       if (existing) {
         existing.raceCount += 1;
-        if (race.highlights.some((highlight) => highlight.teamId === team.id)) {
-          existing.workCount += 1;
-        }
       } else {
         riderMap.set(team.captain.id, {
           id: team.captain.id,
@@ -181,17 +291,10 @@ export function buildPublicSiteModel<T extends RaceSummaryLike>(
           username: team.captain.username,
           orgLabel: "ARY",
           featuredRaceTitle: race.title,
-          featuredWorkTitle:
-            race.highlights.find((highlight) => highlight.teamId === team.id)?.team.name ??
-            null,
+          featuredWorkTitle: null,
           raceCount: 1,
-          workCount: race.highlights.some((highlight) => highlight.teamId === team.id) ? 1 : 0,
-          publicWorkLinks: race.highlights
-            .filter((highlight) => highlight.teamId === team.id)
-            .map((highlight) => ({
-              title: highlight.team.name,
-              href: `/works/${buildWorkSlug(race.id, highlight.teamId, highlight.team.name)}`,
-            })),
+          workCount: 0,
+          publicWorkLinks: [],
         });
       }
     }
@@ -232,9 +335,9 @@ export function getRacePrimaryCta(
   }
 }
 
-export function groupPublicRacesByPhase<
-  T extends { phase: string },
->(races: readonly T[]) {
+export function groupPublicRacesByPhase<T extends { phase: string }>(
+  races: readonly T[],
+) {
   return {
     active: races.filter((race) => race.phase === "active"),
     frozen: races.filter((race) => race.phase === "frozen"),
@@ -244,9 +347,10 @@ export function groupPublicRacesByPhase<
   };
 }
 
-export function sortFeaturedWorks<
-  T extends { score: number; title: string },
->(works: readonly T[], sortBy: "score" | "title") {
+export function sortFeaturedWorks<T extends { score: number; title: string }>(
+  works: readonly T[],
+  sortBy: "score" | "title",
+) {
   return [...works].sort((left, right) => {
     if (sortBy === "score") {
       if (right.score !== left.score) return right.score - left.score;

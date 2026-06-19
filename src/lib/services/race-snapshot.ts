@@ -1,47 +1,23 @@
-// RaceSnapshot 生成服务
-// 从 ARY 数据库读取赛事数据 → 通过 Adapter 映射 → 写入 JSON 快照文件
-
+import fs from "node:fs";
+import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import {
   AryDerivedDataProvider,
   mapToCompetition,
   type AryRaceData,
 } from "@/lib/jumbotron/adapter";
-import { normalizeTrackId, parseRaceTrackConfigJson } from "@/lib/jumbotron/track-config";
+import {
+  normalizeTrackId,
+  parseRaceTrackConfigJson,
+} from "@/lib/jumbotron/track-config";
 import type { RaceSnapshot } from "@/lib/jumbotron/track-runtime/types";
-import fs from "node:fs";
-import path from "node:path";
 
 const SNAPSHOT_DIR = path.join(process.cwd(), "public", "assets", "snapshots");
 
-/**
- * 生成赛事快照 JSON
- *
- * 数据流：
- *   1. 从 Prisma 查询赛事全量数据
- *   2. 通过 AryDerivedDataProvider 映射为 Jumbotron 格式
- *   3. 写入 public/assets/snapshots/<raceId>.json
- *   4. 返回生成的快照对象
- */
 export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
   const race = await prisma.race.findUnique({
     where: { id: raceId },
     include: {
-      organizer: { select: { id: true, username: true } },
-      teams: {
-        include: {
-          captain: { select: { id: true, username: true } },
-        },
-      },
-      leaderboardEntries: {
-        orderBy: [{ totalScore: "desc" }, { createdAt: "asc" }],
-      },
-      submissions: {
-        orderBy: { createdAt: "desc" },
-      },
-      teamArchives: {
-        orderBy: { totalScore: "desc" },
-      },
       feedbackThreads: {
         include: {
           messages: {
@@ -49,57 +25,134 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
           },
         },
       },
+      leaderboardEntries: {
+        orderBy: [{ totalScore: "desc" }, { createdAt: "asc" }],
+      },
+      organizer: { select: { id: true, username: true } },
+      projections: {
+        orderBy: { updatedAt: "desc" },
+      },
+      registrations: {
+        include: {
+          raceProject: {
+            include: {
+              caConnections: {
+                select: {
+                  caType: true,
+                  id: true,
+                  sessions: {
+                    select: {
+                      id: true,
+                      latestActivity: true,
+                      progressPercent: true,
+                      tokenCost: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          user: { select: { id: true, username: true } },
+          work: { select: { id: true, summary: true, title: true } },
+        },
+      },
+      submissions: {
+        orderBy: { createdAt: "desc" },
+      },
+      teamArchives: {
+        orderBy: { totalScore: "desc" },
+      },
+      teams: {
+        include: {
+          captain: { select: { id: true, username: true } },
+        },
+      },
     },
   });
 
   if (!race) {
-    throw new Error(`赛事 ${raceId} 不存在`);
+    throw new Error(`Race ${raceId} not found`);
   }
 
   const raceData: AryRaceData = {
-    id: race.id,
-    title: race.title,
-    summary: race.summary,
-    signupStart: race.signupStart,
-    signupEnd: race.signupEnd,
-    raceStart: race.raceStart,
-    raceEnd: race.raceEnd,
-    organizer: race.organizer,
-    teams: race.teams.map((t) => ({
-      id: t.id,
-      name: t.name,
-      captain: t.captain,
-    })),
-    leaderboardEntries: race.leaderboardEntries.map((e) => ({
-      id: e.id,
-      teamId: e.teamId,
-      totalScore: e.totalScore,
-      progress: e.progress,
-      taskScore: e.taskScore,
-      tokenScore: e.tokenScore,
-      dialogueScore: e.dialogueScore,
-      agentType: e.agentType,
-      createdAt: e.createdAt,
-    })),
-    submissions: race.submissions.map((s) => ({
-      id: s.id,
-      teamId: s.teamId,
-      createdAt: s.createdAt,
-    })),
-    teamArchives: race.teamArchives.map((a) => ({
-      teamId: a.teamId,
-      agentType: a.agentType,
-      tokenUsed: a.tokenUsed,
-      totalScore: a.totalScore,
-      antiCheatPenalty: a.antiCheatPenalty,
-    })),
-    feedbackThreads: race.feedbackThreads.map((f) => ({
-      teamId: f.teamId,
-      messages: f.messages.map((m) => ({
-        content: m.content,
-        createdAt: m.createdAt,
+    feedbackThreads: race.feedbackThreads.map((thread) => ({
+      teamId: thread.teamId,
+      messages: thread.messages.map((message) => ({
+        content: message.content,
+        createdAt: message.createdAt,
       })),
     })),
+    id: race.id,
+    leaderboardEntries: race.leaderboardEntries.map((entry) => ({
+      agentType: entry.agentType,
+      createdAt: entry.createdAt,
+      dialogueScore: entry.dialogueScore,
+      id: entry.id,
+      progress: entry.progress,
+      taskScore: entry.taskScore,
+      teamId: entry.teamId,
+      tokenScore: entry.tokenScore,
+      totalScore: entry.totalScore,
+    })),
+    organizer: race.organizer,
+    projections: race.projections.map((projection) => ({
+      id: projection.id,
+      payloadJson: projection.payloadJson,
+      type: projection.type,
+    })),
+    raceEnd: race.raceEnd,
+    raceStart: race.raceStart,
+    registrations: race.registrations.map((registration) => ({
+      id: registration.id,
+      raceProject: registration.raceProject
+        ? {
+            aggregateIngestionStatus:
+              registration.raceProject.aggregateIngestionStatus,
+            caConnections: registration.raceProject.caConnections.map(
+              (connection) => ({
+                caType: connection.caType,
+                sessions: connection.sessions.map((session) => ({
+                  id: session.id,
+                  latestActivity: session.latestActivity ?? undefined,
+                  progressPercent: session.progressPercent ?? undefined,
+                  tokenCost: session.tokenCost,
+                })),
+              }),
+            ),
+            id: registration.raceProject.id,
+          }
+        : null,
+      user: registration.user,
+      userId: registration.userId,
+      work: registration.work
+        ? {
+            id: registration.work.id,
+            summary: registration.work.summary,
+            title: registration.work.title,
+          }
+        : null,
+    })),
+    signupEnd: race.signupEnd,
+    signupStart: race.signupStart,
+    submissions: race.submissions.map((submission) => ({
+      createdAt: submission.createdAt,
+      id: submission.id,
+      teamId: submission.teamId,
+    })),
+    summary: race.summary,
+    teamArchives: race.teamArchives.map((archive) => ({
+      agentType: archive.agentType,
+      antiCheatPenalty: archive.antiCheatPenalty,
+      teamId: archive.teamId,
+      tokenUsed: archive.tokenUsed,
+      totalScore: archive.totalScore,
+    })),
+    teams: race.teams.map((team) => ({
+      captain: team.captain,
+      id: team.id,
+      name: team.name,
+    })),
+    title: race.title,
   };
 
   const provider = new AryDerivedDataProvider(raceData);
@@ -113,27 +166,30 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
   ]);
 
   const competition = mapToCompetition(raceData, now);
-
-  const staleCount = entries.filter((e) => e.status === "stale").length;
+  const staleCount = entries.filter((entry) => entry.status === "stale").length;
   kpis.onlineRiders = entries.length - staleCount;
-  kpis.activeRiders = entries.filter((e) => e.status !== "stale" && e.status !== "idle").length;
+  kpis.activeRiders = entries.filter(
+    (entry) => entry.status !== "stale" && entry.status !== "idle",
+  ).length;
 
   const trackConfig = parseRaceTrackConfigJson(race.trackConfigJson);
 
   return {
-    generatedAt: now.toISOString(),
-    raceId,
-    trackId: normalizeTrackId(race.trackId),
-    trackConfig: trackConfig ?? undefined,
+    attentionItems,
     competition,
     entries,
+    generatedAt: now.toISOString(),
     kpis,
     messages,
-    attentionItems,
+    raceId,
+    trackConfig: trackConfig ?? undefined,
+    trackId: normalizeTrackId(race.trackId),
   };
 }
 
-export async function generateRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
+export async function generateRaceSnapshot(
+  raceId: string,
+): Promise<RaceSnapshot> {
   const snapshot = await buildRaceSnapshot(raceId);
 
   ensureSnapshotDir();
@@ -143,9 +199,6 @@ export async function generateRaceSnapshot(raceId: string): Promise<RaceSnapshot
   return snapshot;
 }
 
-/**
- * 读取已生成的快照（供 Jumbotron 页面静态消费）
- */
 export function loadRaceSnapshot(raceId: string): RaceSnapshot | null {
   const filePath = path.join(SNAPSHOT_DIR, `${raceId}.json`);
   if (!fs.existsSync(filePath)) return null;
@@ -154,15 +207,12 @@ export function loadRaceSnapshot(raceId: string): RaceSnapshot | null {
   return JSON.parse(raw) as RaceSnapshot;
 }
 
-/**
- * 列出所有已生成的快照 ID
- */
 export function listSnapshotIds(): string[] {
   ensureSnapshotDir();
   return fs
     .readdirSync(SNAPSHOT_DIR)
-    .filter((f) => f.endsWith(".json"))
-    .map((f) => f.replace(".json", ""));
+    .filter((fileName) => fileName.endsWith(".json"))
+    .map((fileName) => fileName.replace(".json", ""));
 }
 
 export function deleteRaceSnapshot(raceId: string): void {

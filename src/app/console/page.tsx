@@ -1,6 +1,8 @@
-import { Panel, aryStyles } from "@/app/_components/ary-shared";
+import { ConsoleHomeView } from "@/app/_components/console/console-home";
+import { ConsoleShell, buildConsoleRootNavItems } from "@/app/_components/console/console-shell";
 import { loadDatabaseUser } from "@/lib/auth";
-import { getRoleCapabilities } from "@/lib/viewer-access";
+import { listConsoleRacesForUser } from "@/lib/services/console-routes";
+import { getConsoleHomeSections } from "@/lib/viewer-access";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -12,35 +14,22 @@ export default async function ConsoleEntryPage() {
     redirect("/login");
   }
 
-  const { canManage, canRide } = getRoleCapabilities(sessionUser.role);
+  const sections = getConsoleHomeSections(sessionUser.roles);
+  const races = sections.includes("races")
+    ? await listConsoleRacesForUser({
+        roles: sessionUser.roles,
+        userId: sessionUser.id,
+      })
+    : [];
 
   return (
-    <main className="shell shell--public-only">
-      <section className="content content--public">
-        <Panel title="Console Entry" eyebrow="Workspace Entry">
-          <div className="stack">
-            <p className="muted">
-              这是 `grs003` 第 1 片区里的最小 Console Entry，占位承接已登录用户离开公开端后的入口。
-            </p>
-            <ul className="bullet-list">
-              {canManage ? <li>Organizer View 后续会进入 Race Console</li> : null}
-              {canRide ? <li>Rider View 后续会进入 Race Workspace</li> : null}
-              {!canManage && !canRide ? <li>当前账号暂无公开定义的工作台视角</li> : null}
-            </ul>
-            <div className="button-row-inline">
-              <a className="button-secondary" href="/">
-                返回公开首页
-              </a>
-              {canManage ? (
-                <a className="button-secondary" href="/races/new">
-                  创建赛事
-                </a>
-              ) : null}
-            </div>
-          </div>
-        </Panel>
-      </section>
-      <style>{aryStyles}</style>
-    </main>
+    <ConsoleShell
+      breadcrumbs={[{ href: "/", label: "公开站" }, { label: "控制台" }]}
+      description="独立的工作台入口，用于进入赛事控制台、管理控制台和大屏控制台。"
+      navItems={buildConsoleRootNavItems(sections)}
+      title="控制台首页"
+    >
+      <ConsoleHomeView raceCount={races.length} sections={sections} />
+    </ConsoleShell>
   );
 }

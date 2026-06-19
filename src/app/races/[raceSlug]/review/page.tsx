@@ -1,5 +1,7 @@
 import { ReviewPageView } from "@/app/_components/public/review-page";
 import { getRaceBySlug } from "@/lib/services/public-routes";
+import { getPublishedReviewSummaryForRace } from "@/lib/services/reports";
+import { buildPublicReviewModel } from "@/lib/services/review";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -16,5 +18,18 @@ export default async function RaceReviewPage({ params }: Props) {
     notFound();
   }
 
-  return <ReviewPageView race={race} />;
+  const [reviewModel, reviewReport] = await Promise.all([
+    buildPublicReviewModel(race.id),
+    getPublishedReviewSummaryForRace(race.id),
+  ]);
+
+  return (
+    <ReviewPageView
+      awards={reviewModel.awards}
+      evidenceHighlights={reviewModel.evidenceHighlights}
+      judgingRecords={reviewModel.judgingRecords}
+      race={race}
+      reviewReport={reviewReport}
+    />
+  );
 }

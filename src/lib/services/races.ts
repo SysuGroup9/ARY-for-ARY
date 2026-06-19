@@ -21,6 +21,55 @@ export async function listRaces() {
           },
         },
       },
+      registrations: {
+        include: {
+          awards: true,
+          evidences: {
+            orderBy: {
+              createdAt: "desc",
+            },
+          },
+          raceProject: {
+            include: {
+              caConnections: {
+                include: {
+                  sessions: {
+                    orderBy: {
+                      startedAt: "desc",
+                    },
+                  },
+                },
+                orderBy: {
+                  registeredAt: "desc",
+                },
+              },
+            },
+          },
+          work: true,
+          user: true,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      },
+      awards: {
+        include: {
+          registration: {
+            include: {
+              user: true,
+            },
+          },
+          work: true,
+        },
+        orderBy: [
+          {
+            awardName: "asc",
+          },
+          {
+            rank: "asc",
+          },
+        ],
+      },
       leaderboardEntries: {
         include: {
           team: true,
@@ -92,6 +141,16 @@ export async function listRaces() {
       runnerTasks: {
         orderBy: {
           createdAt: "desc",
+        },
+      },
+      reports: {
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+      projections: {
+        orderBy: {
+          updatedAt: "desc",
         },
       },
     },

@@ -13,7 +13,7 @@ export default async function HomePage() {
   const sessionUser = await loadDatabaseUser();
 
   const races = await listRaces();
-  const { canManage, canRide } = getRoleCapabilities(sessionUser?.role ?? null);
+  const { canManage, canRide } = getRoleCapabilities(sessionUser?.roles ?? null);
 
   const publicModel = buildPublicSiteModel(races);
 

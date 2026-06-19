@@ -3,20 +3,19 @@ import test from "node:test";
 import {
   createFinalSubmissionSchema,
   createSubmissionSchema,
+  judgingRecordSchema,
   registerSchema,
 } from "./validation";
 
-test("register schema only keeps username, password, and role", () => {
+test("register schema only keeps username and password for public signup", () => {
   const parsed = registerSchema.parse({
     username: "new_user",
     password: "password123",
-    role: "RIDER",
   });
 
   assert.deepEqual(parsed, {
     username: "new_user",
     password: "password123",
-    role: "RIDER",
   });
 });
 
@@ -53,11 +52,29 @@ test("final submission schema requires both code and riding record", () => {
     codeLabel: "solution.ts",
     codeContent: "export const solve = () => 1;",
     recordLabel: "riding-record.txt",
-    ridingRecord: "先澄清输入边界，再验证复杂度。",
+    ridingRecord: "Clarify edges, verify complexity, and summarize validation results.",
     tokenUsed: 12,
     agentType: "OPENAI",
   });
 
   assert.equal(parsed.recordLabel, "riding-record.txt");
-  assert.equal(parsed.ridingRecord, "先澄清输入边界，再验证复杂度。");
+  assert.equal(
+    parsed.ridingRecord,
+    "Clarify edges, verify complexity, and summarize validation results.",
+  );
+});
+
+test("judging schema accepts bounded result/riding scores and comments", () => {
+  const parsed = judgingRecordSchema.parse({
+    assignmentId: "assign_01",
+    comments: "Solid work with clear tradeoff discussion.",
+    scoreResultTotal: 88,
+    scoreRidingTotal: 91,
+    submit: true,
+  });
+
+  assert.equal(parsed.assignmentId, "assign_01");
+  assert.equal(parsed.scoreResultTotal, 88);
+  assert.equal(parsed.scoreRidingTotal, 91);
+  assert.equal(parsed.submit, true);
 });

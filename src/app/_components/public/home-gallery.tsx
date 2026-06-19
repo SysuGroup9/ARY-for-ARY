@@ -16,8 +16,8 @@ export function HomeGallery({
   return (
     <div className="public-gallery">
       <section className="panel">
-        <p className="eyebrow">Featured Races</p>
-        <h2>Race Gallery</h2>
+        <p className="eyebrow">主推赛事</p>
+        <h2>赛事画廊</h2>
         <div className="public-cards">
           {model.featuredRaces.map((race) => (
             <article className="public-card" key={race.id}>
@@ -35,12 +35,12 @@ export function HomeGallery({
                 </a>
                 {(race.phase === "active" || race.phase === "frozen") && (
                   <a className="button-secondary" href={`/races/${race.slug}/live`}>
-                    查看 Live
+                    查看实况大厅
                   </a>
                 )}
                 {race.phase === "finished" && (
                   <a className="button-secondary" href={`/races/${race.slug}/results`}>
-                    查看 Results
+                    查看赛果
                   </a>
                 )}
               </div>
@@ -51,7 +51,7 @@ export function HomeGallery({
 
       <section className="grid">
         <section className="panel">
-          <p className="eyebrow">Latest Results</p>
+          <p className="eyebrow">最新赛果</p>
           <h2>最新赛果</h2>
           <div className="stack">
             {model.latestResults.length === 0 ? (
@@ -68,7 +68,7 @@ export function HomeGallery({
         </section>
 
         <section className="panel">
-          <p className="eyebrow">Featured Works</p>
+          <p className="eyebrow">精选作品</p>
           <h2>精选作品</h2>
           <div className="stack">
             {model.featuredWorks.length === 0 ? (
@@ -88,7 +88,7 @@ export function HomeGallery({
 
       <section className="grid">
         <section className="panel">
-          <p className="eyebrow">Featured Riders</p>
+          <p className="eyebrow">优秀骑手</p>
           <h2>优秀骑手</h2>
           <div className="stack">
             {model.featuredRiders.map((rider) => (
@@ -104,18 +104,18 @@ export function HomeGallery({
         </section>
 
         <section className="panel">
-          <p className="eyebrow">Cooperation</p>
+          <p className="eyebrow">合作入口</p>
           <h2>合作入口</h2>
           <div className="stack">
             <p className="muted">
-              按 `grs003` 的公开端要求，合作入口应独立存在，而不是埋在赛事面板或后台说明中。
+              按 `grs003` 的公开站要求，合作入口应独立存在，而不是埋在赛事面板或后台说明中。
             </p>
             <a className="button" href="/cooperation">
-              进入 Cooperation 页面
+              进入合作页面
             </a>
             {(canManage || canRide) && (
               <p className="muted">
-                Console / Workspace 入口保留为次级能力，不占公开首页主视觉。
+                控制台 / 工作台入口保留为次级能力，不占公开首页主视觉。
               </p>
             )}
           </div>
@@ -123,7 +123,7 @@ export function HomeGallery({
       </section>
 
       <section className="panel">
-        <p className="eyebrow">Past Races</p>
+        <p className="eyebrow">往届赛事</p>
         <h2>往届赛事</h2>
         <div className="stack">
           {model.pastRaces.length === 0 ? (
@@ -140,7 +140,7 @@ export function HomeGallery({
       </section>
 
       <section className="panel">
-        <p className="eyebrow">CTA</p>
+        <p className="eyebrow">行动入口</p>
         <h2>报名 / 办赛 / 赞助 / 合作</h2>
         <div className="button-row-inline">
           <a className="button-secondary" href="/login">

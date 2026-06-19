@@ -1,0 +1,168 @@
+import { buildRaceSlug, getRaceIdFromSlug } from "@/lib/public-site";
+import { prisma } from "@/lib/prisma";
+import type { RaceListItem } from "@/lib/services/races";
+import { listRaces } from "@/lib/services/races";
+import { getCompatibilityContainerForRegistration } from "@/lib/services/rider-bridge";
+import type { AppRole } from "@/lib/user-roles";
+import { hasRole, normalizeRoles } from "@/lib/user-roles";
+
+export type ConsoleRaceAccess = "judge" | "organizer" | "rider";
+
+export type ConsoleRaceListItem = {
+  access: ConsoleRaceAccess;
+  defaultHref: string;
+  race: RaceListItem;
+  slug: string;
+};
+
+export async function listConsoleRacesForUser(input: {
+  roles: readonly AppRole[];
+  userId: string;
+}): Promise<ConsoleRaceListItem[]> {
+  const roles = normalizeRoles(input.roles);
+  const races = await listRaces();
+  const items: ConsoleRaceListItem[] = [];
+
+  if (hasRole(roles, "ORGANIZER")) {
+    items.push(
+      ...races
+        .filter((race) => race.organizerId === input.userId)
+        .map((race) => {
+          const slug = buildRaceSlug(race.id, race.title);
+          return {
+            access: "organizer" as const,
+            defaultHref: `/console/races/${slug}/organizer/overview`,
+            race,
+            slug,
+          };
+        }),
+    );
+  }
+
+  if (hasRole(roles, "RIDER")) {
+    items.push(
+      ...races
+        .filter(
+          (race) =>
+            race.registrations.some((registration) => registration.userId === input.userId),
+        )
+        .map((race) => {
+          const slug = buildRaceSlug(race.id, race.title);
+          return {
+            access: "rider" as const,
+            defaultHref: `/console/races/${slug}/rider/registration`,
+            race,
+            slug,
+          };
+        }),
+    );
+  }
+
+  if (hasRole(roles, "JUDGE")) {
+    const assignments = await prisma.judgeAssignment.findMany({
+      where: {
+        judgeId: input.userId,
+      },
+      select: {
+        work: {
+          select: {
+            registration: {
+              select: {
+                raceId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    const assignedRaceIds = new Set(
+      assignments.map((assignment) => assignment.work.registration.raceId),
+    );
+
+    items.push(
+      ...races
+        .filter((race) => assignedRaceIds.has(race.id))
+        .map((race) => {
+          const slug = buildRaceSlug(race.id, race.title);
+          return {
+            access: "judge" as const,
+            defaultHref: `/console/races/${slug}/judge/assigned`,
+            race,
+            slug,
+          };
+        }),
+    );
+  }
+
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const key = `${item.access}-${item.race.id}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+export async function listScreenConsoleRacesForUser(input: {
+  roles: readonly AppRole[];
+  userId: string;
+}): Promise<Array<{ defaultHref: string; race: RaceListItem; slug: string }>> {
+  const roles = normalizeRoles(input.roles);
+  const races = await listRaces();
+
+  if (hasRole(roles, "ADMIN")) {
+    return races.map((race) => {
+      const slug = buildRaceSlug(race.id, race.title);
+      return {
+        defaultHref: `/console/screen/${slug}/jumbotron`,
+        race,
+        slug,
+      };
+    });
+  }
+
+  if (hasRole(roles, "ORGANIZER")) {
+    return races
+      .filter((race) => race.organizerId === input.userId)
+      .map((race) => {
+        const slug = buildRaceSlug(race.id, race.title);
+        return {
+          defaultHref: `/console/screen/${slug}/jumbotron`,
+          race,
+          slug,
+        };
+      });
+  }
+
+  return [];
+}
+
+export async function getConsoleRaceBySlug(raceSlug: string): Promise<{
+  race: RaceListItem;
+  slug: string;
+} | null> {
+  const raceId = getRaceIdFromSlug(raceSlug);
+  const races = await listRaces();
+  const race = races.find((item) => item.id === raceId);
+
+  if (!race) {
+    return null;
+  }
+
+  return {
+    race,
+    slug: buildRaceSlug(race.id, race.title),
+  };
+}
+
+export async function getConsoleRiderTeamContext(input: {
+  raceId: string;
+  userId: string;
+}) {
+  return getCompatibilityContainerForRegistration({
+    raceId: input.raceId,
+    userId: input.userId,
+  });
+}

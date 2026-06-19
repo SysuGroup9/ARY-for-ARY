@@ -1,18 +1,5 @@
 import type { Metadata } from "next";
-import { Noto_Sans_SC, Space_Grotesk } from "next/font/google";
 import "./globals.css";
-
-const bodyFont = Noto_Sans_SC({
-  variable: "--font-body",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-});
-
-const displayFont = Space_Grotesk({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-});
 
 export const metadata: Metadata = {
   title: "ARY for ARY",
@@ -25,7 +12,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className={`${bodyFont.variable} ${displayFont.variable}`}>
+    <html
+      lang="zh-CN"
+      style={
+        {
+          "--font-body": "Arial, Helvetica, sans-serif",
+          "--font-display": "Arial, Helvetica, sans-serif",
+        } as React.CSSProperties
+      }
+    >
       <body>{children}</body>
     </html>
   );

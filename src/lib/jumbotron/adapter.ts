@@ -31,6 +31,34 @@ export interface AryRaceData {
   raceStart: Date;
   raceEnd: Date;
   organizer: { id: string; username: string };
+  registrations?: Array<{
+    id: string;
+    userId: string;
+    user: { id: string; username: string };
+    raceProject?: null | {
+      aggregateIngestionStatus: string;
+      caConnections?: Array<{
+        caType?: string;
+        sessions?: Array<{
+          id: string;
+          latestActivity?: string;
+          progressPercent?: number;
+          tokenCost?: number;
+        }>;
+      }>;
+      id: string;
+    };
+    work?: null | {
+      id: string;
+      summary: string;
+      title: string;
+    };
+  }>;
+  projections?: Array<{
+    id: string;
+    payloadJson: string;
+    type: string;
+  }>;
   teams: AryTeamData[];
   leaderboardEntries: AryLeaderboardEntryData[];
   submissions: ArySubmissionData[];
@@ -153,16 +181,94 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
     ranked.length > 0 &&
     ranked.every((entry) => typeof entry.progress === "number" && entry.progress === 0);
 
-  return teams.map((team) => {
-    const rank = ranked.findIndex((e) => e.teamId === team.id);
+  const registrationsByUserId = new Map(
+    (race.registrations ?? []).map((registration) => [registration.userId, registration]),
+  );
+  const projectedLeaderboard = race.projections?.find(
+    (projection) => projection.type === "CURRENT_LEADERBOARD",
+  );
+  let projectedEntries = new Map<
+    string,
+    {
+      entryId: string;
+      progressPercent: number;
+      rank: number;
+      tokenCost: number;
+      username: string;
+    }
+  >();
+  let projectedRows: Array<{
+    entryId: string;
+    progressPercent: number;
+    rank: number;
+    tokenCost: number;
+    username: string;
+  }> = [];
+  if (projectedLeaderboard) {
+    try {
+      const parsed = JSON.parse(projectedLeaderboard.payloadJson) as Array<{
+        entryId: string;
+        progressPercent: number;
+        rank: number;
+        tokenCost: number;
+        username: string;
+      }>;
+      projectedRows = parsed;
+      projectedEntries = new Map(parsed.map((item) => [item.entryId, item]));
+    } catch {
+      projectedEntries = new Map();
+      projectedRows = [];
+    }
+  }
+
+  const rosterTeams =
+    (race.registrations?.length ?? 0) > 0
+      ? (race.registrations ?? []).map((registration) => ({
+          id: registration.id,
+          name: registration.work?.title ?? registration.user.username,
+          captain: registration.user,
+        }))
+      : teams;
+
+  return rosterTeams.map((team) => {
+    const projected =
+      projectedEntries.get(team.id) ??
+      projectedRows.find((item) => item.username === team.captain.username);
+    const rank = projected?.rank ? projected.rank - 1 : ranked.findIndex((e) => e.teamId === team.id);
     const entry = ranked[rank];
     const archive = archiveMap.get(team.id);
-    const feedback = feedbackMap.get(team.id);
-    const submissionCount = submissionCountMap.get(team.id) ?? 0;
+    const compatibilityTeam = teams.find((candidate) => candidate.captain.id === team.captain.id);
+    const feedback = feedbackMap.get(compatibilityTeam?.id ?? team.id);
+    const submissionCount = submissionCountMap.get(compatibilityTeam?.id ?? team.id) ?? 0;
+    const registration = registrationsByUserId.get(team.captain.id);
+    const sessionTokenCost =
+      registration?.raceProject?.caConnections?.reduce(
+        (sum, connection) =>
+          sum +
+          (connection.sessions?.reduce(
+            (inner, session) => inner + (session.tokenCost ?? 0),
+            0,
+          ) ?? 0),
+        0,
+      ) ?? 0;
+    const primaryConnection = registration?.raceProject?.caConnections?.[0];
+    const latestSession =
+      registration?.raceProject?.caConnections
+        ?.flatMap((connection) => connection.sessions ?? [])
+        .sort(
+          (left, right) =>
+            (right.progressPercent ?? 0) - (left.progressPercent ?? 0),
+        )[0] ?? null;
+    const effectiveTokenCost =
+      sessionTokenCost > 0 ? sessionTokenCost : (archive?.tokenUsed ?? 0);
 
     // overallProgress：分数相对最高分的比例
     const overallProgress =
-      entry && maxScore > 0 ? Math.min(entry.totalScore / maxScore, 1) : 0.5;
+      projected?.progressPercent != null
+        ? Math.max(0, Math.min(projected.progressPercent / 100, 1))
+        : entry && maxScore > 0
+          ? Math.min(entry.totalScore / maxScore, 1)
+          : 0.5;
 
     const rawProgress = entry?.progress ?? null;
     let roundProgress: number;
@@ -182,6 +288,8 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
       roundProgress = 1;
     } else if (now < race.raceStart) {
       roundProgress = 0;
+    } else if (projected) {
+      roundProgress = overallProgress;
     } else if (entry) {
       // Jumbotron 子系统要求在缺失 roundProgress 时显式退回到 overallProgress，
       // 而不是把所有正在比赛的队伍压回起点。
@@ -205,28 +313,42 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
           createdAt: lastMsg.createdAt.toISOString(),
           displayMode: "ticker",
         }
+      : latestSession?.latestActivity
+        ? {
+            messageId: `msg-${team.id}-session`,
+            entryId: team.id,
+            source: "session",
+            type: "progress_update",
+            severity: "info",
+            summary: latestSession.latestActivity,
+            createdAt: new Date().toISOString(),
+            displayMode: "ticker",
+          }
       : undefined;
 
     return {
       entryId: team.id,
       riderName: team.captain.username,
-      projectName: team.name,
+      projectName: registration?.work?.title ?? team.name,
       cockpitId: undefined,
-      caProvider: mapAgentType(archive?.agentType),
-      rank: rank >= 0 ? rank + 1 : undefined,
+      caProvider: mapCAType(primaryConnection?.caType) ?? mapAgentType(archive?.agentType),
+      rank: projected?.rank ?? (rank >= 0 ? rank + 1 : undefined),
       rankDelta: undefined,
-      score: entry?.totalScore,
+      score: entry?.totalScore ?? projected?.progressPercent,
       overallProgress,
       roundProgress,
       phaseProgress: roundProgress,
       currentPhase: submissionCount > 2 ? "REL" : submissionCount > 0 ? "DEV" : "PRD",
-      costTokens: archive?.tokenUsed ?? 0,
+      costTokens: effectiveTokenCost,
       submissionCount,
-      costUsd: (archive?.tokenUsed ?? 0) * 0.0001,
+      costUsd: effectiveTokenCost * 0.0001,
       riskLevel: (archive?.antiCheatPenalty ?? 0) > 0 ? "medium" : "low",
       obstacleCount: 0,             // mock
       violationCount: (archive?.antiCheatPenalty ?? 0) > 0 ? 1 : 0,
-      status,
+      status:
+        registration?.raceProject?.aggregateIngestionStatus === "ACTIVE"
+          ? "running"
+          : status,
       laneId: undefined,            // 由 track-runtime lane-manager 分配
       lastMessage,
       updatedAt: entry?.createdAt.toISOString() ?? new Date().toISOString(),
@@ -238,8 +360,56 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
  * 生成 Mock Riding Messages
  */
 export function generateMessages(race: AryRaceData): RidingMessageSnapshot[] {
+  const projected = race.projections?.find((projection) => projection.type === "SCREEN_FEED");
+  if (projected) {
+    try {
+      const parsed = JSON.parse(projected.payloadJson) as {
+        items?: Array<{ summary: string; type: string }>;
+      };
+      if (parsed.items?.length) {
+        return parsed.items.map((item, index) => ({
+          messageId: `screen-feed-${index}`,
+          entryId: race.teams[index]?.id ?? race.id,
+          source: "projection",
+          type:
+            item.type === "current_leaderboard_projection"
+              ? "milestone"
+              : "progress_update",
+          severity: "info",
+          summary: item.summary,
+          createdAt: new Date().toISOString(),
+          displayMode: "ticker",
+        }));
+      }
+    } catch {
+      // fall back to legacy/mock generation
+    }
+  }
+
   const messages: RidingMessageSnapshot[] = [];
   const now = new Date();
+  const sessionMessages = (race.registrations ?? []).flatMap((registration) =>
+    registration.raceProject?.caConnections?.flatMap((connection) =>
+      (connection.sessions ?? [])
+        .filter((session) => session.latestActivity)
+        .map((session, index) => ({
+          messageId: `session-${registration.id}-${index}`,
+          entryId:
+            race.teams.find((team) => team.captain.id === registration.userId)?.id ??
+            registration.id,
+          source: "session",
+          type: "progress_update" as const,
+          severity: "info" as const,
+          summary: session.latestActivity!,
+          createdAt: now.toISOString(),
+          displayMode: "ticker" as const,
+        })),
+    ) ?? [],
+  );
+
+  if (sessionMessages.length > 0) {
+    return sessionMessages;
+  }
 
   // 从 feedback 生成消息
   for (const fb of race.feedbackThreads) {
@@ -257,29 +427,6 @@ export function generateMessages(race: AryRaceData): RidingMessageSnapshot[] {
     }
   }
 
-  // 补充 mock 消息
-  const milestones = [
-    "提交通过所有测试用例 ✓",
-    "已完成需求分析阶段",
-    "正在进行代码实现",
-    "开始测试验证",
-    "优化 Token 消耗策略",
-  ];
-
-  for (const team of race.teams.slice(0, 3)) {
-    const randomMilestone = milestones[Math.floor(Math.random() * milestones.length)];
-    messages.push({
-      messageId: `msg-mock-${team.id}`,
-      entryId: team.id,
-      source: "dc",
-      type: "milestone",
-      severity: "info",
-      summary: `${team.name}: ${randomMilestone}`,
-      createdAt: new Date(now.getTime() - Math.random() * 600000).toISOString(),
-      displayMode: "bubble",
-    });
-  }
-
   return messages;
 }
 
@@ -288,6 +435,22 @@ export function generateMessages(race: AryRaceData): RidingMessageSnapshot[] {
  */
 export function generateAttentionItems(race: AryRaceData): AttentionItem[] {
   const items: AttentionItem[] = [];
+
+  for (const registration of race.registrations ?? []) {
+    if (registration.raceProject?.aggregateIngestionStatus === "FAILED") {
+      items.push({
+        itemId: `risk-ca-${registration.id}`,
+        entryId:
+          race.teams.find((team) => team.captain.id === registration.userId)?.id ??
+          registration.userId,
+        category: "risk",
+        severity: "medium",
+        summary: `${registration.user.username}: CA ingestion failed`,
+        status: "active",
+        createdAt: new Date().toISOString(),
+      });
+    }
+  }
 
   for (const archive of race.teamArchives) {
     if ((archive.antiCheatPenalty ?? 0) > 0) {
@@ -304,20 +467,6 @@ export function generateAttentionItems(race: AryRaceData): AttentionItem[] {
     }
   }
 
-  // Mock 风险项
-  const riskTeams = race.teams.slice(0, 2);
-  for (const team of riskTeams) {
-    items.push({
-      itemId: `risk-mock-${team.id}`,
-      entryId: team.id,
-      category: "risk",
-      severity: "low",
-      summary: `${team.name}: 提交间隔即将到期，请尽快提交`,
-      status: "active",
-      createdAt: new Date().toISOString(),
-    });
-  }
-
   return items;
 }
 
@@ -325,26 +474,52 @@ export function generateAttentionItems(race: AryRaceData): AttentionItem[] {
  * 计算 Competition KPI
  */
 export function calculateKPIs(race: AryRaceData): CompetitionKPI {
-  const totalTeams = race.teams.length;
+  const registrationCount = race.registrations?.length ?? 0;
+  const totalTeams = registrationCount > 0 ? registrationCount : race.teams.length;
   const scoredTeams = race.leaderboardEntries.length;
-
-  const totalTokens = race.teamArchives.reduce((sum, a) => sum + a.tokenUsed, 0);
-  const codexTokens = race.teamArchives
-    .filter((a) => a.agentType === "COPILOT")
-    .reduce((sum, a) => sum + a.tokenUsed, 0);
-  const claudeTokens = race.teamArchives
-    .filter((a) => a.agentType === "CLAUDE")
-    .reduce((sum, a) => sum + a.tokenUsed, 0);
+  const activeRaceProjects =
+    registrationCount > 0
+      ? (race.registrations ?? []).filter((registration) => registration.raceProject).length
+      : scoredTeams;
+  const activeRegistrations =
+    registrationCount > 0
+      ? (race.registrations ?? []).filter(
+          (registration) =>
+            registration.raceProject?.aggregateIngestionStatus === "ACTIVE",
+        ).length
+      : scoredTeams;
+  const sessionTokenCosts = (race.registrations ?? []).flatMap((registration) =>
+    registration.raceProject?.caConnections?.flatMap((connection) =>
+      connection.sessions?.map((session) => session.tokenCost ?? 0) ?? [],
+    ) ?? [],
+  );
+  const totalTokens = sessionTokenCosts.length
+    ? sessionTokenCosts.reduce((sum, tokenCost) => sum + tokenCost, 0)
+    : race.teamArchives.reduce((sum, a) => sum + a.tokenUsed, 0);
+  const codexTokens = sessionTokenCosts.length
+    ? sessionTokenCosts.reduce((sum, tokenCost) => sum + tokenCost, 0)
+    : race.teamArchives
+        .filter((a) => a.agentType === "COPILOT")
+        .reduce((sum, a) => sum + a.tokenUsed, 0);
+  const claudeTokens = sessionTokenCosts.length
+    ? 0
+    : race.teamArchives
+        .filter((a) => a.agentType === "CLAUDE")
+        .reduce((sum, a) => sum + a.tokenUsed, 0);
   const totalTokensWithCA = codexTokens + claudeTokens || 1;
-
-  const riskCount = race.teamArchives.filter((a) => (a.antiCheatPenalty ?? 0) > 0).length;
+  const riskCount =
+    (race.registrations ?? []).filter(
+      (registration) =>
+        registration.raceProject?.aggregateIngestionStatus === "FAILED",
+    ).length ||
+    race.teamArchives.filter((a) => (a.antiCheatPenalty ?? 0) > 0).length;
 
   return {
-    completionRate: totalTeams > 0 ? Math.round((scoredTeams / totalTeams) * 100) : 0,
+    completionRate: totalTeams > 0 ? Math.round((activeRaceProjects / totalTeams) * 100) : 0,
     totalTokens,
-    activeRiders: scoredTeams,
+    activeRiders: activeRegistrations,
     onlineRiders: totalTeams,
-    activeCockpits: scoredTeams,
+    activeCockpits: activeRaceProjects,
     codexTokens,
     claudeTokens,
     codexShare: Math.round((codexTokens / totalTokensWithCA) * 100),
@@ -365,6 +540,19 @@ function mapAgentType(agentType?: string): "codex" | "claude" | "other" {
       return "codex";
     default:
       return "other";
+  }
+}
+
+function mapCAType(caType?: string): "codex" | "claude" | "other" | null {
+  switch (caType) {
+    case "CODEX":
+      return "codex";
+    case "CLAUDE_CODE":
+      return "claude";
+    case "OTHER":
+      return "other";
+    default:
+      return null;
   }
 }
 

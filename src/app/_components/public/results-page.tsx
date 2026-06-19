@@ -1,89 +1,140 @@
 import { buildRaceSlug } from "@/lib/public-site";
 import type { RaceListItem } from "@/lib/services/races";
-import { getAgentLabel } from "@/lib/services/submissions";
 
-export function ResultsPageView({ race }: { race: RaceListItem }) {
+export function ResultsPageView({
+  race,
+  awards,
+  raceReport,
+  ridingSkillHighlights,
+}: {
+  race: RaceListItem;
+  awards: Array<{
+    awardName: string;
+    decisionReason: string;
+    rank: number;
+    registration: { user: { username: string } };
+    work: null | { title: string; href?: string; slug?: string };
+  }>;
+  raceReport: null | { summary: string; title: string };
+  ridingSkillHighlights: Array<{
+    label: string;
+    riderName: string;
+  }>;
+}) {
+  const groupedAwards = new Map<string, typeof awards>();
+  for (const award of awards) {
+    const bucket = groupedAwards.get(award.awardName) ?? [];
+    bucket.push(award);
+    groupedAwards.set(award.awardName, bucket);
+  }
+
+  const winningWorks = awards.filter((award) => award.work);
+
   return (
     <div className="stack">
       <section className="panel">
-        <p className="eyebrow">Results</p>
+        <p className="eyebrow">赛果</p>
         <h1>{race.title}</h1>
         <p className="muted">
-          当前页面作为最终结果页，明确与过程展示分离，不再把过程榜单伪装成赛后结果。
+          当前赛果页只读取已发布的 `Award` 与报告链路，不再把过程榜单当作最终结果来源。
         </p>
+        {raceReport ? <p className="muted">{raceReport.summary}</p> : null}
       </section>
 
       <section className="panel">
-        <p className="eyebrow">Award Leaderboard</p>
-        <h2>最终榜单</h2>
-        {race.leaderboardEntries.length === 0 ? (
-          <p className="muted">最终公开结果尚未发布。</p>
+        <p className="eyebrow">奖项榜单</p>
+        <h2>已发布奖项</h2>
+        {awards.length === 0 ? (
+          <p className="muted">暂无已发布的公开赛果。</p>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>排名</th>
-                <th>队伍</th>
-                <th>总分</th>
-                <th>Agent</th>
-              </tr>
-            </thead>
-            <tbody>
-              {race.leaderboardEntries.map((entry) => (
-                <tr key={entry.id}>
-                  <td>{entry.rank}</td>
-                  <td>{entry.team.name}</td>
-                  <td>{entry.totalScore}</td>
-                  <td>{getAgentLabel(entry.agentType)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="stack">
+            {[...groupedAwards.entries()].map(([awardName, rows]) => (
+              <section className="panel" key={awardName}>
+                <p className="eyebrow">{awardName}</p>
+                <h2>{awardName}</h2>
+                <div className="stack">
+                  {rows.map((award) => (
+                    <div
+                      className="public-link-card"
+                      key={`${awardName}-${award.rank}-${award.registration.user.username}`}
+                    >
+                      <strong>{award.registration.user.username}</strong>
+                      <span>名次：{award.rank}</span>
+                      <span>{award.work?.title ?? "未关联作品"}</span>
+                      <span>{award.decisionReason}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
         )}
       </section>
 
       <section className="grid">
         <section className="panel">
-          <p className="eyebrow">Winning Works</p>
+          <p className="eyebrow">获奖作品</p>
           <h2>获奖作品</h2>
           <div className="stack">
-            {race.highlights.length === 0 ? (
-              <p className="muted">当前暂无公开获奖作品。</p>
+            {winningWorks.length ? (
+              winningWorks.map((award) =>
+                award.work?.href || award.work?.slug ? (
+                  <a
+                    className="public-link-card"
+                    href={award.work.href ?? `/works/${award.work.slug}`}
+                    key={`${award.awardName}-work-${award.work.title}`}
+                  >
+                    <strong>{award.work.title}</strong>
+                    <span>{award.awardName}</span>
+                    <span>{award.registration.user.username}</span>
+                  </a>
+                ) : (
+                  <div
+                    className="public-link-card"
+                    key={`${award.awardName}-work-${award.work!.title}`}
+                  >
+                    <strong>{award.work!.title}</strong>
+                    <span>{award.awardName}</span>
+                    <span>{award.registration.user.username}</span>
+                  </div>
+                ),
+              )
             ) : (
-              race.highlights.map((highlight) => (
-                <div className="public-link-card" key={highlight.id}>
-                  <strong>{highlight.team.name}</strong>
-                  <span>{highlight.excerpt}</span>
-                </div>
-              ))
+              <p className="muted">暂无公开获奖作品。</p>
             )}
           </div>
         </section>
 
         <section className="panel">
-          <p className="eyebrow">Review Entry</p>
-          <h2>评审总结入口</h2>
-          <a className="button-secondary" href={`/races/${buildRaceSlug(race.id, race.title)}/review`}>
-            查看 Review
+          <p className="eyebrow">骑行亮点</p>
+          <h2>骑行亮点</h2>
+          <div className="stack">
+            {ridingSkillHighlights.length ? (
+              ridingSkillHighlights.map((highlight, index) => (
+                <div
+                  className="public-link-card"
+                  key={`${highlight.riderName}-${highlight.label}-${index}`}
+                >
+                  <strong>{highlight.riderName}</strong>
+                  <span>{highlight.label}</span>
+                </div>
+              ))
+            ) : (
+              <p className="muted">暂无已发布的骑行亮点。</p>
+            )}
+          </div>
+        </section>
+
+        <section className="panel">
+          <p className="eyebrow">评审总结入口</p>
+          <h2>评审总结</h2>
+          <a
+            className="button-secondary"
+            href={`/races/${buildRaceSlug(race.id, race.title)}/review`}
+          >
+            查看评审总结
           </a>
         </section>
-      </section>
-
-      <section className="panel">
-        <p className="eyebrow">Riding Skill Highlights</p>
-        <h2>骑行能力亮点</h2>
-        <div className="stack">
-          {race.highlights.length === 0 ? (
-            <p className="muted">当前暂无公开骑行能力亮点。</p>
-          ) : (
-            race.highlights.map((highlight) => (
-              <div className="public-link-card" key={`${highlight.id}-skill`}>
-                <strong>{highlight.team.name}</strong>
-                <span>{highlight.excerpt}</span>
-              </div>
-            ))
-          )}
-        </div>
       </section>
     </div>
   );

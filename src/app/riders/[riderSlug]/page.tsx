@@ -20,10 +20,14 @@ export default async function RiderPage({ params }: Props) {
     <RiderProfilePageView
       featuredRaceTitle={rider.featuredRaceTitle}
       featuredWorkTitle={rider.featuredWorkTitle}
+      judgeComments={rider.judgeComments}
       orgLabel={rider.orgLabel}
+      performanceSummary={rider.performanceSummary}
       publicWorkLinks={rider.publicWorkLinks}
       raceCount={rider.raceCount}
       raceRecords={rider.raceRecords}
+      reportSummaries={rider.reportSummaries}
+      skillTags={rider.skillTags}
       username={rider.username}
       workCount={rider.workCount}
     />

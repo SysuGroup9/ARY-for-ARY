@@ -1,11 +1,15 @@
 import {
   buildPublicSiteModel,
   buildRaceSlug,
+  buildWorkSlug,
   getRaceIdFromSlug,
   getRiderIdFromSlug,
   getWorkPartsFromSlug,
 } from "@/lib/public-site";
+import { prisma } from "@/lib/prisma";
 import { listRaces } from "@/lib/services/races";
+import { getPublishedReviewSummaryForRace, listPublishedRiderReportsForUser } from "@/lib/services/reports";
+import { getWorkForLegacyTeamSlug, getWorkForPublicSlug } from "@/lib/services/works";
 
 export async function getRaceBySlug(raceSlug: string) {
   const raceId = getRaceIdFromSlug(raceSlug);
@@ -23,30 +27,35 @@ export async function getRaceBySlug(raceSlug: string) {
 }
 
 export async function getWorkBySlug(workSlug: string) {
-  const { raceId, teamId } = getWorkPartsFromSlug(workSlug);
-  const races = await listRaces();
-  const race = races.find((item) => item.id === raceId);
+  const { raceId, workId } = getWorkPartsFromSlug(workSlug);
+  const work =
+    (await getWorkForPublicSlug({ raceId, workId })) ??
+    (await getWorkForLegacyTeamSlug({ raceId, teamId: workId }));
 
-  if (!race) {
-    return null;
-  }
-
-  const highlight = race.highlights.find((item) => item.teamId === teamId);
-  if (!highlight) {
+  if (!work) {
     return null;
   }
 
   return {
+    awards: work.awards,
+    author: work.registration.user.username,
+    demoUrl: work.demoUrl,
+    evidenceSummaries: work.registration.evidences.map((evidence) => evidence.summary),
+    excerpt: work.summary,
     id: workSlug,
-    title: highlight.team.name,
-    author:
-      race.teams.find((team) => team.id === highlight.teamId)?.captain.username ??
-      highlight.team.name,
-    excerpt: highlight.excerpt,
-    score: highlight.score,
-    codeSnippet: highlight.codeSnippet,
-    raceSlug: buildRaceSlug(race.id, race.title),
-    raceTitle: race.title,
+    judgeComments: work.judgeAssignments
+      .filter((assignment) => assignment.judgingRecord?.comments)
+      .map((assignment) => ({
+        judgeName: assignment.judge.username,
+        summary: assignment.judgingRecord!.comments,
+      })),
+    raceSlug: buildRaceSlug(work.registration.race.id, work.registration.race.title),
+    raceTitle: work.registration.race.title,
+    repoUrl: work.repoUrl,
+    score: work.awards[0] ? 100 - work.awards[0].rank + 1 : 0,
+    techNotes: work.techNotes,
+    title: work.title,
+    videoUrl: work.videoUrl,
   };
 }
 
@@ -60,30 +69,129 @@ export async function getRiderBySlug(riderSlug: string) {
     return null;
   }
 
-  const raceRecords = races
-    .filter((race) => race.teams.some((team) => team.captain.id === riderId))
-    .map((race) => ({
-      raceId: race.id,
-      raceSlug: buildRaceSlug(race.id, race.title),
-      raceTitle: race.title,
-      phase: race.phase,
-      awardScore:
-        race.leaderboardEntries.find((entry) =>
-          race.teams.find((team) => team.id === entry.teamId)?.captain.id === riderId,
-        )?.totalScore ?? null,
-      workTitle:
-        race.highlights.find((highlight) =>
-          race.teams.find((team) => team.id === highlight.teamId)?.captain.id === riderId,
-        )?.team.name ?? null,
-      comment:
-        race.teamComments.find((comment) =>
-          race.teams.find((team) => team.id === comment.teamId)?.captain.id === riderId,
-        )?.content ?? null,
-    }));
+  const registrations = await prisma.registration.findMany({
+    where: {
+      userId: riderId,
+    },
+    include: {
+      awards: true,
+      evidences: true,
+      race: true,
+      raceProject: {
+        include: {
+          caConnections: {
+            include: {
+              sessions: true,
+            },
+          },
+        },
+      },
+      work: true,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+
+  const riderReports = await listPublishedRiderReportsForUser(riderId);
+  const reviewReports = await Promise.all(
+    registrations.map((registration) => getPublishedReviewSummaryForRace(registration.raceId)),
+  );
+  const works = await prisma.work.findMany({
+    where: {
+      registration: {
+        userId: riderId,
+      },
+    },
+    include: {
+      judgeAssignments: {
+        include: {
+          judge: true,
+          judgingRecord: true,
+        },
+      },
+      registration: {
+        include: {
+          race: true,
+        },
+      },
+    },
+  });
+
+  const raceRecords = registrations.map((registration) => ({
+    awardNames: registration.awards.map((award) => award.awardName),
+    awardScore: registration.awards[0]?.rank ?? null,
+    comment:
+      reviewReports.find((report) => report?.raceId === registration.raceId)?.summary ?? null,
+    evidenceCount: registration.evidences.length,
+    phase: registration.race.raceEnd < new Date() ? "finished" : "active",
+    raceId: registration.race.id,
+    raceSlug: buildRaceSlug(registration.race.id, registration.race.title),
+    raceTitle: registration.race.title,
+    workTitle: registration.work?.title ?? null,
+  }));
+  const allSessions = registrations.flatMap((registration) =>
+    registration.raceProject?.caConnections.flatMap(
+      (connection) => connection.sessions,
+    ) ?? [],
+  );
+  const totalTokens = allSessions.reduce(
+    (sum, session) => sum + session.tokenCost,
+    0,
+  );
+  const progressSamples = allSessions
+    .map((session) => session.progressPercent)
+    .filter((value): value is number => typeof value === "number");
+  const averageProgressPercent = progressSamples.length
+    ? Math.round(
+        progressSamples.reduce((sum, value) => sum + value, 0) /
+          progressSamples.length,
+      )
+    : 0;
+  const riskCount = allSessions.filter(
+    (session) => session.riskLevel && session.riskLevel !== "low" && session.riskLevel !== "none",
+  ).length;
+  const judgeComments = works.flatMap((work) =>
+    work.judgeAssignments
+      .filter((assignment) => assignment.judgingRecord?.comments)
+      .map((assignment) => ({
+        raceTitle: work.registration.race.title,
+        summary: assignment.judgingRecord!.comments,
+      })),
+  );
+  const derivedSkillTags = new Set<string>();
+  if (totalTokens > 0) {
+    derivedSkillTags.add("成本控制");
+  }
+  if (riskCount > 0) {
+    derivedSkillTags.add("风险处理");
+  }
+  if (judgeComments.length > 0 || riderReports.length > 0) {
+    derivedSkillTags.add("复盘表达");
+  }
 
   return {
     ...rider,
-    publicWorkLinks: rider.publicWorkLinks,
+    judgeComments,
+    performanceSummary: {
+      averageProgressPercent,
+      riskCount,
+      totalTokens,
+    },
+    publicWorkLinks: registrations
+      .filter((registration) => registration.work)
+      .map((registration) => {
+        return {
+          href: `/works/${buildWorkSlug(
+            registration.race.id,
+            registration.work!.id,
+            registration.work!.title,
+          )}`,
+          title: registration.work!.title,
+        };
+      }),
     raceRecords,
+    reportSummaries: riderReports.map((report) => report.summary),
+    skillTags: [...derivedSkillTags],
   };
 }

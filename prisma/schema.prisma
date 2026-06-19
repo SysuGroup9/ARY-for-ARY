@@ -8,6 +8,8 @@ datasource db {
 }
 
 enum UserRole {
+  ADMIN
+  JUDGE
   ORGANIZER
   RIDER
 }
@@ -17,6 +19,72 @@ enum SubmissionStatus {
   PULLED
   SCORED
   FAILED
+}
+
+enum RegistrationStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum IngestionStatus {
+  NOT_CONFIGURED
+  CONNECTED
+  ACTIVE
+  FAILED
+}
+
+enum CAType {
+  CODEX
+  CLAUDE_CODE
+  OTHER
+}
+
+enum IngestionSource {
+  CONNECTOR
+  MANUAL
+}
+
+enum EvidenceType {
+  SESSION_SUMMARY
+  WORK
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+  INTERNAL
+}
+
+enum ProjectionType {
+  RACE_PROGRESS
+  REGISTRATION_STATUS
+  COST
+  RISK
+  CURRENT_LEADERBOARD
+  EVENT_STREAM_READ_MODEL
+  SCREEN_FEED
+}
+
+enum WorkStatus {
+  DRAFT
+  SUBMITTED
+  LOCKED
+  HIDDEN
+}
+
+enum ReportStatus {
+  DRAFT
+  GENERATED
+  REVIEWED
+  PUBLISHED
+}
+
+enum ReportType {
+  RIDER_REPORT
+  RACE_REPORT
+  REVIEW_SUMMARY
 }
 
 enum RunnerTaskType {
@@ -56,10 +124,18 @@ model User {
   id           String    @id @default(cuid())
   username     String    @unique
   passwordHash String
-  role         UserRole
+  role         UserRole  @default(RIDER)
+  rolesJson    String    @default("[\"RIDER\"]")
+  profileName  String    @default("")
+  profileOrgLabel String @default("")
+  profileCompleted Boolean @default(false)
+  githubAccount String?
   createdAt    DateTime  @default(now())
 
   organizedRaces Race[]  @relation("OrganizerRaces")
+  registrations  Registration[]
+  judgeAssignments JudgeAssignment[] @relation("JudgeAssignments")
+  assignedJudgeAssignments JudgeAssignment[] @relation("AssignedByJudgeAssignments")
   teamMemberships TeamMember[]
   teamCaptains   Team[]  @relation("TeamCaptain")
   feedbackMessages FeedbackMessage[]
@@ -110,6 +186,10 @@ model Race {
   updatedAt                  DateTime @updatedAt
 
   organizer      User               @relation("OrganizerRaces", fields: [organizerId], references: [id], onDelete: Cascade)
+  registrations  Registration[]
+  projections    Projection[]
+  awards         Award[]
+  reports        Report[]
   teams          Team[]
   submissions    Submission[]
   teamArchives   TeamArchive[]
@@ -121,6 +201,224 @@ model Race {
   teamComments    TeamComment[]
   runnerTasks     RunnerTask[]
   artifacts       SubmissionArtifact[]
+}
+
+model Registration {
+  id           String             @id @default(cuid())
+  raceId       String
+  userId       String
+  status       RegistrationStatus @default(SUBMITTED)
+  submittedAt  DateTime           @default(now())
+  approvedAt   DateTime?
+  rejectedAt   DateTime?
+  withdrawnAt  DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  race         Race               @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  raceProject  RaceProject?
+  evidences    Evidence[]
+  work         Work?
+  awards       Award[]
+  reports      Report[]           @relation("SubjectReports")
+
+  @@unique([raceId, userId])
+}
+
+model RaceProject {
+  id                        String          @id @default(cuid())
+  registrationId            String          @unique
+  githubRepoUrl             String          @default("")
+  aggregateIngestionStatus  IngestionStatus @default(NOT_CONFIGURED)
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @updatedAt
+
+  registration              Registration    @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  caConnections             CAConnection[]
+}
+
+model CAConnection {
+  id                   String          @id @default(cuid())
+  raceProjectId        String
+  caType               CAType
+  ingestionSource      IngestionSource @default(MANUAL)
+  connectorId          String
+  connectorSecret      String          @default(cuid())
+  connectorBaseUrl     String          @default("")
+  connectorVersion     String          @default("")
+  caProjectId          String
+  ingestionStatus      IngestionStatus @default(CONNECTED)
+  registeredAt         DateTime        @default(now())
+  handshakeCompletedAt DateTime?
+  disabledAt           DateTime?
+  lastSyncedAt         DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  raceProject          RaceProject     @relation(fields: [raceProjectId], references: [id], onDelete: Cascade)
+  ingestionEvents      CAIngestionEvent[]
+  sessions             Session[]
+
+  @@index([raceProjectId, ingestionStatus])
+}
+
+model CAIngestionEvent {
+  id             String       @id @default(cuid())
+  caConnectionId String
+  messageId      String
+  idempotencyKey String       @unique
+  observedAt     DateTime
+  signalType     String
+  signalKind     String
+  payloadJson    String
+  createdAt      DateTime     @default(now())
+
+  caConnection   CAConnection @relation(fields: [caConnectionId], references: [id], onDelete: Cascade)
+
+  @@index([caConnectionId, observedAt])
+}
+
+model Session {
+  id            String       @id @default(cuid())
+  caConnectionId String
+  caSessionId   String
+  startedAt     DateTime
+  endedAt       DateTime?
+  messageCount  Int          @default(0)
+  toolCallCount Int          @default(0)
+  tokenCost     Int          @default(0)
+  allRidingMessageLength Int  @default(0)
+  lastActiveAt  DateTime?
+  snapshotFetchedAt DateTime?
+  currentGoal   String?
+  latestActivity String?
+  progressPercent Int?
+  riskLevel     String?
+  riskReason    String?
+  taskStatus    String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  caConnection  CAConnection @relation(fields: [caConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([caConnectionId, caSessionId])
+  @@index([caConnectionId, startedAt])
+}
+
+model Evidence {
+  id            String       @id @default(cuid())
+  registrationId String
+  type          EvidenceType
+  title         String
+  summary       String
+  sourceRefJson String
+  visibility    Visibility   @default(INTERNAL)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  registration  Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+
+  @@index([registrationId, type])
+}
+
+model Projection {
+  id         String         @id @default(cuid())
+  raceId      String
+  type        ProjectionType
+  payloadJson String
+  asOfAt      DateTime
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  race        Race           @relation(fields: [raceId], references: [id], onDelete: Cascade)
+
+  @@unique([raceId, type])
+}
+
+model Work {
+  id             String       @id @default(cuid())
+  registrationId String       @unique
+  title          String
+  summary        String
+  demoUrl        String       @default("")
+  repoUrl        String       @default("")
+  videoUrl       String       @default("")
+  techNotes      String       @default("")
+  status         WorkStatus   @default(SUBMITTED)
+  visibility     Visibility   @default(PUBLIC)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  judgeAssignments JudgeAssignment[]
+  awards         Award[]
+}
+
+model JudgeAssignment {
+  id               String       @id @default(cuid())
+  workId           String
+  judgeId          String
+  assignedByUserId String
+  assignedAt       DateTime     @default(now())
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  work             Work         @relation(fields: [workId], references: [id], onDelete: Cascade)
+  judge            User         @relation("JudgeAssignments", fields: [judgeId], references: [id], onDelete: Cascade)
+  assignedByUser   User         @relation("AssignedByJudgeAssignments", fields: [assignedByUserId], references: [id], onDelete: Cascade)
+  judgingRecord    JudgingRecord?
+
+  @@unique([workId, judgeId])
+}
+
+model JudgingRecord {
+  id                 String          @id @default(cuid())
+  judgeAssignmentId  String          @unique
+  scoreResultJson    String
+  scoreRidingJson    String
+  comments           String          @default("")
+  submittedAt        DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  judgeAssignment    JudgeAssignment @relation(fields: [judgeAssignmentId], references: [id], onDelete: Cascade)
+}
+
+model Award {
+  id              String       @id @default(cuid())
+  raceId           String
+  registrationId   String
+  workId           String?
+  awardName        String
+  rank             Int
+  decisionReason   String      @default("")
+  publishedAt      DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  race             Race        @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  registration     Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  work             Work?       @relation(fields: [workId], references: [id], onDelete: SetNull)
+
+  @@unique([raceId, awardName, rank])
+}
+
+model Report {
+  id                   String       @id @default(cuid())
+  raceId               String
+  subjectRegistrationId String?
+  type                 ReportType
+  status               ReportStatus @default(DRAFT)
+  title                String
+  summary              String
+  body                 String
+  publishedAt          DateTime?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  race                 Race         @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  subjectRegistration  Registration? @relation("SubjectReports", fields: [subjectRegistrationId], references: [id], onDelete: SetNull)
 }
 
 model Team {

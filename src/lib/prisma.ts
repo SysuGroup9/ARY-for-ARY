@@ -1,3 +1,4 @@
+import "dotenv/config";
 import fs from "node:fs";
 import path from "node:path";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";

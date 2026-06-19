@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-const roleEnum = z.enum(["ORGANIZER", "RIDER"]);
 const agentEnum = z.enum([
   "CLAUDE",
   "COPILOT",
@@ -19,7 +18,6 @@ const checkpointSchema = z.object({
 export const registerSchema = z.object({
   username: z.string().trim().min(3, "用户名至少 3 个字符").max(32),
   password: z.string().min(6, "密码至少 6 个字符").max(128),
-  role: roleEnum,
 });
 
 export const loginSchema = z.object({
@@ -170,3 +168,11 @@ export const displayOptionsSchema = raceBaseSchema
   .extend({
     raceId: z.string().min(1),
   });
+
+export const judgingRecordSchema = z.object({
+  assignmentId: z.string().min(1),
+  comments: z.string().trim().min(1).max(4000),
+  scoreResultTotal: z.coerce.number().min(0).max(100),
+  scoreRidingTotal: z.coerce.number().min(0).max(100),
+  submit: z.boolean().default(false),
+});

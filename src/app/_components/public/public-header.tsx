@@ -6,15 +6,15 @@ export function PublicHeader({ hasSession }: { hasSession: boolean }) {
       <div className="public-header__brand">
         <a href="/">ARY</a>
       </div>
-      <nav className="public-header__nav" aria-label="Public Header">
-        <a href="/races">Races</a>
-        <a href="/works">Works</a>
-        <a href="/riders">Riders</a>
-        <a href="/cooperation">Cooperation</a>
+      <nav className="public-header__nav" aria-label="公开导航">
+        <a href="/races">赛事</a>
+        <a href="/works">作品</a>
+        <a href="/riders">骑手</a>
+        <a href="/cooperation">合作</a>
       </nav>
       <div className="public-header__actions">
         <a className="button-secondary" href={getConsoleEntryTarget(hasSession)}>
-          {hasSession ? "Console Entry" : "Login"}
+          {hasSession ? "进入控制台" : "登录"}
         </a>
       </div>
     </header>

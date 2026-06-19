@@ -1,40 +1,67 @@
 import type { RaceListItem } from "@/lib/services/races";
 
-export function ReviewPageView({ race }: { race: RaceListItem }) {
+export function ReviewPageView({
+  race,
+  awards,
+  evidenceHighlights,
+  judgingRecords,
+  reviewReport,
+}: {
+  race: RaceListItem;
+  awards: Array<{
+    awardName: string;
+    decisionReason: string;
+    registration: { user: { username: string } };
+  }>;
+  evidenceHighlights: Array<{
+    summary: string;
+    title: string;
+  }>;
+  judgingRecords: Array<{
+    comments: string;
+    judgeAssignment: { judge: { username: string }; work: { title: string } };
+  }>;
+  reviewReport: null | { body: string; summary: string; title: string };
+}) {
   return (
     <div className="stack">
       <section className="panel">
-        <p className="eyebrow">Review</p>
+        <p className="eyebrow">评审总结</p>
         <h1>{race.title}</h1>
         <p className="muted">
-          当前页面先以现有 organizer comment 和公开 highlight 数据承接 `grs003` 的 Review Summary / Featured Cases 骨架。
+          当前评审总结页只读取已发布的 `review_summary`、评委评语、公开 Evidence 和已发布奖项。
         </p>
       </section>
 
       <section className="grid">
         <section className="panel">
-          <p className="eyebrow">Review Summary</p>
-          <h2>评审总结</h2>
-          {race.organizerComment ? (
-            <blockquote className="comment-card">{race.organizerComment}</blockquote>
+          <p className="eyebrow">总结摘要</p>
+          <h2>已发布总结</h2>
+          {reviewReport ? (
+            <div className="stack">
+              <strong>{reviewReport.title}</strong>
+              <p>{reviewReport.summary}</p>
+              <blockquote className="comment-card">{reviewReport.body}</blockquote>
+            </div>
           ) : (
-            <p className="muted">当前还没有已发布的公开 Review 内容。</p>
+            <p className="muted">暂无已发布的公开评审总结。</p>
           )}
         </section>
 
         <section className="panel">
-          <p className="eyebrow">Featured Cases</p>
-          <h2>典型案例</h2>
+          <p className="eyebrow">获奖说明</p>
+          <h2>已发布奖项</h2>
           <div className="stack">
-            {race.highlights.length === 0 ? (
-              <p className="muted">当前暂无公开案例。</p>
-            ) : (
-              race.highlights.map((highlight) => (
-                <div className="public-link-card" key={highlight.id}>
-                  <strong>{highlight.team.name}</strong>
-                  <span>{highlight.excerpt}</span>
+            {awards.length ? (
+              awards.map((award, index) => (
+                <div className="public-link-card" key={`${award.awardName}-${index}`}>
+                  <strong>{award.awardName}</strong>
+                  <span>{award.registration.user.username}</span>
+                  <span>{award.decisionReason}</span>
                 </div>
               ))
+            ) : (
+              <p className="muted">暂无已发布奖项。</p>
             )}
           </div>
         </section>
@@ -42,35 +69,67 @@ export function ReviewPageView({ race }: { race: RaceListItem }) {
 
       <section className="grid">
         <section className="panel">
-          <p className="eyebrow">Award Rationale</p>
-          <h2>获奖说明</h2>
-          <p className="muted">
-            当前先以公开赛果和 organizer 总评承接获奖说明，后续再接入正式 review summary。
-          </p>
+          <p className="eyebrow">评委评语</p>
+          <h2>评审记录</h2>
+          <div className="stack">
+            {judgingRecords.length ? (
+              judgingRecords.map((record, index) => (
+                <blockquote
+                  className="comment-card"
+                  key={`${record.judgeAssignment.work.title}-${index}`}
+                >
+                  {record.judgeAssignment.judge.username}: {record.comments}
+                </blockquote>
+              ))
+            ) : (
+              <p className="muted">暂无评委评语。</p>
+            )}
+          </div>
         </section>
 
         <section className="panel">
-          <p className="eyebrow">Judge Comments</p>
-          <h2>评委观点</h2>
-          {race.teamComments.length === 0 ? (
-            <p className="muted">当前暂无公开评委评语。</p>
-          ) : (
-            <div className="stack">
-              {race.teamComments.map((comment) => (
-                <blockquote className="comment-card" key={comment.id}>
-                  {comment.team.name}：{comment.content}
-                </blockquote>
-              ))}
-            </div>
-          )}
+          <p className="eyebrow">典型案例</p>
+          <h2>作品案例</h2>
+          <div className="stack">
+            {judgingRecords.length ? (
+              judgingRecords.map((record, index) => (
+                <div
+                  className="public-link-card"
+                  key={`${record.judgeAssignment.work.title}-case-${index}`}
+                >
+                  <strong>{record.judgeAssignment.work.title}</strong>
+                  <span>{record.comments}</span>
+                </div>
+              ))
+            ) : (
+              <p className="muted">暂无公开典型案例。</p>
+            )}
+          </div>
         </section>
       </section>
 
       <section className="panel">
-        <p className="eyebrow">Next Race Suggestion</p>
-        <h2>下一场建议</h2>
+        <p className="eyebrow">证据摘要</p>
+        <h2>公开证据摘要</h2>
+        <div className="stack">
+          {evidenceHighlights.length ? (
+            evidenceHighlights.map((item, index) => (
+              <div className="public-link-card" key={`${item.title}-${index}`}>
+                <strong>{item.title}</strong>
+                <span>{item.summary}</span>
+              </div>
+            ))
+          ) : (
+            <p className="muted">暂无公开证据摘要。</p>
+          )}
+        </div>
+      </section>
+
+      <section className="panel">
+        <p className="eyebrow">下一场建议</p>
+        <h2>浏览更多赛事</h2>
         <a className="button-secondary" href="/races">
-          返回 Races 继续浏览
+          返回赛事列表
         </a>
       </section>
     </div>

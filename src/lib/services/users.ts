@@ -1,13 +1,18 @@
-import type { UserRole } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { createSession, hashPassword, verifyPassword } from "@/lib/auth";
+import type { AppRole } from "@/lib/user-roles";
+import {
+  getDefaultActiveRole,
+  hasRole,
+  parseRolesJson,
+  serializeRoles,
+} from "@/lib/user-roles";
 import { loginSchema, registerSchema } from "@/lib/validation";
 
 export async function registerUser(formData: FormData) {
   const parsed = registerSchema.parse({
     username: formData.get("username"),
     password: formData.get("password"),
-    role: formData.get("role"),
   });
 
   const existing = await prisma.user.findUnique({
@@ -17,21 +22,26 @@ export async function registerUser(formData: FormData) {
   });
 
   if (existing) {
-    throw new Error("用户名已存在");
+    throw new Error("鐢ㄦ埛鍚嶅凡瀛樺湪");
   }
+
+  const roles: AppRole[] = ["RIDER"];
+  const role = getDefaultActiveRole(roles);
 
   const user = await prisma.user.create({
     data: {
-      username: parsed.username,
       passwordHash: await hashPassword(parsed.password),
-      role: parsed.role,
+      role,
+      rolesJson: serializeRoles(roles),
+      username: parsed.username,
     },
   });
 
   await createSession({
     id: user.id,
+    role,
+    roles,
     username: user.username,
-    role: user.role,
   });
 
   return user;
@@ -50,30 +60,61 @@ export async function loginUser(formData: FormData) {
   });
 
   if (!user) {
-    throw new Error("用户名或密码错误");
+    throw new Error("鐢ㄦ埛鍚嶆垨瀵嗙爜閿欒");
   }
 
   const valid = await verifyPassword(parsed.password, user.passwordHash);
   if (!valid) {
-    throw new Error("用户名或密码错误");
+    throw new Error("鐢ㄦ埛鍚嶆垨瀵嗙爜閿欒");
   }
+
+  const roles = parseRolesJson(user.rolesJson);
+  const role = hasRole(roles, user.role)
+    ? user.role
+    : getDefaultActiveRole(roles);
 
   await createSession({
     id: user.id,
+    role,
+    roles,
     username: user.username,
-    role: user.role,
   });
 
   return user;
 }
 
-export async function listUsersByRole(role: UserRole) {
-  return prisma.user.findMany({
-    where: {
-      role,
-    },
+export async function listUsers() {
+  const users = await prisma.user.findMany({
     orderBy: {
       createdAt: "asc",
+    },
+  });
+
+  return users.map((user) => ({
+    ...user,
+    roles: parseRolesJson(user.rolesJson),
+  }));
+}
+
+export async function listUsersByRole(role: AppRole) {
+  const users = await listUsers();
+  return users.filter((user) => hasRole(user.roles, role));
+}
+
+export async function updateUserRoles(input: {
+  roles: AppRole[];
+  userId: string;
+}) {
+  const roles: AppRole[] = input.roles.length === 0 ? ["RIDER"] : input.roles;
+  const primaryRole = getDefaultActiveRole(roles);
+
+  return prisma.user.update({
+    where: {
+      id: input.userId,
+    },
+    data: {
+      role: primaryRole,
+      rolesJson: serializeRoles(roles),
     },
   });
 }

@@ -1,5 +1,7 @@
 import { ResultsPageView } from "@/app/_components/public/results-page";
 import { getRaceBySlug } from "@/lib/services/public-routes";
+import { getPublishedRaceReportForRace } from "@/lib/services/reports";
+import { buildPublicResultsModel } from "@/lib/services/results";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -16,5 +18,17 @@ export default async function RaceResultsPage({ params }: Props) {
     notFound();
   }
 
-  return <ResultsPageView race={race} />;
+  const [resultsModel, raceReport] = await Promise.all([
+    buildPublicResultsModel(race.id),
+    getPublishedRaceReportForRace(race.id),
+  ]);
+
+  return (
+    <ResultsPageView
+      awards={resultsModel.awards}
+      race={race}
+      raceReport={raceReport}
+      ridingSkillHighlights={resultsModel.ridingSkillHighlights}
+    />
+  );
 }

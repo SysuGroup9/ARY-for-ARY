@@ -1,18 +1,8 @@
 import type { ReactNode } from "react";
-import { getDemoCredentials } from "@/lib/demo-credentials";
 import CreateRaceFormClient from "@/app/_components/create-race-form-client";
-import { formatDateTime } from "@/lib/format";
-import {
-  getRacePhaseLabel,
-  shouldHidePublicLeaderboard,
-  type RacePhase,
-} from "@/lib/race-phase";
-import { type RaceListItem } from "@/lib/services/races";
-import { getAgentLabel } from "@/lib/services/submissions";
+import { getDemoCredentials } from "@/lib/demo-credentials";
 
 type FormAction = (formData: FormData) => void | Promise<void>;
-
-type GroupedRaces = Record<RacePhase, RaceListItem[]>;
 
 export function Panel({
   eyebrow,
@@ -38,53 +28,50 @@ export function HeroSection({
   mode: "member" | "auth" | "audience";
 }) {
   const content = {
-    member: {
-      lede:
-        "当前版本已经从前端 localStorage PoC 重构为真实全栈应用。账号、赛事、队伍、提交、反馈和榜单落在 SQLite，但 Organizer 的私有评测代码仍然不进入 ARY。",
+    audience: {
       items: [
-        "Organizer 可创建赛事并配置赛后披露边界。",
-        "Rider 可真实注册、报名，并按阶段分别提交代码或赛后代码 + Riding Record。",
-        "Runner 可通过 API 拉取任务并回传评分。",
-        "Audience 可直接在首页查看公开赛事与榜单。",
+        "Browse races, works, results, and rider profiles.",
+        "Enter the current featured race in one or two clicks.",
+        "Keep console workflows out of the public gallery.",
       ],
+      lede:
+        "The public side of ARY is now a gallery-first experience focused on races, works, results, and rider profiles.",
     },
     auth: {
-      lede:
-        "登录页现在只承担身份进入。Organizer 和 Rider 登录后进入完整工作区；公开观众浏览统一在首页完成，不再保留单独观众入口。",
       items: [
-        "Organizer 登录后可进入赛事创建与管理区。",
-        "Rider 登录后可报名、比赛中提交代码、赛后提交代码与 Riding Record，并发送反馈。",
-        "公开赛事浏览统一收敛到首页。",
-        "Runner API 仍独立使用 bearer token，不受网页登录门禁影响。",
+        "Public signup creates Rider accounts only.",
+        "Organizer, Judge, and Admin access is assigned from Console.",
+        "Public browsing stays on the public site after login flows are separated.",
       ],
+      lede:
+        "This page is the identity entry for ARY. Public browsing stays on the public site; workspace access starts from login.",
     },
-    audience: {
-      lede:
-        "当前是公开观众视图，只展示无需登录即可公开的赛事信息、公开榜单和赛后展示内容。",
+    member: {
       items: [
-        "可浏览按状态分组的公开赛事。",
-        "可查看公开榜单与封榜后的隐藏状态。",
-        "可查看 Organizer 主动披露的赛后展示。",
-        "如需报名、提交或管理赛事，请返回登录入口。",
+        "Public site and Console now live on separate routes.",
+        "Race workspaces are moving under /console/*.",
+        "The next refactor slice is deeper grs003 domain alignment.",
       ],
+      lede:
+        "ARY is being refactored from a mixed dashboard into separate public and console experiences aligned to grs003.",
     },
   }[mode];
 
   return (
     <section className="hero">
       <div className="hero__copy">
-        <p className="hero__eyebrow">ARY GRS 001</p>
+        <p className="hero__eyebrow">ARY</p>
         <h1>Public Yard, Private Race Source.</h1>
         <p className="hero__lede">{content.lede}</p>
         <div className="hero__chips">
           <span>Next.js 16</span>
           <span>Prisma 7</span>
           <span>SQLite</span>
-          <span>真实 Session Cookie</span>
+          <span>Console Split</span>
         </div>
       </div>
       <div className="hero__card">
-        <h2>当前能力</h2>
+        <h2>Current Focus</h2>
         <ul>
           {content.items.map((item) => (
             <li key={item}>{item}</li>
@@ -120,29 +107,28 @@ export function AuthTabsPanel({
 
       <div className="auth-tabs__switches">
         <label className="auth-tabs__switch" htmlFor="auth-tab-login">
-          登录
+          Login
         </label>
         <label className="auth-tabs__switch" htmlFor="auth-tab-register">
-          注册
+          Register
         </label>
       </div>
 
       <div className="auth-tabs__panel auth-tabs__panel--login">
         <AuthForm
           action={loginAction}
-          description="已有账号可直接登录"
-          submitLabel="登录"
-          title="登录"
+          description="Use an existing ARY account to enter Console or continue participating in races."
+          submitLabel="Login"
+          title="Login"
         />
       </div>
 
       <div className="auth-tabs__panel auth-tabs__panel--register">
         <AuthForm
           action={registerAction}
-          description="现场创建 Organizer 或 Rider 账号"
-          includeRegisterFields
-          submitLabel="注册"
-          title="注册"
+          description="Public signup creates a Rider account only. Organizer, Judge, and Admin roles are assigned from Console."
+          submitLabel="Register"
+          title="Register"
         />
       </div>
     </div>
@@ -153,7 +139,7 @@ export function SeedAccountsPanel() {
   const credentials = getDemoCredentials();
 
   return (
-    <Panel title="演示账号" eyebrow="Seed">
+    <Panel title="Seed Accounts" eyebrow="Demo">
       <div className="seed-grid">
         {credentials.map((credential) => (
           <div key={credential.label}>
@@ -167,304 +153,6 @@ export function SeedAccountsPanel() {
   );
 }
 
-export function RaceBrowserPanel({ grouped }: { grouped: GroupedRaces }) {
-  return (
-    <Panel title="赛事浏览" eyebrow="Race Browser">
-      {(Object.entries(grouped) as [RacePhase, RaceListItem[]][]).map(
-        ([phase, items]) => (
-          <div className="race-group" key={phase}>
-            <h3>{getRacePhaseLabel(phase)}</h3>
-            {items.length === 0 ? (
-              <p className="muted">暂无赛事</p>
-            ) : (
-              items.map((race) => (
-                <article className="race-card" key={race.id}>
-                  <div className="race-card__top">
-                    <strong>{race.title}</strong>
-                    <span>{race.teams.length} 队</span>
-                  </div>
-                  <p>{race.summary}</p>
-                  <small>
-                    {formatDateTime(race.raceStart)} -{" "}
-                    {formatDateTime(race.raceEnd)}
-                  </small>
-                </article>
-              ))
-            )}
-          </div>
-        ),
-      )}
-    </Panel>
-  );
-}
-
-export function RunnerApiPanel() {
-  return (
-    <Panel title="Runner API" eyebrow="Integration">
-      <div className="stack">
-        <code>GET /api/runner/tasks/pull?raceId=&lt;id&gt;</code>
-        <code>POST /api/runner/tasks/result</code>
-        <p className="muted">
-          Header 使用 <code>Authorization: Bearer ary-runner-dev-secret</code>
-        </p>
-      </div>
-    </Panel>
-  );
-}
-
-export function PublicRaceSections({ race }: { race: RaceListItem }) {
-  const isRunningPhase = race.phase === "active" || race.phase === "frozen";
-  const isFinishedPhase = race.phase === "finished";
-
-  return (
-    <>
-      <header className="race-panel__header">
-        <div>
-          <p className="eyebrow">{getRacePhaseLabel(race.phase)}</p>
-          <h2>{race.title}</h2>
-          <p>{race.summary}</p>
-        </div>
-        <div className="meta-pills">
-          <span>{race.teams.length} 支队伍</span>
-          <span>{race.submissionIntervalHours}h 提交冷却</span>
-          <span>Top {race.displayHighlightCount} Highlight</span>
-        </div>
-      </header>
-
-      <section className="grid">
-        <Panel title="公开规则" eyebrow="Public Projection">
-          <dl className="detail-grid">
-            <div>
-              <dt>题目包</dt>
-              <dd>
-                {race.taskPackageLabel}
-                {race.cloudStudioUrl ? (
-                  <span> · <a href={race.cloudStudioUrl}>打开任务入口</a></span>
-                ) : null}
-              </dd>
-            </div>
-            <div>
-              <dt>赛道</dt>
-              <dd>{race.trackId}</dd>
-            </div>
-            <div>
-              <dt>CloudStudio</dt>
-              <dd>{race.cloudStudioUrl || "未设置"}</dd>
-            </div>
-            <div>
-              <dt>报名时间</dt>
-              <dd>
-                {formatDateTime(race.signupStart)} -{" "}
-                {formatDateTime(race.signupEnd)}
-              </dd>
-            </div>
-            <div>
-              <dt>比赛时间</dt>
-              <dd>
-                {formatDateTime(race.raceStart)} -{" "}
-                {formatDateTime(race.raceEnd)}
-              </dd>
-            </div>
-            <div>
-              <dt>评测说明</dt>
-              <dd>{race.evaluationNotes}</dd>
-            </div>
-            <div>
-              <dt>关键词</dt>
-              <dd>{race.keywords.join(" / ")}</dd>
-            </div>
-          </dl>
-        </Panel>
-
-        {isRunningPhase ? (
-          <Panel title="过程榜单" eyebrow="Leaderboard">
-            {shouldHidePublicLeaderboard(race.phase) ? (
-              <p className="muted">当前处于封榜阶段，公开榜单暂时隐藏。</p>
-            ) : race.leaderboardEntries.length === 0 ? (
-              <p className="muted">尚未同步榜单。</p>
-            ) : (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>排名</th>
-                    <th>队伍</th>
-                    <th>总分</th>
-                    <th>任务</th>
-                    <th>Token</th>
-                    <th>对话</th>
-                    <th>Agent</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {race.leaderboardEntries.map((entry) => (
-                    <tr key={entry.id}>
-                      <td>{entry.rank}</td>
-                      <td>{entry.team.name}</td>
-                      <td>{entry.totalScore}</td>
-                      <td>{entry.taskScore ?? "-"}</td>
-                      <td>{entry.tokenScore ?? "-"}</td>
-                      <td>{entry.dialogueScore ?? "-"}</td>
-                      <td>{getAgentLabel(entry.agentType)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </Panel>
-        ) : isFinishedPhase ? (
-          <Panel title="最终公开结果" eyebrow="Final Result">
-            {race.harnessEntries.length > 0 ? (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>队伍</th>
-                    <th>Harness</th>
-                    <th>Reasoning</th>
-                    <th>Keyword</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {race.harnessEntries.map((entry) => (
-                    <tr key={entry.id}>
-                      <td>{entry.team.name}</td>
-                      <td>{entry.harnessScore}</td>
-                      <td>{entry.reasoningScore ?? "-"}</td>
-                      <td>{entry.keywordScore ?? "-"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : race.leaderboardEntries.length > 0 ? (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>排名</th>
-                    <th>队伍</th>
-                    <th>总分</th>
-                    <th>Agent</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {race.leaderboardEntries.map((entry) => (
-                    <tr key={entry.id}>
-                      <td>{entry.rank}</td>
-                      <td>{entry.team.name}</td>
-                      <td>{entry.totalScore}</td>
-                      <td>{getAgentLabel(entry.agentType)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p className="muted">最终公开结果尚未发布。</p>
-            )}
-          </Panel>
-        ) : (
-          <Panel title="当前阶段说明" eyebrow="Stage">
-            <div className="stack">
-              <p className="muted">
-                当前阶段主要展示赛事说明、报名时间和任务入口；过程榜单与赛马大屏将在比赛开始后开放。
-              </p>
-              <p>
-                当前默认赛道模板：{race.trackId}。即使比赛尚未开始，也已经绑定了统一底图，不是缺少背景图。
-              </p>
-              <p>
-                如果你是参赛者，请在比赛开始前完成组队、环境准备和题目理解。
-              </p>
-              <p>
-                提交流程说明：比赛开始后即可主动提交代码；比赛结束后还需要补交最终代码与 Riding Record，供 Harness 评测和赛后展示使用。
-              </p>
-            </div>
-          </Panel>
-        )}
-      </section>
-
-      <section className="grid">
-        <Panel title="题目与披露边界" eyebrow="Boundary">
-          <div className="stack">
-            <p>{race.taskDescription}</p>
-            <p>
-              训练数据：
-              {race.displayShowTrainingData
-                ? ` ${race.trainingDataSummary || "未填写"}`
-                : " Organizer 未公开"}
-            </p>
-            <ul className="bullet-list">
-              <li>
-                Organizer 评论：
-                {race.displayShowOrganizerComment ? "公开" : "不公开"}
-              </li>
-              <li>
-                Rider 代码：
-                {race.displayShowRiderCode ? "公开" : "不公开"}
-              </li>
-              <li>
-                Top Highlights：
-                {race.displayShowTopHighlights
-                  ? `公开前 ${race.displayHighlightCount} 条`
-                  : "不公开"}
-              </li>
-            </ul>
-          </div>
-        </Panel>
-
-        {isFinishedPhase ? (
-          <Panel title="赛后展示" eyebrow="Showcase">
-            {race.highlights.length === 0 && race.harnessEntries.length === 0 ? (
-              <p className="muted">尚未发布赛后展示。</p>
-            ) : (
-              <div className="stack">
-                {race.highlights.map((highlight) => (
-                  <div className="highlight-card" key={highlight.id}>
-                    <div className="highlight-card__top">
-                      <strong>{highlight.team.name}</strong>
-                      <span>
-                        {getAgentLabel(highlight.agentType)} / {highlight.score}
-                      </span>
-                    </div>
-                    <p>{highlight.excerpt}</p>
-                    {race.displayShowRiderCode ? (
-                      <pre>{highlight.codeSnippet}</pre>
-                    ) : null}
-                  </div>
-                ))}
-
-                {race.displayShowOrganizerComment && race.organizerComment ? (
-                  <blockquote className="comment-card">
-                    {race.organizerComment}
-                  </blockquote>
-                ) : null}
-              </div>
-            )}
-          </Panel>
-        ) : isRunningPhase ? (
-          <Panel title="比赛进行提示" eyebrow="Live Race">
-            <div className="stack">
-              <p className="muted">
-                当前比赛处于进行中阶段，首页会展示过程榜单与赛马大屏；赛后披露内容将在比赛结束后按 Organizer 配置公开。
-              </p>
-              <p>
-                若处于封榜阶段，公开榜单会暂时隐藏，但比赛动态仍可通过大屏继续观看。
-              </p>
-            </div>
-          </Panel>
-        ) : (
-          <Panel title="报名与准备提示" eyebrow="Preparation">
-            <div className="stack">
-              <p className="muted">
-                当前仍在报名或准备阶段，首页不展示赛马大屏，避免把尚未开始的比赛误呈现为实时竞速。
-              </p>
-              <p>
-                公开可见的内容以赛事说明、时间安排和任务入口为主。
-              </p>
-            </div>
-          </Panel>
-        )}
-      </section>
-    </>
-  );
-}
-
 export function CreateRaceForm({ action }: { action: FormAction }) {
   return <CreateRaceFormClient action={action} />;
 }
@@ -472,13 +160,11 @@ export function CreateRaceForm({ action }: { action: FormAction }) {
 function AuthForm({
   action,
   description,
-  includeRegisterFields = false,
   submitLabel,
   title,
 }: {
   action: FormAction;
   description: string;
-  includeRegisterFields?: boolean;
   submitLabel: string;
   title: string;
 }) {
@@ -488,23 +174,12 @@ function AuthForm({
         <strong>{title}</strong>
         <p className="muted">{description}</p>
       </div>
-      {includeRegisterFields ? (
-        <>
-          <label>
-            角色
-            <select defaultValue="RIDER" name="role">
-              <option value="ORGANIZER">Organizer</option>
-              <option value="RIDER">Rider</option>
-            </select>
-          </label>
-        </>
-      ) : null}
       <label>
-        用户名
+        Username
         <input name="username" placeholder="username" required />
       </label>
       <label>
-        密码
+        Password
         <input
           name="password"
           placeholder="password"
@@ -518,19 +193,191 @@ function AuthForm({
 }
 
 export const aryStyles = `
+  :root {
+    --accent: #3157a4;
+    --accent-dark: #25427d;
+    --accent-soft: rgba(49, 87, 164, 0.12);
+    --background: #f5efe7;
+    --foreground: #1e2430;
+    --muted: #6c7280;
+    --panel: rgba(255, 255, 255, 0.86);
+    --panel-border: rgba(43, 52, 68, 0.08);
+    --panel-strong: rgba(255, 255, 255, 0.96);
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --shadow: 0 16px 36px rgba(25, 30, 40, 0.08);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    border: 1px solid rgba(43, 52, 68, 0.14);
+    border-radius: 12px;
+    background: #fff;
+    padding: 0.75rem 0.9rem;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  button,
+  .button,
+  .button-secondary,
+  .button-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    border: 0;
+    border-radius: 12px;
+    cursor: pointer;
+    padding: 0 14px;
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  button,
+  .button {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .button-secondary {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(43, 52, 68, 0.12);
+    color: var(--foreground);
+  }
+
+  .button-danger {
+    background: #a73e3e;
+    color: #fff;
+  }
+
+  .muted {
+    color: var(--muted);
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 340px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .shell--public-only {
+    display: block;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 20px 32px;
+  }
+
+  .content,
+  .content--public,
+  .sidebar,
+  .stack,
+  .feedback-list,
+  .public-gallery {
+    display: grid;
+    gap: 16px;
+  }
+
+  .content--public {
+    width: 100%;
+  }
+
+  .grid,
+  .seed-grid,
+  .detail-grid,
+  .check-grid,
+  .weights-grid,
+  .local-picker-grid {
+    display: grid;
+    gap: 14px;
+  }
+
+  .grid,
+  .seed-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .check-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .weights-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .local-picker-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    padding: 22px;
+  }
+
+  .panel h2 {
+    margin: 0;
+    line-height: 1.1;
+  }
+
+  .panel__body {
+    margin-top: 14px;
+  }
+
+  .eyebrow {
+    margin: 0 0 8px;
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
   .hero {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
     gap: 20px;
-    margin-bottom: 24px;
+    padding: 20px;
+    max-width: 1240px;
+    margin: 0 auto 24px;
   }
 
   .hero__copy,
-  .hero__card,
-  .panel,
-  .race-panel {
+  .hero__card {
     background: var(--panel);
-    backdrop-filter: blur(14px);
     border: 1px solid var(--panel-border);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow);
@@ -538,42 +385,26 @@ export const aryStyles = `
 
   .hero__copy {
     padding: 36px;
-    position: relative;
-    overflow: hidden;
   }
 
-  .hero__copy::after {
-    content: "";
-    position: absolute;
-    inset: auto -60px -80px auto;
-    width: 220px;
-    height: 220px;
-    border-radius: 999px;
-    background: radial-gradient(circle, rgba(195, 78, 54, 0.24), transparent 70%);
+  .hero__card {
+    padding: 28px;
   }
 
-  .hero__eyebrow,
-  .eyebrow {
+  .hero__eyebrow {
     margin: 0 0 8px;
     color: var(--accent);
-    font-family: var(--font-display), sans-serif;
     font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 
-  .hero h1,
-  .panel h2,
-  .race-panel h2 {
-    margin: 0;
-    font-family: var(--font-display), sans-serif;
-    line-height: 1;
-  }
-
   .hero h1 {
+    margin: 0;
     max-width: 10ch;
     font-size: clamp(3rem, 7vw, 5.5rem);
+    line-height: 0.96;
   }
 
   .hero__lede {
@@ -591,34 +422,24 @@ export const aryStyles = `
   }
 
   .hero__chips span,
-  .meta-pills span {
+  .meta-pills span,
+  .file-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
     border-radius: 999px;
-    padding: 0.5rem 0.8rem;
     background: var(--accent-soft);
     color: var(--accent-dark);
+    padding: 0.5rem 0.8rem;
     font-size: 0.92rem;
     font-weight: 600;
   }
 
-  .hero__card {
-    padding: 28px;
-  }
-
-  .hero__card h2 {
-    margin-bottom: 16px;
-  }
-
-  .hero__card ul {
+  .hero__card ul,
+  .bullet-list {
+    margin: 0;
     padding-left: 1.2rem;
-    color: var(--muted);
     line-height: 1.8;
-  }
-
-  .shell {
-    display: grid;
-    grid-template-columns: 340px minmax(0, 1fr);
-    gap: 20px;
-    align-items: start;
   }
 
   .auth-entry-layout {
@@ -626,55 +447,96 @@ export const aryStyles = `
     grid-template-columns: minmax(0, 1.25fr) 320px;
     gap: 20px;
     align-items: start;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 20px 32px;
   }
 
-  .sidebar,
-  .content,
-  .stack,
-  .auth-stack,
-  .feedback-list {
+  .auth-tabs {
     display: grid;
+    gap: 14px;
+    position: relative;
+  }
+
+  .auth-tabs__toggle {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .auth-tabs__switches {
+    display: inline-grid;
+    grid-template-columns: repeat(2, minmax(0, max-content));
+    gap: 8px;
+    padding: 6px;
+    border-radius: 999px;
+    background: rgba(239, 229, 217, 0.85);
+    width: fit-content;
+  }
+
+  .auth-tabs__switch {
+    border-radius: 999px;
+    padding: 0.65rem 1rem;
+    color: var(--muted);
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .auth-tabs__panel {
+    display: none;
+  }
+
+  #auth-tab-login:checked ~ .auth-tabs__switches label[for="auth-tab-login"],
+  #auth-tab-register:checked ~ .auth-tabs__switches label[for="auth-tab-register"] {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  #auth-tab-login:checked ~ .auth-tabs__panel--login,
+  #auth-tab-register:checked ~ .auth-tabs__panel--register {
+    display: grid;
+  }
+
+  .public-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 18px 20px;
+  }
+
+  .public-header__brand a {
+    font-size: 1.2rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .public-header__nav,
+  .button-row-inline,
+  .meta-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .public-header__nav a {
+    text-decoration: none;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .public-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 16px;
   }
 
-  .content {
-    gap: 20px;
-  }
-
-  .panel,
-  .race-panel {
-    padding: 22px;
-  }
-
-  .panel__body {
-    margin-top: 14px;
-  }
-
-  .seed-grid,
-  .grid,
-  .detail-grid,
-  .button-row,
-  .weights-grid,
-  .check-grid {
-    display: grid;
-    gap: 14px;
-  }
-
-  .seed-grid,
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .race-group {
-    display: grid;
-    gap: 10px;
-  }
-
-  .race-group h3 {
-    margin: 0;
-    font-size: 1rem;
-  }
-
+  .public-card,
+  .public-link-card,
+  .picker-card,
   .race-card,
   .identity-card,
   .feedback-thread,
@@ -686,69 +548,20 @@ export const aryStyles = `
     padding: 16px;
   }
 
-  .identity-card,
-  .feedback-thread,
-  .highlight-card,
-  .message {
+  .public-link-card {
     display: grid;
-    gap: 8px;
+    gap: 6px;
+    text-decoration: none;
+    color: inherit;
   }
 
+  .public-card__top,
   .race-card__top,
   .highlight-card__top,
   .feedback-thread__top {
     display: flex;
     justify-content: space-between;
     gap: 12px;
-  }
-
-  .race-card p,
-  .muted,
-  .message p,
-  .comment-card {
-    color: var(--muted);
-  }
-
-  .shell code {
-    display: block;
-    overflow-x: auto;
-    border-radius: 12px;
-    background: #261d18;
-    color: #f7eee7;
-    padding: 0.85rem 1rem;
-  }
-
-  .race-panel {
-    display: grid;
-    gap: 18px;
-  }
-
-  .race-panel__header {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    align-items: start;
-  }
-
-  .meta-pills {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: end;
-    gap: 8px;
-  }
-
-  .detail-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .detail-grid dt {
-    font-size: 0.88rem;
-    color: var(--muted);
-  }
-
-  .detail-grid dd {
-    margin: 6px 0 0;
-    font-weight: 600;
   }
 
   .table {
@@ -784,32 +597,6 @@ export const aryStyles = `
     grid-column: 1 / -1;
   }
 
-  .button-row {
-    grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
-    align-items: center;
-  }
-
-  .button-cta-large {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 68px;
-    padding: 0 30px;
-    border-radius: 18px;
-    font-size: 1.12rem;
-    font-weight: 900;
-    letter-spacing: 0.01em;
-    box-shadow: 0 14px 30px rgba(195, 78, 54, 0.24);
-  }
-
-  .weights-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .check-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .checkbox {
     display: flex !important;
     align-items: center;
@@ -821,59 +608,19 @@ export const aryStyles = `
     width: auto;
   }
 
-  .bullet-list {
-    margin: 0;
-    padding-left: 1.2rem;
-    line-height: 1.8;
-  }
-
   .comment-card {
     margin: 0;
     line-height: 1.8;
   }
 
-  .highlight-card pre {
+  .highlight-card pre,
+  .shell code {
     overflow-x: auto;
     white-space: pre-wrap;
-    margin: 0;
     border-radius: 12px;
     background: #271f19;
     color: #f6ece1;
     padding: 12px;
-  }
-
-  .local-picker-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-  }
-
-  .picker-card {
-    display: grid;
-    gap: 10px;
-    border-radius: 16px;
-    border: 1px solid rgba(59, 43, 27, 0.1);
-    background: var(--panel-strong);
-    padding: 16px;
-  }
-
-  .button-row-inline {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .file-chip {
-    display: inline-flex;
-    align-items: center;
-    min-height: 38px;
-    padding: 0 12px;
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: var(--accent-dark);
-    font-size: 0.9rem;
-    font-weight: 600;
   }
 
   .track-preview {
@@ -902,52 +649,6 @@ export const aryStyles = `
     border: 0;
   }
 
-  .auth-tabs {
-    display: grid;
-    gap: 14px;
-    position: relative;
-  }
-
-  .auth-tabs__toggle {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .auth-tabs__switches {
-    display: inline-grid;
-    grid-template-columns: repeat(2, minmax(0, max-content));
-    gap: 8px;
-    padding: 6px;
-    border-radius: 999px;
-    background: rgba(239, 229, 217, 0.85);
-    width: fit-content;
-  }
-
-  .auth-tabs__switch {
-    border-radius: 999px;
-    padding: 0.65rem 1rem;
-    color: var(--muted);
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 160ms ease, color 160ms ease;
-  }
-
-  .auth-tabs__panel {
-    display: none;
-  }
-
-  #auth-tab-login:checked ~ .auth-tabs__switches label[for="auth-tab-login"],
-  #auth-tab-register:checked ~ .auth-tabs__switches label[for="auth-tab-register"] {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  #auth-tab-login:checked ~ .auth-tabs__panel--login,
-  #auth-tab-register:checked ~ .auth-tabs__panel--register {
-    display: grid;
-  }
-
   @media (max-width: 1100px) {
     .hero,
     .shell,
@@ -961,8 +662,9 @@ export const aryStyles = `
       grid-template-columns: 1fr;
     }
 
-    .race-panel__header {
+    .public-header {
       flex-direction: column;
+      align-items: flex-start;
     }
 
     .meta-pills {

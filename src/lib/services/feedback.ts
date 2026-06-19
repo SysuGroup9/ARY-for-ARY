@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getCompatibilityContainerForRegistration } from "@/lib/services/rider-bridge";
 import { feedbackReplySchema, feedbackSchema } from "@/lib/validation";
 
 export async function sendFeedback(authorId: string, formData: FormData) {
@@ -7,11 +8,9 @@ export async function sendFeedback(authorId: string, formData: FormData) {
     content: formData.get("content"),
   });
 
-  const team = await prisma.team.findFirst({
-    where: {
-      raceId: parsed.raceId,
-      captainId: authorId,
-    },
+  const team = await getCompatibilityContainerForRegistration({
+    raceId: parsed.raceId,
+    userId: authorId,
   });
 
   if (!team) {

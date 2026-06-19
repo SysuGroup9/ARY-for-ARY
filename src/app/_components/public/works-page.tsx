@@ -2,43 +2,51 @@ import { buildWorkSlug } from "@/lib/public-site";
 import type { RaceListItem } from "@/lib/services/races";
 
 export function WorksPageView({ race }: { race: RaceListItem }) {
+  const publicWorks = race.registrations
+    .filter((registration) => registration.work)
+    .map((registration) => {
+      return {
+        author: registration.user.username,
+        excerpt: registration.work!.summary,
+        href: `/works/${buildWorkSlug(
+          race.id,
+          registration.work!.id,
+          registration.work!.title,
+        )}`,
+        registrationId: registration.id,
+        title: registration.work!.title,
+      };
+    });
+
   return (
     <div className="stack">
       <section className="panel">
-        <p className="eyebrow">Works</p>
+        <p className="eyebrow">作品</p>
         <h1>{race.title}</h1>
         <p className="muted">
-          当前页面是按 `grs003` 拆出的公开作品集合页，第一阶段先复用 highlights 作为公开作品入口。
+          当前页面展示这场赛事已发布的公开作品，数据来源为 `Registration / Work`。
         </p>
       </section>
 
       <section className="panel">
-        <p className="eyebrow">Featured Works</p>
-        <h2>作品列表</h2>
+        <p className="eyebrow">精选作品</p>
+        <h2>已发布作品</h2>
         <p className="muted">
-          当前阶段先补最小排序和公开作品集合；完整筛选器后续继续收口。
+          这些公开作品卡片与作品详情页、骑手档案页共用同一条结果链路。
         </p>
         <div className="button-row-inline" style={{ marginBottom: "1rem" }}>
-          <span className="file-chip">排序：按分数降序</span>
+          <span className="file-chip">排序：按发布时间</span>
           <span className="file-chip">范围：仅公开作品</span>
         </div>
         <div className="stack">
-          {race.highlights.length === 0 ? (
-            <p className="muted">当前暂无公开作品。</p>
+          {publicWorks.length === 0 ? (
+            <p className="muted">暂无已发布的公开作品。</p>
           ) : (
-            race.highlights.map((highlight) => (
-              <a
-                className="public-link-card"
-                href={`/works/${buildWorkSlug(race.id, highlight.teamId, highlight.team.name)}`}
-                key={highlight.id}
-              >
-                <strong>{highlight.team.name}</strong>
-                <span>
-                  作者：
-                  {race.teams.find((team) => team.id === highlight.teamId)?.captain.username ??
-                    "未知"}
-                </span>
-                <span>{highlight.excerpt}</span>
+            publicWorks.map((work) => (
+              <a className="public-link-card" href={work.href} key={work.registrationId}>
+                <strong>{work.title}</strong>
+                <span>作者：{work.author}</span>
+                <span>{work.excerpt}</span>
               </a>
             ))
           )}

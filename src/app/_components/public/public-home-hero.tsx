@@ -17,7 +17,7 @@ export function PublicHomeHero({
 
   return (
     <section className="panel">
-      <p className="eyebrow">Hero / Featured Races</p>
+      <p className="eyebrow">主推赛事</p>
       <h1>{featured.title}</h1>
       <p className="muted">{featured.summary}</p>
       <div className="detail-grid" style={{ marginTop: "1rem" }}>
@@ -54,7 +54,7 @@ export function PublicHomeHero({
       </div>
       {model.liveRaces.length > 1 ? (
         <div className="stack" style={{ marginTop: "1rem" }}>
-          <strong>Live Race Switcher</strong>
+          <strong>进行中赛事切换</strong>
           <div className="button-row-inline">
             {model.liveRaces.map((race) => (
               <a className="button-secondary" href={`/races/${race.slug}/live`} key={race.id}>

@@ -45,7 +45,7 @@ export default function JumbotronBanner({ items }: Props) {
     <div className="jt-banner">
       {/* 导航 */}
       <div className="jt-banner-nav">
-        <span className="jt-banner-label">🏇 ARY 实时赛况</span>
+        <span className="jt-banner-label">🏇 Live Race Switcher</span>
         <div className="jt-banner-tabs">
           {items.map((it, i) => (
             <button
