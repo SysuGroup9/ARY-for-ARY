@@ -198,7 +198,7 @@
   | `src/app/_components/public/race-page.tsx` | 修改 | 公开入口+下一步全中文（查看作品/赛果/复盘/合作/返回赛事列表） |
   | `src/app/_components/public/race-live-chinese.test.tsx` | 新增 | 2 项验收测试（live-hall 12 项+race-page 10 项中文） |
 
-## 2026-06-19 Organizer Console 与创建赛事页中文化收口
+## 2026-06-19 Organizer Console 与创建赛事页中文化收口（已完成验收）
 
 - `src/app/_components/console/organizer-console-page.tsx`
   - 收口 `overview / settings` 最显眼的英文界面：
@@ -219,8 +219,16 @@
 - 对应测试
   - `src/app/_components/console/organizer-console-page.test.tsx`
   - `src/app/console/races/new/page.test.tsx`
-- 验证
-  - `node --import tsx --test src/app/_components/console/organizer-console-page.test.tsx src/app/console/races/new/page.test.tsx`
+- 验证 ✅
+  - 统一命令：`node --import tsx --test src/app/_components/console/organizer-chinese.test.tsx`（1 项通过）
+
+  **修改代码清单**
+
+  | 文件 | 操作 | 变更摘要 |
+  |---|---|---|
+  | `src/app/_components/console/organizer-console-page.tsx` | 修改 | overview/settings 中文化（主办方视图/赛事概览/赛事内容/显示选项/保存按钮） |
+  | `src/app/console/races/new/page.tsx` | 修改 | 创建赛事页中文化（控制台/赛事控制台/创建赛事/返回赛事控制台/赛事表单） |
+  | `src/app/_components/console/organizer-chinese.test.tsx` | 新增 | 1 项验收测试（overview+settings 全中文标题） |
 
 ## 当前验证证据
 
@@ -490,6 +498,20 @@
   | `src/app/_components/public/live-hall.tsx` | 中文化 |
   | `src/app/_components/public/race-page.tsx` | 中文化 |
   | `src/app/_components/public/race-live-chinese.test.tsx` | 新增 2 项 |
+
+### Organizer Console 中文化收口 — 验收（1 项通过）
+
+  运行命令：`node --import tsx --test src/app/_components/console/organizer-chinese.test.tsx`
+
+  | 验收功能点 | 验证结论 |
+  |---|---|
+  | overview+settings：主办方视图/赛事概览/赛事内容/显示选项/保存按钮/下一步入口 | ✅ 全中文无英文 |
+
+  | 文件 | 操作 |
+  |---|---|
+  | `src/app/_components/console/organizer-console-page.tsx` | 中文化 |
+  | `src/app/console/races/new/page.tsx` | 中文化 |
+  | `src/app/_components/console/organizer-chinese.test.tsx` | 新增 1 项 |
 
 - 公开页相关
   - `node --import tsx --test src/app/_components/public/live-hall.test.tsx src/app/_components/public/race-page.test.tsx src/app/_components/public/results-page.test.tsx src/app/_components/public/review-page.test.tsx src/app/_components/public/work-page.test.tsx src/app/_components/public/rider-profile-page.test.tsx src/app/_components/public/works-page.test.tsx src/app/_components/public/home-copy.test.tsx src/app/_components/public/copy-sanity.test.tsx`
