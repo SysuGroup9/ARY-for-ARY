@@ -255,7 +255,11 @@
 - `src/lib/viewer-access.ts`
   - 首页顶部登录主入口文案改回可理解的登录入口，不再显示误导性的“返回公开站”。
 - 验证
-  - `node --import tsx --test src/lib/viewer-access.test.ts src/app/_components/public/live-hall.test.tsx`
+  - `node --import tsx --test src/lib/viewer-access.test.ts src/lib/services/adapter-freshness-convergence.test.ts`
+  - 仅做静态逻辑验证，不对 UI 渲染做自动化测试
+  - 自动化：13/13 全部通过（viewer-access 11 项 + adapter-freshness 2 项）
+  - 新增 `src/lib/services/adapter-freshness-convergence.test.ts` 覆盖 session 时间优先级（`lastActiveAt` > `updatedAt` > `entry.createdAt`）和 `resolveMotionState` stale 检测
+  - 需手动验收 12 项：登录页 seed/demo 移除 (M-1~M-3)、多场赛事滚动切换 (M-4)、回退单场 (M-5)、在线数赛道一致性 (M-6)、`force-dynamic` 配置 (M-7)、JumbotronInline 内嵌顶部 (M-8)、无大屏控制台入口 (M-9)、`race-snapshot.ts` 时间字段 (M-10~M-11)、`STALE_THRESHOLD_MS` 阈值 (M-12)
 
 ## 2026-06-19 登录入口 / 报名入口 / 控制台入口收口
 
@@ -589,6 +593,54 @@
   | `src/app/_components/console/organizer-console-page.tsx` | 中文化 |
   | `src/app/console/races/new/page.tsx` | 中文化 |
   | `src/app/_components/console/organizer-chinese.test.tsx` | 新增 1 项 |
+
+### 公开入口 / Live Hall / 大屏在线态收口 — 验收（13 项通过）
+
+  仅做静态逻辑验证，不对 UI 渲染做自动化测试。
+
+  运行命令：`node --import tsx --test src/lib/viewer-access.test.ts src/lib/services/adapter-freshness-convergence.test.ts`
+
+  | 验收功能点 | 验证结论 |
+  |---|---|
+  | **已验证 (自动化 13 项)** | |
+  | `getPublicAuthAction` 匿名/已登录文案区分 | ✅ null → "登录 / 注册"，有角色 → "身份入口" |
+  | 登录入口不含"返回公开站" | ✅ 不出现误导性文案 |
+  | `getConsoleEntryTarget` 分区控制 | ✅ null → null，有角色 → /console |
+  | `getConsoleHomeSections` 全角色覆盖 | ✅ 7 种组合，含 null/空数组 |
+  | `getLoginRedirectTarget` / `getHomeRedirectTarget` | ✅ 已登录 → /，首页永远公开 |
+  | `getCreateRacePageAccess` 组织者门控 | ✅ ORGANIZER 允许，RIDER 拒绝 |
+  | `getConsoleRaceViewAccess` 视图守卫 | ✅ organizer/rider/judge + 赛事范围 |
+  | `getRoleCapabilities` 能力映射 | ✅ organizer/rider/null 能力矩阵 |
+  | `getConsoleAdminAccess` / `getConsoleScreenAccess` | ✅ ADMIN/ORGANIZER 控制台边界 |
+  | `getConsoleDefaultHref` 角色默认路由 | ✅ ADMIN → users，ORGANIZER → races |
+  | `getCreateRaceBackTarget` | ✅ 返回首页 / |
+  | mapToRacingEntries session 时间优先级 | ✅ `lastActiveAt` > `updatedAt` > `entry.createdAt` |
+  | resolveMotionState stale 检测 | ✅ running/sprinting > 5min → stale |
+  | **未验证 (手动验收 12 项)** | |
+  | `public-header.tsx` 双入口并存 | M-8 浏览器确认 |
+  | `login/page.tsx` 移除 seed/demo | M-1~M-3 浏览器确认 |
+  | `live-hall.tsx` 大屏顶部 + 隐藏控制台入口 | M-8~M-9 浏览器确认 |
+  | `JumbotronInline.tsx` 内嵌渲染 | M-8 浏览器确认 |
+  | `race-snapshot.ts` session 时间字段 | M-10~M-11 代码审查 |
+  | `JumbotronClient.tsx` 在线数口径一致 | M-6 浏览器对比 |
+  | `jumbotron/[raceId]/page.tsx` 多场滚动 | M-4~M-5, M-7 浏览器 + 代码审查 |
+
+  **修改代码清单**
+
+  | 文件 | 操作 | 变更摘要 | 关联验收点 |
+  |---|---|---|---|
+  | `src/lib/viewer-access.ts` | 修改 | `getPublicAuthAction()` public-first：匿名→"登录 / 注册"，已登录→"身份入口"，无"返回公开站" | 已验证 1-2 |
+  | | 修改 | `getConsoleEntryTarget()` 仅对有 Console section 的用户返回 /console | 已验证 3-4 |
+  | `src/app/_components/public/public-header.tsx` | 修改 | 公开入口与 Console 次级入口并存渲染 | 未验证 |
+  | `src/app/login/page.tsx` | 修改 | 移除 seed/demo 预置账号展示面板；返回按钮"返回公开首页" | 未验证 |
+  | `src/app/_components/public/live-hall.tsx` | 修改 | JumbotronInline 直接内嵌顶部；移除"打开大屏控制台"公开暴露 | 未验证 |
+  | `src/app/JumbotronInline.tsx` | 修改 | 从点击展开式预览改为直接内嵌 JumbotronClient | 未验证 |
+  | `src/lib/services/race-snapshot.ts` | 修改 | Prisma select 增加 session.lastActiveAt/updatedAt 字段 | 未验证 |
+  | `src/lib/jumbotron/adapter.ts` | 修改 | `mapToRacingEntries()` updatedAt 优先 latestSession.lastActiveAt | 已验证 12 |
+  | `src/app/jumbotron/[raceId]/JumbotronClient.tsx` | 修改 | 在线数改用 resolveMotionState，与赛道 stale 判定同一口径 | 未验证 |
+  | `src/app/jumbotron/[raceId]/page.tsx` | 修改 | 多场 live race 可滚动切换；无 live race 回退单场渲染 | 未验证 |
+  | `src/lib/viewer-access.test.ts` | 已有 | 覆盖访问控制逻辑 (11 项) | 已验证 1-11 |
+  | `src/lib/services/adapter-freshness-convergence.test.ts` | 新增 | Session 时间优先级 + resolveMotionState stale 检测 (2 项) | 已验证 12-13 |
 
 - 公开页相关
   - `node --import tsx --test src/app/_components/public/live-hall.test.tsx src/app/_components/public/race-page.test.tsx src/app/_components/public/results-page.test.tsx src/app/_components/public/review-page.test.tsx src/app/_components/public/work-page.test.tsx src/app/_components/public/rider-profile-page.test.tsx src/app/_components/public/works-page.test.tsx src/app/_components/public/home-copy.test.tsx src/app/_components/public/copy-sanity.test.tsx`
