@@ -79,3 +79,12 @@ test("home gallery renders readable Chinese public copy instead of mojibake text
   assert.match(html, /进入赛事页/);
   assert.doesNotMatch(html, /鏆|杩|浣|璧|鍚|鎴|寰|绮/);
 });
+
+test("home gallery shows continue-racing shortcuts for rider users", () => {
+  const html = renderToStaticMarkup(
+    <HomeGallery canManage={false} canRide={true} model={model} />,
+  );
+
+  assert.match(html, /继续参赛/);
+  assert.match(html, /提交赛后材料/);
+});

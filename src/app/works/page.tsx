@@ -17,27 +17,28 @@ export default async function WorksIndexPage() {
       <PublicHeader roles={sessionUser?.roles ?? null} />
       <section className="shell shell--public-only">
         <section className="content content--public">
-          <Panel title="Works" eyebrow="Public Works">
+          <Panel title="作品" eyebrow="公开作品">
             <div className="stack" style={{ marginBottom: "1rem" }}>
               <p className="muted">
-                当前先提供最小排序视图：按分数降序展示公开作品。筛选器后续再补到完整 `grs003` 语义。
+                当前先提供最小排序视图：按分数降序展示公开作品。筛选器后续再补到完整
+                `grs003` 语义。
               </p>
             </div>
           </Panel>
 
           <section className="grid">
-            <Panel title="赛事上下文" eyebrow="Race Context">
+            <Panel title="赛事上下文" eyebrow="赛事上下文">
               <div className="stack">
                 <p className="muted">
-                  当前公开作品来自已结束赛事的 highlights 数据，后续会进一步区分不同 Race 的公开作品集合。
+                  当前公开作品主要来自已结束赛事的公开作品资产，后续会继续补齐更完整的赛事分组和筛选语义。
                 </p>
                 <a className="button-secondary" href="/races">
-                  返回 Races
+                  返回赛事列表
                 </a>
               </div>
             </Panel>
 
-            <Panel title="筛选与排序" eyebrow="Filter / Sort">
+            <Panel title="筛选与排序" eyebrow="筛选 / 排序">
               <div className="stack">
                 <span className="file-chip">排序：按分数降序</span>
                 <span className="file-chip">范围：仅公开作品</span>
@@ -45,13 +46,17 @@ export default async function WorksIndexPage() {
             </Panel>
           </section>
 
-          <Panel title="作品卡片" eyebrow="Work Cards">
+          <Panel title="作品卡片" eyebrow="作品卡片">
             <div className="stack">
               {works.length === 0 ? (
                 <p className="muted">暂无公开作品。</p>
               ) : (
                 works.map((work) => (
-                  <a className="public-link-card" href={`/works/${work.id}`} key={work.id}>
+                  <a
+                    className="public-link-card"
+                    href={`/works/${work.id}`}
+                    key={work.id}
+                  >
                     <strong>{work.title}</strong>
                     <span>作者：{work.author}</span>
                     <span>所属赛事：{work.raceTitle}</span>
@@ -63,7 +68,7 @@ export default async function WorksIndexPage() {
             </div>
           </Panel>
 
-          <Panel title="精选作品" eyebrow="Featured Works">
+          <Panel title="精选作品" eyebrow="精选作品">
             <div className="stack">
               {works.length === 0 ? (
                 <p className="muted">当前暂无精选作品。</p>

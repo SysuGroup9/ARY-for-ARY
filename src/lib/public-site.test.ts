@@ -300,6 +300,10 @@ test("sorts featured works by score and title", () => {
 
 test("maps race phase to public home CTA", () => {
   assert.deepEqual(
+    getRacePrimaryCta({ slug: "race_signup--test", phase: "registration" }),
+    { href: "/races/race_signup--test/register", label: "立即报名" },
+  );
+  assert.deepEqual(
     getRacePrimaryCta({ slug: "race_active--test", phase: "active" }),
     { href: "/races/race_active--test/live", label: "进入实况大厅" },
   );

@@ -5,6 +5,7 @@ import { useRef, useState, type ChangeEvent } from "react";
 interface Props {
   action: (formData: FormData) => void | Promise<void>;
   raceId: string;
+  returnTo?: string;
 }
 
 const defaultCode =
@@ -12,7 +13,7 @@ const defaultCode =
 const defaultRecord =
   "先澄清输入边界，再回顾关键决策，最后总结验证结果与遗留问题。";
 
-export default function FinalSubmissionFormClient({ action, raceId }: Props) {
+export default function FinalSubmissionFormClient({ action, raceId, returnTo }: Props) {
   const [codeLabel, setCodeLabel] = useState("solution.ts");
   const [codeContent, setCodeContent] = useState(defaultCode);
   const [recordLabel, setRecordLabel] = useState("riding-record.txt");
@@ -35,6 +36,7 @@ export default function FinalSubmissionFormClient({ action, raceId }: Props) {
   return (
     <form action={action} className="form-grid">
       <input name="raceId" type="hidden" value={raceId} />
+      {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
       <div className="full local-picker-grid">
         <div className="picker-card">
           <strong>赛后代码文件</strong>

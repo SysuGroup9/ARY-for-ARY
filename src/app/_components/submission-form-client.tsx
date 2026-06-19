@@ -5,12 +5,13 @@ import { useRef, useState, type ChangeEvent } from "react";
 interface Props {
   action: (formData: FormData) => void | Promise<void>;
   raceId: string;
+  returnTo?: string;
 }
 
 const defaultCode =
   "export function solve(input: number[]) {\n  return [...input].sort((a, b) => a - b);\n}";
 
-export default function SubmissionFormClient({ action, raceId }: Props) {
+export default function SubmissionFormClient({ action, raceId, returnTo }: Props) {
   const [codeLabel, setCodeLabel] = useState("solution.ts");
   const [codeContent, setCodeContent] = useState(defaultCode);
   const codeInputRef = useRef<HTMLInputElement>(null);
@@ -30,6 +31,7 @@ export default function SubmissionFormClient({ action, raceId }: Props) {
   return (
     <form action={action} className="form-grid">
       <input name="raceId" type="hidden" value={raceId} />
+      {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
       <div className="full local-picker-grid">
         <div className="picker-card">
           <strong>本地代码文件</strong>

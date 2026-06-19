@@ -1,3 +1,4 @@
+import { logoutAction } from "@/app/actions";
 import type { ReactNode } from "react";
 
 export type ConsoleNavItem = {
@@ -94,6 +95,11 @@ export function ConsoleShell({
           <a href="/">ARY</a>
           <span>控制台</span>
         </div>
+        <form action={logoutAction}>
+          <button className="button-secondary" type="submit">
+            退出登录
+          </button>
+        </form>
         <nav className="console-nav" aria-label="控制台导航">
           {navItems.map((item) => (
             <a href={item.href} key={item.href}>

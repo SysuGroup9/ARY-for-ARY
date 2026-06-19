@@ -153,6 +153,16 @@ export function HomeGallery({
             <a className="button-secondary" href="/races">
               查看赛事报名页
             </a>
+            {canRide ? (
+              <a className="button-secondary" href="/console/races">
+                继续参赛
+              </a>
+            ) : null}
+            {canRide ? (
+              <a className="button-secondary" href="/console/races">
+                提交赛后材料
+              </a>
+            ) : null}
             <a className="button-secondary" href="/races/new">
               我要办赛
             </a>

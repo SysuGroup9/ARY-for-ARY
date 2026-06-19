@@ -1,9 +1,11 @@
+import { logoutAction } from "@/app/actions";
 import type { AppRole } from "@/lib/user-roles";
 import { getConsoleEntryTarget, getPublicAuthAction } from "@/lib/viewer-access";
 
 export function PublicHeader({ roles }: { roles: readonly AppRole[] | null }) {
   const authAction = getPublicAuthAction({ roles });
   const consoleHref = getConsoleEntryTarget(roles);
+  const isAuthenticated = Boolean(roles?.length);
 
   return (
     <header className="public-header">
@@ -17,9 +19,17 @@ export function PublicHeader({ roles }: { roles: readonly AppRole[] | null }) {
         <a href="/cooperation">合作</a>
       </nav>
       <div className="public-header__actions">
-        <a className="button-secondary" href={authAction.href}>
-          {authAction.label}
-        </a>
+        {isAuthenticated ? (
+          <form action={logoutAction}>
+            <button className="button-secondary" type="submit">
+              退出登录
+            </button>
+          </form>
+        ) : (
+          <a className="button-secondary" href={authAction.href}>
+            {authAction.label}
+          </a>
+        )}
         {consoleHref ? (
           <a className="button-secondary" href={consoleHref}>
             进入控制台
