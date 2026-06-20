@@ -7,7 +7,7 @@
 - 当前代码库已经从单页混合模式推进到分层结构，核心分区包括公开站、赛事控制台、管理控制台、大屏控制台和大屏展示层。
 - 公开页面主路线已经落到 `/races`、`/works`、`/riders`、`/cooperation`、`/console/*` 这一组 `grs003` 推荐路径上。
 - 控制台入口、评委视图、骑手视图、主办方视图，以及公开页中的大部分用户可见文案，已经收口到中文。
-- 大屏控制台与赛事控制台已经按能力边界拆开；在企业能力尚未独立建模前，大屏控制台先仅向 `Admin` 开放，不再默认暴露给 Organizer。
+- 大屏控制台与赛事控制台已经按能力边界拆开；当前已重新向 `Organizer` 开放大屏控制台入口，但 Organizer 只能看到自己主办的赛事，`Admin` 仍可查看全部赛事。
 - GitHub OAuth 主链路代码与 CA handshake / signal / snapshot fetch 运行时桥已经具备，且仓库内新增了可运行的本地 connector demo。
 - Jumbotron 与大屏赛道渲染样式仍以“尽量保留最早样式”为原则，这几轮中文化收口没有改动赛道视觉结构。
 - 项目已完成 `grs003` 核心要求：公开端/控制台/大屏页面就位、4 角色体系、领域模型落地、Race 8 状态机、CA 最小闭环、Runner 降级。剩余 UI 视觉升级和 Team→Registration 深层迁移在后续迭代。
@@ -15,6 +15,25 @@
 
 ## 已完成收口
 - 企业合作办赛审批链路：`submitCooperationRequest` → `listCooperationRequests` → `approveCooperationRequest` / `rejectCooperationRequest`，Admin 可在 `/console/admin/race-requests` 查看并审批
+
+## 2026-06-20 Organizer 大屏控制台入口恢复
+
+### 概述
+
+按最新产品要求，恢复主办方进入大屏控制台的能力：Organizer 可从自己主办赛事的主办方视图直接进入大屏控制台，并在 `/console/screen` 中只看到自己主办的赛事；Admin 仍保留全部赛事的大屏控制台访问范围。
+
+### 修改代码清单
+
+| 文件 | 操作 | 变更摘要 |
+|---|---|---|
+| `src/app/_components/console/organizer-console-page.tsx` | 修改 | 在主办方「下一步入口」中新增「大屏控制台」按钮，跳转到 `/console/screen/${raceSlug}/jumbotron`；说明文案改为主办方可选择展示模式 |
+| `src/lib/viewer-access.ts` | 修改 | `canUseScreen`、`getConsoleHomeSections()` 和 `getConsoleScreenAccess()` 重新允许 `ORGANIZER` 使用/看到大屏控制台 |
+| `src/lib/services/console-routes.ts` | 修改 | `listScreenConsoleRacesForUser()` 改为 `ADMIN` 返回全部赛事、`ORGANIZER` 返回自己主办的赛事，其他角色返回空列表 |
+
+### 验证
+
+- `npm test -- --runInBand src/app/_components/console/console-copy.test.tsx` 未执行成功：项目当前没有 `test` script。
+- `npm run lint` 已运行但失败；失败项为仓库既有 lint 问题，输出中未出现本次修改文件的新增错误。
 
 ## 2026-06-20 Rider 控制台「作品提交」Section 收口
 
@@ -188,7 +207,9 @@ Admin 登录 → /console/admin/race-requests → RaceRequestsPageView
   - `npm --prefix organizer_demo/ca_connector_demo run typecheck` 已通过。
   - `powershell -Command "$env:DATABASE_URL='file:./dev.db'; npm --prefix organizer_demo/ca_connector_demo run typecheck; npm run build"` 已通过。
 
-## 2026-06-19 大屏控制台权限边界收口（已完成验收）
+## 2026-06-19 大屏控制台权限边界收口（历史记录，已被 2026-06-20 Organizer 入口恢复覆盖）
+
+> 注：本节记录 2026-06-19 的阶段性决策；2026-06-20 已按最新要求恢复 Organizer 大屏控制台入口，当前状态以「2026-06-20 Organizer 大屏控制台入口恢复」为准。
 
 - `src/lib/viewer-access.ts`
   - `canUseScreen`、`getConsoleHomeSections()` 和 `getConsoleScreenAccess()` 不再把 Organizer 视为大屏控制台用户。

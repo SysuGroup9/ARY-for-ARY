@@ -8,8 +8,8 @@ export const dynamic = "force-dynamic";
 export default async function CalibratorPage() {
   const user = await loadDatabaseUser();
 
-  // 仅 Organizer 可访问
-  if (!user || !hasRole(user.roles, "ORGANIZER")) {
+  // 仅 Organizer 与 ADMIN 可访问
+  if (!user || !(hasRole(user.roles, "ORGANIZER") || hasRole(user.roles, "ADMIN"))) {
     redirect("/");
   }
 

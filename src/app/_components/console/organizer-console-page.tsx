@@ -136,9 +136,12 @@ function renderOrganizerSection({
               >
                 报告
               </a>
+              <a className="button-secondary" href={`/console/screen/${raceSlug}/jumbotron`}>
+                大屏控制台
+              </a>
             </div>
             <p className="muted">
-              企业能力尚未独立建模；当前大屏控制台仅向管理员开放，后续再从独立企业权限收口。
+              主办方可从这里进入大屏控制台，选择当前赛事需要的展示模式。
             </p>
           </Panel>
         </section>
