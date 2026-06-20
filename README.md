@@ -12,6 +12,10 @@ ARY 是一个面向 Agent Racing 演示场景的全栈项目，当前仓库已�
 - `Prisma 7`
 - `SQLite`
 
+## 演示视频
+
+- [ARY GRS 003 功能演示](https://www.bilibili.com/video/BV18yjn6DEt2/)
+
 ## 项目入口
 
 常用页面：
