@@ -118,19 +118,20 @@ export async function listScreenConsoleRacesForUser(input: {
   const roles = normalizeRoles(input.roles);
   const races = await listRaces();
 
-  if (hasRole(roles, "ADMIN")) {
-    // 企业能力尚未独立建模，当前由 Admin 代理大屏控制台可见范围。
-    return races.map((race: RaceListItem) => {
-      const slug = buildRaceSlug(race.id, race.title);
-      return {
-        defaultHref: `/console/screen/${slug}/jumbotron`,
-        race,
-        slug,
-      };
-    });
-  }
+  const visibleRaces = hasRole(roles, "ADMIN")
+    ? races
+    : hasRole(roles, "ORGANIZER")
+      ? races.filter((race: RaceListItem) => race.organizerId === input.userId)
+      : [];
 
-  return [];
+  return visibleRaces.map((race: RaceListItem) => {
+    const slug = buildRaceSlug(race.id, race.title);
+    return {
+      defaultHref: `/console/screen/${slug}/jumbotron`,
+      race,
+      slug,
+    };
+  });
 }
 
 export async function getConsoleRaceBySlug(raceSlug: string): Promise<{
