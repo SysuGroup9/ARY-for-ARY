@@ -45,3 +45,14 @@ export function hasRole(roles: readonly AppRole[], role: AppRole): boolean {
 export function getDefaultActiveRole(roles: readonly AppRole[]): AppRole {
   return normalizeRoles(roles)[0];
 }
+
+const ROLE_LABELS: Record<AppRole, string> = {
+  ADMIN: "管理员",
+  JUDGE: "评委",
+  ORGANIZER: "主办方",
+  RIDER: "骑手",
+};
+
+export function getRoleLabels(roles: readonly AppRole[]): string[] {
+  return normalizeRoles(roles).map((r) => ROLE_LABELS[r]);
+}

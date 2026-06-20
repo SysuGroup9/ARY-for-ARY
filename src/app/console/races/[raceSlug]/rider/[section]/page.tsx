@@ -78,6 +78,7 @@ export default async function RiderConsoleSectionPage({ params }: Props) {
         labels: riderSectionLabels,
       })}
       title={`${context.race.title} / 骑手`}
+      user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
       <RiderConsolePageView
         race={context.race}

@@ -75,6 +75,7 @@ export default async function OrganizerConsoleSectionPage({ params }: Props) {
         labels: organizerSectionLabels,
       })}
       title={`${context.race.title} / 主办方`}
+      user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
       <OrganizerConsolePageView
         judgeAssignments={judgeAssignments}

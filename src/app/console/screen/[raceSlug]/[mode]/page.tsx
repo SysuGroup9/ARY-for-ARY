@@ -65,6 +65,7 @@ export default async function ScreenConsoleModePage({ params }: Props) {
         labels: screenModeLabels,
       })}
       title={`${context.race.title} / 大屏`}
+      user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
       <ScreenConsolePageView
         mode={mode as (typeof screenConsoleModes)[number]}

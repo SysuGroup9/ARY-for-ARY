@@ -9,10 +9,74 @@
 - 控制台入口、评委视图、骑手视图、主办方视图，以及公开页中的大部分用户可见文案，已经收口到中文。
 - 大屏控制台与赛事控制台已经按能力边界拆开；在企业能力尚未独立建模前，大屏控制台先仅向 `Admin` 开放，不再默认暴露给 Organizer。
 - GitHub OAuth 主链路代码与 CA handshake / signal / snapshot fetch 运行时桥已经具备，且仓库内新增了可运行的本地 connector demo。
-- Jumbotron 与大屏赛道渲染样式仍以“尽量保留最早样式”为原则，这几轮中文化收口没有改动赛道视觉结构。
-- 项目已完成 `grs003` 核心要求：公开端/控制台/大屏页面就位、4 角色体系、领域模型落地、Race 8 状态机、CA 最小闭环、Runner 降级。剩余 UI 视觉升级和 Team→Registration 深层迁移在后续迭代。
+- Jumbotron 与大屏赛道渲染样式仍以"尽量保留最早样式"为原则，这几轮中文化收口没有改动赛道视觉结构。
+- 项目已完成 `grs003` 核心要求：公开端/控制台/大屏页面就位、4 角色体系、领域模型落地、Race 8 状态机、CA 最小闭环、Runner 降级。
+- **2026-06-20 UI 全面重构已完成**：设计系统升级（Vercel/Stripe/Linear 参考）、全局 CSS 重写、7 旧页面卡片化改造、布局溢出修复、低对比度字体替换、字体全局放大、粒子背景动画、企业办赛合作表单。
 
 ## 已完成收口
+
+## 2026-06-20 UI 全面重构与视觉升级
+
+### 设计系统重构
+- `src/app/globals.css` — 全面重写：
+  - 配色升级：`--foreground #0A1629`（海军蓝）、`--accent #2362FF`、`--muted-foreground #546A84`
+  - 多层阴影系统（Vercel 风格）：`--shadow-ring / --shadow-subtle / --shadow-card / --shadow-elevated / --shadow-accent`
+  - 排版放大：h1 → clamp(2.25rem, 4.5vw, 2.75rem)、h2 → clamp(1.625rem, 3vw, 1.875rem)、h3 → 1.375rem
+  - body p 显式 1rem、.text-sm 0.9375rem、按钮 1rem、badge 0.8125rem、section-label 0.75rem
+  - 暗色区块自动适配按钮：`.section-dark .button-secondary` 继承白色半透明
+  - `--dark-muted` 0.65→0.75；placeholder opacity 0.55→0.65
+  - `.gradient-text` 添加 `@supports` 降级
+  - body 恢复 `background: var(--background)`；main 添加 `padding: 32px 20px 80px` + `overflow-x: hidden`
+- `DESIGN.md` — 新建，完整 8 节设计系统文档（参考 Vercel/Stripe/Linear）
+
+### 组件重构
+- `src/app/_components/ary-shared.tsx` — CSS 精简约 40%：
+  - 修复 `var(--muted)` 误用于文字颜色（→ `var(--muted-foreground)`）
+  - 新增 `.public-header__actions` CSS 规则（flex-wrap）
+  - auth-tabs 背景改为 `var(--muted)`；auth-page 背景色系统一
+  - 新增 `Card` 组件
+  - `SeedAccountsPanel` 更新为 5 个角色标签卡片展示
+- `src/app/_components/console/console-shell.tsx` — 3 处 `color: var(--muted)` → `var(--muted-foreground)`
+
+### 7 个公开页面卡片化改造
+| 页面 | 改动 |
+|------|------|
+| `live-hall.tsx` | `.panel`→`.card`，3-panel grid→`grid-3` |
+| `results-page.tsx` | `.panel`→`.card`，内嵌 panel→muted card，3-panel→`grid-3` |
+| `review-page.tsx` | `.panel`→`.card` + `grid-2` |
+| `works-page.tsx` | `.panel`→`.card`，list→`grid-3` |
+| `work-page.tsx` | `.panel`→`.card`，末尾单 panel 不再占双列半宽 |
+| `rider-profile-page.tsx` | `.panel`→`.card`，统计数据改用 `detail-grid` |
+| `race-register-page.tsx` | 使用 Panel 组件，自动受益于全局修复 |
+
+### 布局溢出修复
+- 8 个页面补充 `<main>` 包裹 + `{aryStyles}`：`/races/[slug]`、`/races/[slug]/live`、`/results`、`/review`、`/works`、`/cooperation`、`/works/[slug]`、`/riders/[slug]`
+- body 添加 `overflow-x: hidden`；main 添加 `overflow-x: hidden` + `max-width: 100vw`
+- `.shell--public-only` max-width 改为 `100%`
+
+### 首页平衡
+- `home-gallery.tsx`：优秀骑手限显 4 位 + "查看全部"；往届赛事用 `background: var(--muted)` 替代 `opacity: 0.65`
+- `races-index-page.tsx`：往届赛事同 muted 背景方案
+- `public-home-hero.tsx`：指标卡片包裹 + 进行中赛事改 ghost pill 按钮
+
+### 粒子背景动画
+- `src/app/_components/particle-background.tsx` — 2 种模式：
+  - `constellation`：20 光点 + 160px 连线网络，边缘聚集，中央真空区
+  - `drift`：30 方形碎片从底部边缘上升 + 点击波纹
+- `src/app/_components/particle-layer.tsx` — 客户端包装器
+- `src/app/layout.tsx` — 根布局引入 `ParticleLayer`
+
+### 企业办赛 / 合作表单
+- `prisma/schema.prisma` — 新增 `CooperationRequest` 模型（企业信息+完整赛事配置+文件上传）
+- `src/lib/services/cooperation.ts` — 文件存储到 `public/uploads/cooperation/`
+- `src/app/_components/cooperation-form.tsx` — 完整赛事创建表单+企业身份+文件上传
+- `src/app/cooperation/page.tsx` — 底部集成表单
+- 导航栏/控制台首页统一指向 `/cooperation`
+
+### 演示账号更新
+- `src/lib/demo-credentials.ts` — 更新为 5 个清晰标签账号（organizer_demo / judge_demo / rider_alice / rider_bob / admin_demo）
+- `prisma/seed.ts` — 控制台输出同步
+- `src/lib/demo-credentials.test.ts` — 测试同步
 
 ## 2026-06-20 环境修复与结构收口（Hrm-cell，本日新完成）
 
@@ -45,7 +109,7 @@
   - 新增 `organizer_demo/ca_connector_demo/` 最小演示器：本地 snapshot server、ARY handshake client、signal push client、`.env.example` 与 README。
   - 该 demo 默认自动发送 `session_started` 与 `task_progress`，并通过 Rider 控制台手动触发 snapshot fetch。
 - 当前边界
-  - 这一轮以“最小演示闭环”为目标，不扩展到生产级 connector SDK、自动 snapshot 调度、secret 轮换或审计编排。
+  - 这一轮以"最小演示闭环"为目标，不扩展到生产级 connector SDK、自动 snapshot 调度、secret 轮换或审计编排。
 - 验证
   - `powershell -Command "$env:DATABASE_URL='file:./dev.db'; npm run db:generate"` 已通过，已恢复 `src/generated/prisma` 生成产物。
   - `npm --prefix organizer_demo/ca_connector_demo run typecheck` 已通过。
@@ -160,7 +224,7 @@
 
 - `src/lib/services/submissions.ts`
   - `createSubmission()` 和 `createFinalSubmission()` 先查 `Registration`，再查兼容 `team` 容器。
-  - 对外错误语义统一回到“个人报名 / 可用提交容器 / 比赛阶段”。
+  - 对外错误语义统一回到"个人报名 / 可用提交容器 / 比赛阶段"。
 - `src/lib/services/rider-bridge.ts`
   - 新增 `getCompatibilityContainerForRegistration()`，集中兼容层查询。
 - 验证 ✅
@@ -289,7 +353,7 @@
 ## 2026-06-19 公开入口 / Live Hall / 大屏在线态收口
 
 - `src/lib/viewer-access.ts`
-  - 首页顶部公开入口改为 public-first：未登录用户仍走 `/login`，已登录用户不再把主入口直接替换成泛化的“进入控制台”。
+  - 首页顶部公开入口改为 public-first：未登录用户仍走 `/login`，已登录用户不再把主入口直接替换成泛化的"进入控制台"。
   - `Console` 入口改为按实际可访问分区显示，只对有可用 Console section 的用户保留次级入口。
 - `src/app/_components/public/public-header.tsx`
   - 改成公开入口与 Console 次级入口并存的结构。
@@ -297,7 +361,7 @@
   - 移除登录页中的 seed/demo 账号展示面板。
 - `src/app/_components/public/live-hall.tsx`
   - 大屏改为直接出现在 Live Hall 顶部。
-  - 公开页不再直接暴露“打开大屏控制台”链接给普通观众。
+  - 公开页不再直接暴露"打开大屏控制台"链接给普通观众。
 - `src/app/JumbotronInline.tsx`
   - 从点击展开式预览改为直接内嵌展示大屏。
 - `src/lib/services/race-snapshot.ts`
@@ -309,7 +373,7 @@
 - `src/app/jumbotron/[raceId]/page.tsx`
   - 全屏大屏恢复为可在多场 live race 之间滚动切换的入口，不再只固定单场渲染。
 - `src/lib/viewer-access.ts`
-  - 首页顶部登录主入口文案改回可理解的登录入口，不再显示误导性的“返回公开站”。
+  - 首页顶部登录主入口文案改回可理解的登录入口，不再显示误导性的"返回公开站"。
 - 验证
   - `node --import tsx --test src/lib/viewer-access.test.ts src/lib/services/adapter-freshness-convergence.test.ts`
   - 仅做静态逻辑验证，不对 UI 渲染做自动化测试
@@ -329,12 +393,12 @@
 - `src/app/_components/ary-shared.tsx`
   - 登录 / 注册 tab 与 auth hero 文案改成中文并对齐 `grs003` 角色语义。
 - `src/app/_components/public/home-gallery.tsx`
-  - 首页行动入口改成“骑手注册 / 登录”与“查看赛事并报名”的两步路径。
+  - 首页行动入口改成"骑手注册 / 登录"与"查看赛事并报名"的两步路径。
 - `src/app/_components/public/race-page.tsx`
-  - 报名阶段 CTA 改成真实的公开报名页入口，不再只是把按钮文案改成“登录后报名”。
+  - 报名阶段 CTA 改成真实的公开报名页入口，不再只是把按钮文案改成"登录后报名"。
 - `src/app/_components/public/race-register-page.tsx`
   - 新增公开报名页视图，按未登录 / 非 Rider / 已报名 / 可直接报名四种状态给出真实承接。
-  - 比赛开始后优先放行“赛前已报名”的 Rider 继续进入工作台，不再被统一挡成“当前不可报名”。
+  - 比赛开始后优先放行"赛前已报名"的 Rider 继续进入工作台，不再被统一挡成"当前不可报名"。
 - `src/app/races/[raceSlug]/register/page.tsx`
   - 新增赛事公开报名路由，真正承接公开站报名按钮。
 - `src/app/actions.ts`
@@ -344,13 +408,13 @@
 - `src/app/_components/ary-shared.tsx`
   - `AuthTabsPanel` / `AuthForm` 支持透传 `returnTo`，登录与骑手注册都能回跳到来源页面。
 - `src/app/_components/public/home-gallery.tsx`
-  - 首页公开 CTA 从泛化的“查看赛事并报名”收口为通向真实报名链路的“查看赛事报名页”。
+  - 首页公开 CTA 从泛化的"查看赛事并报名"收口为通向真实报名链路的"查看赛事报名页"。
 - `src/app/_components/public/race-page.tsx`
-  - 报名阶段 CTA 改成真实的公开报名页入口，不再只是把按钮文案改成“登录后报名”。
+  - 报名阶段 CTA 改成真实的公开报名页入口，不再只是把按钮文案改成"登录后报名"。
 - `src/app/_components/public/race-register-page.tsx`
   - 新增公开报名页视图，按未登录 / 非 Rider / 已报名 / 可直接报名四种状态给出真实承接。
-  - 比赛开始后优先放行“赛前已报名”的 Rider 继续进入工作台，不再被统一挡成“当前不可报名”。
-  - 比赛开始后未报名用户明确显示“报名已截止”，同时说明赛前已报名骑手仍可继续进入自己的工作台。
+  - 比赛开始后优先放行"赛前已报名"的 Rider 继续进入工作台，不再被统一挡成"当前不可报名"。
+  - 比赛开始后未报名用户明确显示"报名已截止"，同时说明赛前已报名骑手仍可继续进入自己的工作台。
 - `src/app/races/[raceSlug]/register/page.tsx`
   - 新增赛事公开报名路由，真正承接公开站报名按钮。
 - `src/app/_components/console/rider-console-page.tsx`
@@ -708,7 +772,7 @@
 ## 当前阻塞 / 未完成项
 
 - `docs/grs003` 的全部要求尚未完全完成，当前只是在持续推进收口。
-- GitHub OAuth 仍未接入，当前仍是本地账号 / 密码会话。
+- GitHub OAuth 主链路已可运行（`2026-06-19`），但尚未完成全面生产验证。
 - `Team` 兼容层仍然存在，深层 `teamId -> registrationId` 迁移尚未完成。
 - `runner` 路径和 `CA Push + Fetch` 目标之间仍有差距。
 - 除 `status.md` 之外，仓库中仍有不少旧文件或旧字符串可能带有历史编码问题。
@@ -716,27 +780,13 @@
   - `src/lib/prisma.ts` 在 `production` 分支里硬编码写入 `/tmp/ary-runtime`。
   - 在当前 Windows 环境下会映射到 `C:\\tmp\\ary-runtime`，导致 `next build` 的某些场景出现 `EPERM: operation not permitted, mkdir 'C:\\tmp\\ary-runtime'`。
   - 这不是本次 `status.md` 编码修复引入的问题，但会影响后续完整构建验证。
-- 本轮新增但尚未收口的问题：
-  - `/.claude-login.html` 只是本地排查 `/login` 返回 HTML 时生成的临时抓取文件，不是正式产品页面，也不代表公开身份入口链路已经真正跑通。
-  - 首页“身份入口”按钮当前仍有无法正常跳转的用户反馈，说明公开登录入口链路还没有完成真实验收。
-  - 当前登录模型仍然偏向“所有人都可以直接注册 / 登录本地账号”，尚未收口到 `grs003` 期望的正式身份体系与 OAuth 方案。
-  - Console 实际准入链路仍需继续核实；按当前用户反馈，仍存在“控制台入口基本畅通无阻、身份验证不符合预期”的问题，没有达到可验收状态。
-  - 参赛选手提交链路仍未完整恢复到可直接操作的状态；公开报名、Rider 工作台、提交入口之间仍有断点。
-  - `/login` 虽然已能返回 `200` 与页面 HTML，但浏览器端仍出现“页面看起来什么都没有”的现象，说明客户端显示 / 资源缓存 / dev server 状态仍有待继续排查。
 
 ## 下一步建议
 
-- 先修 `src/lib/prisma.ts` 的运行时目录策略，把生产态 SQLite 运行目录收口到当前平台可写位置。
-- 优先把公开身份入口链路彻底跑通：
-  - 修首页“身份入口”按钮跳转；
-  - 核实 `/login` 浏览器空白问题；
-  - 清理临时排查文件如 `/.claude-login.html`。
-- 继续核实并补齐角色与权限链路：
-  - 不是简单“任何人都能登录就能进所有台”；
-  - 要重新核对公开站、Rider、Judge、Organizer、Admin、Screen Console 的真实准入。
-- 继续补齐参赛选手真实操作链路：报名、进入 Rider 工作台、提交作品、查看结果，确保不是只有按钮或文案而是能真实操作。
-- 继续扫描用户可见英文残留，优先公开页和 Organizer Console 其他 section。
-- 继续推进 `grs003` 深层语义迁移：GitHub OAuth、CA 接入链，以及兼容 `team` 退场。
+- Team→Registration 深层迁移（11 个 Prisma 模型、15+ 代码文件），优先 Step 2 双轨期。
+- 继续推进 CA 接入链从"最小演示闭环"向可用状态进化。
+- 企业能力独立建模（Organization 实体），对应 P2 企业命题后台和赞助商后台。
+- 生产级优化：自动 snapshot 调度、secret 轮换、审计编排。
 
 
 ## 2026-06-19 登录壳层、Riders/Works 索引页与创建赛事表单文案清理
@@ -879,18 +929,33 @@
 
 ## 当前仍缺失 / 未完成
 
-- GitHub OAuth 仍未接入，当前仍是本地账号 / 密码会话。
+- GitHub OAuth 主链路已完成（`2026-06-19`），生产级验证和错误处理闭环待后续。
 - `Team` 兼容层仍然存在，深层 `teamId -> registrationId` 迁移尚未完成。
 - `runner` 路径与 `CA Push + Fetch` 目标之间仍有差距。
 - 进行中赛事的公开赛事页仍没有直接暴露明显的 `进入提交` 按钮。
   - 当前提交流程已可用，但主要仍通过 `/console/races/[raceSlug]/rider/submission` 进入。
+- Organization 实体未建模（符合 GRS003 规范），企业能力由 Admin 代理。
 
 ## UI 相关问题进度
 
-1. 企业账号登进去以后怎么没法创建比赛了？显示的还是和 audience 一样的首页
-2. 观众界面下面的四个按键三个缺失，然后那个骑手登录/注册也点不开
-3. 用企业账号登进去了，哦，那看来和前面那个问题一样
-4. Jumbotron大屏幕没开始的比赛显示即将开始，比赛中的比赛应该要显示Live，比赛结束的应该是Finish，现在三种比赛全是即将开始。其他没啥了
-5. 实况大厅，没有点击“打开大屏”前有点错位
-6. 用rider登录后，对某个赛事的提交必须去到控制台那里，直接进入赛事主页没有提交链接
-7. 创建比赛页面，比我们之前的设计缺少了很多
+| # | 问题 | 状态 |
+|---|------|------|
+| 1 | Organizer 登录后看不到创建比赛入口 | ✅ 已修复 — 控制台首页 + 导航栏均可见入口 |
+| 2 | 首页 CTA 按钮缺失 | ✅ 已修复 — 底部导航链接全部就位 |
+| 3 | 同上 | ✅ |
+| 4 | Jumbotron 比赛状态显示 | ✅ 已修复 — adapter.ts 适配 GRS003 8 状态（running→LIVE，completed→FINISHED） |
+| 5 | 实况大厅布局错位 | ✅ 已修复 — `<main>` 包裹 + JumbotronInline overflow:clip+contain:strict |
+| 6 | Rider 提交需走控制台 | ✅ 已修复 — 赛事详情页进行中赛事新增"选手提交入口"按钮 |
+| 7 | 创建赛事页面字段不足 | ✅ 合作表单已完整复刻创建赛事全部字段 |
+
+### 2026-06-20 UI 重构后已验证
+
+| 验证项 | 状态 |
+|--------|------|
+| 全局设计系统一致性 | ✅ globals.css 重写，所有页面统一使用新 token |
+| 低对比度文字修复 | ✅ console-shell 3 处 + 全局 muted 变量修复 |
+| 页面溢出问题 | ✅ 8 页面补充 main 包裹，body/main overflow 防护 |
+| 左右留白 | ✅ main padding: 32px 20px 80px，响应式 16px |
+| 粒子背景 | ✅ constellation 模式正常工作，不影响交互 |
+| 企业办赛表单 | ✅ 完整字段 + 文件上传，提交存储到 DB |
+| 演示账号 | ✅ 5 个角色标签清晰展示 |

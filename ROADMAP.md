@@ -114,3 +114,19 @@
 - **Console 权限验证**：确认 `console-routes.ts` 中 Organizer 按 `organizerId` 过滤、Rider 按 `registration` 过滤、Judge 按 `judgeAssignment` 过滤，权限已正确加固。
 - **GitHub OAuth 验收**：验证 `github-oauth.ts` → callback route → login page 全链路完整，缺 GitHub App 配置时自动重定向到 `/login?oauthError=` 并显示中文提示。
 - 最终验证：`npx tsc --noEmit` 零错误，`npm run build` 通过，`npm run db:seed` 生成 3 赛事 + 11 骑手 + Registration/RaceProject 数据。
+
+### Iteration 5（2026-06-20，UI 全面重构）
+
+- **设计系统升级**：新建 `DESIGN.md` 完整 8 节设计规范，参考 Vercel/Stripe/Linear 设计系统。`globals.css` 全面重写：新配色 token、多层阴影、统一间距/圆角体系。
+- **全局字体放大 7-10%**：h1/h2/h3/body/按钮/badge 等全部微调。
+- **低对比度修复**：console-shell 3 处 `color: var(--muted)`→`var(--muted-foreground)`，`--dark-muted` 0.65→0.75，placeholder opacity 提升。
+- **7 个公开页面卡片化改造**：live-hall/results/review/works/work/rider-profile/race-register 全部从旧 `.panel` 迁移到 `.card` 系统。
+- **布局溢出修复**：8 个页面补充 `<main>` 包裹，body/main 添加 overflow-x 防护，实况大厅 JumbotronInline 使用 `overflow:clip + contain:strict`。
+- **首页优化**：骑手/合作列平衡、往届赛事用 muted 背景替代 opacity、section-dark 按钮自动适配、底部改为 Sysu-Group9 团队信息。
+- **粒子背景**：`constellation`（光点+连线）和 `drift`（方块上升+点击波纹）两种模式，中央真空区保护内容。
+- **企业办赛合作表单**：`CooperationRequest` 数据模型，完整赛事配置字段+文件上传，需登录才能提交。
+- **控制台身份显示**：侧栏顶部显示用户名+角色标签（管理员/主办方/骑手/评委），9 个 ConsoleShell 调用点全部传递 user。
+- **Jumbotron 状态修复**：adapter.ts 适配 GRS003 8 状态（running→LIVE，completed→FINISHED）。
+- **赛事详情页**：进行中赛事新增"选手提交入口"按钮。
+- **演示账号更新**：5 个清晰标签+角色展示。
+- 验证：`npx tsc --noEmit` 零错误，`npm run build` 通过。

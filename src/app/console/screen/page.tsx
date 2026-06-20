@@ -30,6 +30,7 @@ export default async function ScreenConsoleRootPage() {
       description="选择一场赛事，并进入当前需要的展示模式。"
       navItems={buildConsoleRootNavItems(sections)}
       title="大屏控制台"
+      user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
       <ScreenConsolePageView races={races} />
     </ConsoleShell>

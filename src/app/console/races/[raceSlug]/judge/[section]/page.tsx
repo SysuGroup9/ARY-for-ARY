@@ -67,6 +67,7 @@ export default async function JudgeConsoleSectionPage({ params }: Props) {
         labels: judgeSectionLabels,
       })}
       title={`${context.race.title} / 评委`}
+      user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
       <JudgeConsolePageView
         assignments={assignments}

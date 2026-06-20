@@ -5,9 +5,12 @@ export function RacePageView({ race, raceSlug }: { race: RaceListItem; raceSlug:
   const cta =
     race.phase === "registration" || race.phase === "preparation"
       ? { href: `/races/${raceSlug}/register`, label: "进入报名页面" }
-      : race.phase === "active" || race.phase === "frozen"
+      : race.phase === "active" || race.phase === "frozen" || race.phase === "running" || race.phase === "submitting"
         ? { href: `/races/${raceSlug}/live`, label: "进入实况大厅" }
         : { href: `/races/${raceSlug}/results`, label: "查看赛果" };
+
+  const isActive = race.phase === "active" || race.phase === "frozen" || race.phase === "running" || race.phase === "submitting";
+  const riderSubmitHref = `/console/races/${raceSlug}/rider/submission`;
 
   return (
     <div className="stack" style={{ gap: "var(--space-6)" }}>
@@ -24,7 +27,14 @@ export function RacePageView({ race, raceSlug }: { race: RaceListItem; raceSlug:
           <div><dt>报名时间</dt><dd style={{fontSize:"0.8125rem"}}>{formatDateTime(race.signupStart)} - {formatDateTime(race.signupEnd)}</dd></div>
           <div><dt>比赛时间</dt><dd style={{fontSize:"0.8125rem"}}>{formatDateTime(race.raceStart)} - {formatDateTime(race.raceEnd)}</dd></div>
         </div>
-        <a className="button" href={cta.href} style={{ height: 52, padding: "0 28px", fontSize: "1rem" }}>{cta.label} →</a>
+        <div className="flex-row">
+          <a className="button" href={cta.href} style={{ height: 52, padding: "0 28px", fontSize: "1rem" }}>{cta.label} →</a>
+          {isActive ? (
+            <a className="button-secondary" href={riderSubmitHref} style={{ height: 52, fontSize: "0.9375rem" }}>
+              选手提交入口
+            </a>
+          ) : null}
+        </div>
       </div>
 
       {/* 上下文 + 规则 */}
