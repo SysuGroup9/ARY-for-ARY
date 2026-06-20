@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { clearSession, requireRole } from "@/lib/auth";
+import { clearSession, getSessionUser, requireRole } from "@/lib/auth";
 import { startGitHubOAuth } from "@/lib/github-oauth";
 import { replyFeedback, sendFeedback } from "@/lib/services/feedback";
 import { createCAConnectionForRaceProject } from "@/lib/services/ca-connections";
@@ -31,6 +31,10 @@ import { registerTeam, updateTeamComment } from "@/lib/services/teams";
 import { registerForRace } from "@/lib/services/registrations";
 import { loginUser, registerUser, updateUserRoles } from "@/lib/services/users";
 import { submitCooperationRequest } from "@/lib/services/cooperation";
+import {
+  approveCooperationRequest,
+  rejectCooperationRequest,
+} from "@/lib/services/cooperation";
 import { normalizeRoles } from "@/lib/user-roles";
 
 export async function registerAction(formData: FormData) {
@@ -286,7 +290,9 @@ export async function scoreRunnerTaskAction(formData: FormData) {
 }
 
 export async function cooperationRequestAction(formData: FormData) {
+  const session = await getSessionUser();
   await submitCooperationRequest({
+    submitterId: session?.id ?? null,
     companyName: String(formData.get("companyName") ?? ""),
     contactName: String(formData.get("contactName") ?? ""),
     contactEmail: String(formData.get("contactEmail") ?? ""),
@@ -316,4 +322,18 @@ export async function cooperationRequestAction(formData: FormData) {
     proposalFile: formData.get("proposalFile") as File | null,
   });
   redirect("/cooperation?submitted=1");
+}
+
+export async function approveCooperationRequestAction(formData: FormData) {
+  const user = await requireRole("ADMIN");
+  const requestId = String(formData.get("requestId") ?? "");
+  await approveCooperationRequest(requestId, user.id);
+  revalidatePath("/console/admin/race-requests");
+}
+
+export async function rejectCooperationRequestAction(formData: FormData) {
+  await requireRole("ADMIN");
+  const requestId = String(formData.get("requestId") ?? "");
+  await rejectCooperationRequest(requestId);
+  revalidatePath("/console/admin/race-requests");
 }

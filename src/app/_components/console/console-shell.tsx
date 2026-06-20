@@ -39,6 +39,7 @@ export const adminConsoleSections = [
   "users",
   "profile-completion",
   "roles",
+  "race-requests",
 ] as const;
 
 export const screenConsoleModes = [

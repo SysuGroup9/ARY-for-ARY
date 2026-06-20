@@ -11,8 +11,10 @@
 - GitHub OAuth 主链路代码与 CA handshake / signal / snapshot fetch 运行时桥已经具备，且仓库内新增了可运行的本地 connector demo。
 - Jumbotron 与大屏赛道渲染样式仍以“尽量保留最早样式”为原则，这几轮中文化收口没有改动赛道视觉结构。
 - 项目已完成 `grs003` 核心要求：公开端/控制台/大屏页面就位、4 角色体系、领域模型落地、Race 8 状态机、CA 最小闭环、Runner 降级。剩余 UI 视觉升级和 Team→Registration 深层迁移在后续迭代。
+- 企业办赛合作链已闭环：公开合作页提交 → CooperationRequest(PENDING) → Admin 控制台审批（批准自动创建 Race / 拒绝标记 REJECTED）。Admin 控制台由 3 个 section 扩展为 4 个。
 
 ## 已完成收口
+- 企业合作办赛审批链路：`submitCooperationRequest` → `listCooperationRequests` → `approveCooperationRequest` / `rejectCooperationRequest`，Admin 可在 `/console/admin/race-requests` 查看并审批
 
 ## 2026-06-20 环境修复与结构收口（Hrm-cell，本日新完成）
 
@@ -34,6 +36,113 @@
   - `npx tsc --noEmit` 零错误。
   - `npm run build` 通过。
   - `npm run db:seed` 生成 3 赛事 + 11 骑手。
+
+## 2026-06-20 Admin 办赛申请审批功能（本日新完成）
+
+### 概述
+
+补全企业合作办赛链路的审批环节。此前企业提交办赛申请后仅存入 `CooperationRequest`（status=PENDING），无任何查看或审批能力。本日新增 Admin 控制台审批页面与完整审批 Service，形成"企业提交 → Admin 审核 → 自动创建赛事"的完整闭环。
+
+### 流程
+
+```
+企业填写合作表单 → cooperationRequestAction → CooperationRequest (status: PENDING, submitterId=当前用户)
+                                                          ↓
+Admin 登录 → /console/admin/race-requests → RaceRequestsPageView
+                                                          ↓
+                                            ┌── 批准 ──→ $transaction:
+                                            │             1. Race.create(organizerId=request.submitterId ?? adminUserId)
+                                            │             2. CooperationRequest.status → "APPROVED"
+                                            │
+                                            └── 拒绝 ──→ CooperationRequest.status → "REJECTED"
+```
+
+### 新增 / 修改代码清单
+
+| 文件 | 操作 | 变更摘要 |
+|---|---|---|
+| `prisma/schema.prisma` | 修改 | `CooperationRequest` 新增 `submitterId String?` 字段（提交申请时记录当前用户 ID） |
+| `src/lib/services/cooperation.ts` | 修改 | 新增 import `parseKeywords` / `normalizeWeights`；`submitCooperationRequest` 新增 `submitterId` 参数 |
+| `src/lib/services/cooperation.ts` | 新增 | `listCooperationRequests(status?: string)` — 列出所有申请，可选按 status 过滤，按 `createdAt` 降序 |
+| `src/lib/services/cooperation.ts` | 新增 | `approveCooperationRequest(requestId, adminUserId)` — 批准申请，`$transaction` 原子创建 Race + 更新状态为 APPROVED。organizerId 优先取 `request.submitterId`，fallback 到 `adminUserId`。校验：申请不存在抛错、非 PENDING 状态拒绝重复审批 |
+| `src/lib/services/cooperation.ts` | 新增 | `rejectCooperationRequest(requestId)` — 拒绝申请，更新状态为 REJECTED。相同防重逻辑 |
+| `src/app/actions.ts` | 修改 | 新增 import `getSessionUser` / `approveCooperationRequest` / `rejectCooperationRequest`；`cooperationRequestAction` 调用 `getSessionUser()` 获取当前用户 ID 并传入 `submitterId` |
+| `src/app/actions.ts` | 新增 | `approveCooperationRequestAction(formData)` — Server Action，`requireRole("ADMIN")` 鉴权，读取 `requestId` 调用 Service，`revalidatePath("/console/admin/race-requests")` |
+| `src/app/actions.ts` | 新增 | `rejectCooperationRequestAction(formData)` — Server Action，同上鉴权 + revalidate |
+| `src/app/_components/console/race-requests-page.tsx` | **新建** | `RaceRequestsPageView` 组件：分"待审核申请"和"已处理申请"两组展示，含申请详情折叠面板（`<details>`）与批准/拒绝按钮（Server Action 表单） |
+| `src/app/_components/console/console-shell.tsx` | 修改 | `adminConsoleSections` 从 `["users", "profile-completion", "roles"]` 扩展为 `["users", "profile-completion", "roles", "race-requests"]` |
+| `src/app/console/admin/[section]/page.tsx` | 修改 | 新增 import `RaceRequestsPageView` / `listCooperationRequests`；`adminSectionLabels` 新增 `"race-requests": "办赛申请审核"`；section 为 `"race-requests"` 时渲染 `RaceRequestsPageView`，其他走原有 `AdminConsolePageView` |
+| `src/app/_components/console/console-home.tsx` | 修改 | admin 卡片描述从"用户列表、资料状态与角色管理"更新为"用户列表、资料状态、角色管理与办赛申请审核" |
+| `src/app/_components/cooperation-form.tsx` | 修改 | 提交成功提示文案更新为"你的办赛申请已提交，将由管理员审核。审核通过后赛事将自动创建…"，明确告知审批流程 |
+
+### API 接口定义
+
+#### `listCooperationRequests(status?: string)`
+- **参数**：`status` 可选，值为 `"PENDING"` / `"APPROVED"` / `"REJECTED"`，不传返回全部
+- **返回**：`Promise<CooperationRequest[]>`，按 `createdAt` 降序
+- **权限**：无内置鉴权（由调用方 `/console/admin/[section]/page.tsx` 的 `getConsoleAdminAccess` 守卫）
+
+#### `approveCooperationRequest(requestId: string, adminUserId: string)`
+- **参数**：
+  - `requestId` - 申请记录 ID（cuid）
+  - `adminUserId` - 审批管理员的用户 ID，作为 Race 的 `organizerId` 的 fallback 值
+- **organizerId 确定逻辑**：优先使用申请记录中的 `submitterId`（提交申请时记录的用户 ID），若为空则 fallback 到 `adminUserId`
+- **返回**：`Promise<Race>` — 新创建的赛事记录
+- **错误处理**：
+  - 申请不存在 → `throw new Error("办赛申请不存在")`
+  - 申请状态非 PENDING → `throw new Error("该申请已处理，无法重复审批")`
+- **Race 默认值**（申请表中不包含的字段）：
+  - `taskPackageLabel` = 申请中的 `raceTitle`
+  - `cloudStudioUrl` = `""`
+  - `trackId` = `"oval-track"`（默认椭圆赛道）
+  - `trackConfigJson` = `""`（空赛道配置）
+  - `updateGranularityMinutes` = 30（Prisma 默认值）
+  - `displayHighlightCount` = 3（Prisma 默认值）
+  - `weightTaskPassRate` = 1.0, 其余权重 = 0.0（task-only 评分模式）
+  - `harnessWeightReasoning` = 0.6, `harnessWeightKeyword` = 0.4（Prisma 默认值）
+  - `organizerComment` = `""`（Prisma 默认值）
+- **原子性**：使用 `prisma.$transaction` 同时创建 Race + 更新 CooperationRequest 状态
+
+#### `rejectCooperationRequest(requestId: string)`
+- **参数**：`requestId` - 申请记录 ID
+- **返回**：`Promise<CooperationRequest>`
+- **错误处理**：同 `approveCooperationRequest`，申请不存在或已处理均抛错
+
+### Server Actions
+
+#### `approveCooperationRequestAction(formData: FormData)`
+- **鉴权**：`requireRole("ADMIN")` — 仅管理员可调用
+- **入参**：`formData.get("requestId")` — 申请 ID
+- **副作用**：调用 `approveCooperationRequest` 后 `revalidatePath("/console/admin/race-requests")`
+
+#### `rejectCooperationRequestAction(formData: FormData)`
+- **鉴权**：`requireRole("ADMIN")` — 仅管理员可调用
+- **入参**：同 approve，读取 `requestId`
+- **副作用**：调用 `rejectCooperationRequest` 后 `revalidatePath("/console/admin/race-requests")`
+
+### 边界条件处理
+
+| 场景 | 处理方式 |
+|---|---|
+| 申请不存在 | `throw Error("办赛申请不存在")`，页面显示错误 |
+| 重复审批（status 已非 PENDING） | `throw Error("该申请已处理，无法重复审批")` |
+| 空申请列表 | `RaceRequestsPageView` 显示"暂无申请"空态 |
+| 全部已处理 | 仅显示"已处理申请"面板，"待审核"面板不渲染 |
+| 全部待审核 | 仅显示"待审核申请"面板，"已处理"面板不渲染 |
+| 非 ADMIN 用户访问 `/console/admin/race-requests` | `getConsoleAdminAccess` 返回 `allowed: false`，重定向到 `/console` |
+| 提交申请时已登录（有 session） | `submitterId` 记录当前用户 ID，批准后 Race 归属该用户 |
+| 提交申请时未登录（匿名） | `submitterId` 为 null，批准后 `organizerId` fallback 到审批 Admin |
+| 申请中的日期为 String 格式 | 批准时 `new Date(request.signupStart)` 等转为 DateTime |
+| Schema 变更后 dev server 缓存旧 Client | 需 `prisma generate` + 清理 `.next` 目录后重启 |
+
+### 验证
+
+- TypeScript 编译：所有新增/修改文件 `read_lints` 零错误
+- Prisma 客户端：`prisma generate` 后 `CooperationRequest`（含 `submitterId` 字段）已出现在 `src/generated/prisma/models/` 和 `client.ts` 类型中
+- 数据库：`prisma db push` 同步 `CooperationRequest` 表（含 `submitterId` 列）到 `dev.db`
+- 手动验收：organizer 登录后提交申请 → Admin 审批 → organizer 控制台可看到该赛事
+
+---
 
 ## 2026-06-19 GitHub OAuth 与真实 agent 最小闭环补齐（进行中）
 
@@ -192,10 +301,10 @@
   | `src/app/_components/console/rider-console-page.tsx` | 修改 | 视图语义改为报名/作品提交/评审结果/骑手报告；不暴露 compatibility 层 |
   | `src/app/_components/console/rider-console-semantics.test.tsx` | 新增 | 3 项验收测试（6 section 中文+compatibility 隔离+report 语义） |
 
-## 2026-06-19 Admin Console 最小账号治理中文化收口（已完成验收）
+## 2026-06-19 Admin Console 最小账号治理中文化收口（已完成验收，2026-06-20 扩展为 4 section）
 
 - `src/app/_components/console/admin-console-page.tsx`
-  - 收口为 `用户列表 / 资料补全 / 角色维护` 三个最小账号治理区块。
+  - 收口为 `用户列表 / 资料补全 / 角色维护` 三个最小账号治理区块（`办赛申请审核` section 于 2026-06-20 新增，独立组件）。
   - 角色标签改为：
   - `管理员`
   - `评委`
@@ -603,13 +712,13 @@
   | `src/app/_components/console/rider-console-page.tsx` | 修改 6 section 语义 |
   | `src/app/_components/console/rider-console-semantics.test.tsx` | 新增 3 项 |
 
-### Admin Console 中文化收口 — 验收（3 项全部通过）
+### Admin Console 中文化收口 — 验收（3 项全部通过，2026-06-20 扩展至 4 section）
 
   运行命令：`node --import tsx --test src/app/_components/console/admin-console-chinese.test.tsx`
 
   | 验收功能点 | 验证结论 |
   |---|---|
-  | 3 section：用户列表/资料补全/角色维护 | ✅ 全中文 |
+  | 3 section：用户列表/资料补全/角色维护 (+ 2026-06-20 新增办赛申请审核) | ✅ 全中文 |
   | 4 角色标签：管理员/评委/主办方/骑手 | ✅ 无英文残留 |
   | 资料状态：已补全/待补全 | ✅ 全中文 |
   | 角色维护含保存按钮 | ✅ |

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { parseKeywords, normalizeWeights } from "@/lib/services/scoring";
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -14,6 +15,7 @@ async function saveFile(file: File, subDir: string): Promise<{ name: string; pat
 }
 
 export async function submitCooperationRequest(data: {
+  submitterId?: string | null;
   companyName: string;
   contactName: string;
   contactEmail: string;
@@ -60,6 +62,7 @@ export async function submitCooperationRequest(data: {
 
   return prisma.cooperationRequest.create({
     data: {
+      submitterId: data.submitterId ?? null,
       companyName: data.companyName,
       contactName: data.contactName,
       contactEmail: data.contactEmail,
@@ -90,5 +93,98 @@ export async function submitCooperationRequest(data: {
       proposalFileName,
       proposalFilePath,
     },
+  });
+}
+
+export async function listCooperationRequests(status?: string) {
+  return prisma.cooperationRequest.findMany({
+    where: status ? { status } : {},
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function approveCooperationRequest(
+  requestId: string,
+  adminUserId: string,
+) {
+  const request = await prisma.cooperationRequest.findUnique({
+    where: { id: requestId },
+  });
+  if (!request) throw new Error("办赛申请不存在");
+  if (request.status !== "PENDING") throw new Error("该申请已处理，无法重复审批");
+
+  // 优先使用提交申请时记录的 submitterId，fallback 到审批 Admin
+  const organizerId = request.submitterId ?? adminUserId;
+
+  const keywords = parseKeywords(request.keywordsText);
+  const weights = normalizeWeights({
+    taskPassRate: 1.0,
+    codeReview: 0.0,
+    reasoning: 1.0,
+    keywords: 1.0,
+    totalTask: 1.0,
+    totalToken: 0.0,
+    totalDialogue: 0.0,
+  });
+
+  return prisma.$transaction(async (tx) => {
+    const race = await tx.race.create({
+      data: {
+        organizerId,
+        title: request.raceTitle,
+        summary: request.raceSummary,
+        taskPackageLabel: request.raceTitle,
+        taskDescription: request.taskDescription,
+        trainingDataSummary: request.trainingDataSummary,
+        hasTrainingData: request.hasTrainingData,
+        evaluationNotes: request.evaluationNotes,
+        keywordsJson: JSON.stringify(keywords),
+        tokenLimit: request.tokenLimit,
+        signupStart: new Date(request.signupStart),
+        signupEnd: new Date(request.signupEnd),
+        raceStart: new Date(request.raceStart),
+        raceEnd: new Date(request.raceEnd),
+        enableFreeze: request.enableFreeze,
+        freezeMinutesBeforeEnd: request.enableFreeze
+          ? request.freezeMinutesBeforeEnd
+          : 0,
+        maxTeamSize: request.maxTeamSize,
+        submissionIntervalHours: request.submissionIntervalHours,
+        cloudStudioUrl: "",
+        trackId: "oval-track",
+        trackConfigJson: "",
+        displayShowTrainingData: request.displayShowTrainingData,
+        displayShowOrganizerComment: request.displayShowOrganizerComment,
+        displayShowTopHighlights: request.displayShowTopHighlights,
+        displayShowRiderCode: request.displayShowRiderCode,
+        weightTaskPassRate: weights.taskPassRate,
+        weightCodeReview: weights.codeReview,
+        weightReasoning: weights.reasoning,
+        weightKeywords: weights.keywords,
+        weightTotalTask: weights.totalTask,
+        weightTotalToken: weights.totalToken,
+        weightTotalDialogue: weights.totalDialogue,
+      },
+    });
+
+    await tx.cooperationRequest.update({
+      where: { id: requestId },
+      data: { status: "APPROVED" },
+    });
+
+    return race;
+  });
+}
+
+export async function rejectCooperationRequest(requestId: string) {
+  const request = await prisma.cooperationRequest.findUnique({
+    where: { id: requestId },
+  });
+  if (!request) throw new Error("办赛申请不存在");
+  if (request.status !== "PENDING") throw new Error("该申请已处理，无法重复审批");
+
+  return prisma.cooperationRequest.update({
+    where: { id: requestId },
+    data: { status: "REJECTED" },
   });
 }

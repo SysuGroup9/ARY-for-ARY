@@ -12,7 +12,7 @@ export function CooperationForm() {
     return (
       <div className="card" style={{ textAlign: "center", padding: 40 }}>
         <h3 style={{ marginBottom: 12 }}>提交成功</h3>
-        <p className="muted">我们会在 1-2 个工作日内通过邮件联系你，沟通办赛详情。你在表单中填写的赛事配置将作为创建赛事时的初始参考。</p>
+        <p className="muted">你的办赛申请已提交，将由管理员审核。审核通过后赛事将自动创建，我们也会在 1-2 个工作日内通过邮件联系你，沟通赛事详情。</p>
       </div>
     );
   }

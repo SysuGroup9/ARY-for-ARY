@@ -1,10 +1,12 @@
 import { AdminConsolePageView } from "@/app/_components/console/admin-console-page";
+import { RaceRequestsPageView } from "@/app/_components/console/race-requests-page";
 import {
   ConsoleShell,
   adminConsoleSections,
   buildConsoleSectionNavItems,
 } from "@/app/_components/console/console-shell";
 import { loadDatabaseUser } from "@/lib/auth";
+import { listCooperationRequests } from "@/lib/services/cooperation";
 import { listUsers } from "@/lib/services/users";
 import { getConsoleAdminAccess } from "@/lib/viewer-access";
 import { notFound, redirect } from "next/navigation";
@@ -13,6 +15,7 @@ const adminSectionLabels: Record<string, string> = {
   users: "用户列表",
   "profile-completion": "资料补全",
   roles: "角色维护",
+  "race-requests": "办赛申请审核",
 };
 
 export const dynamic = "force-dynamic";
@@ -39,6 +42,7 @@ export default async function AdminConsoleSectionPage({ params }: Props) {
   }
 
   const users = await listUsers();
+  const cooperationRequests = await listCooperationRequests();
 
   return (
     <ConsoleShell
@@ -55,10 +59,14 @@ export default async function AdminConsoleSectionPage({ params }: Props) {
       })}
       title="管理控制台"
     >
-      <AdminConsolePageView
-        section={section as (typeof adminConsoleSections)[number]}
-        users={users}
-      />
+      {section === "race-requests" ? (
+        <RaceRequestsPageView requests={cooperationRequests} />
+      ) : (
+        <AdminConsolePageView
+          section={section as (typeof adminConsoleSections)[number]}
+          users={users}
+        />
+      )}
     </ConsoleShell>
   );
 }

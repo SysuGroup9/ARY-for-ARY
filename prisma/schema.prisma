@@ -697,6 +697,8 @@ model TeamComment {
 
 model CooperationRequest {
   id               String   @id @default(cuid())
+  // 提交者
+  submitterId      String?
   // 企业信息
   companyName      String
   contactName      String

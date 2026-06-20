@@ -17,7 +17,7 @@ export function ConsoleHomeView({
         };
       case "admin":
         return {
-          description: "用户列表、资料状态与角色管理",
+          description: "用户列表、资料状态、角色管理与办赛申请审核",
           href: "/console/admin/users",
           label: "管理控制台",
         };
