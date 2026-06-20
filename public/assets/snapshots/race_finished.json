@@ -11,11 +11,11 @@
     "currentRound": 1,
     "nextPhase": "已结束",
     "elapsedTime": 0,
-    "systemTime": "2026-06-20T06:58:04.330Z"
+    "systemTime": "2026-06-20T09:40:39.936Z"
   },
   "entries": [
     {
-      "entryId": "cmqm0a7y2001us8s31i6bqmz3",
+      "entryId": "cmqm63brg001u8sw3yuto8oou",
       "riderName": "rider_alice",
       "projectName": "Render Rocket",
       "caProvider": "codex",
@@ -33,19 +33,19 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-cmqm0a7y2001us8s31i6bqmz3-session",
-        "entryId": "cmqm0a7y2001us8s31i6bqmz3",
+        "messageId": "msg-cmqm63brg001u8sw3yuto8oou-session",
+        "entryId": "cmqm63brg001u8sw3yuto8oou",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "Render Rocket finished the performance run and captured the final summary.",
-        "createdAt": "2026-06-20T06:58:04.330Z",
+        "createdAt": "2026-06-20T09:40:39.936Z",
         "displayMode": "ticker"
       },
       "updatedAt": "2026-06-17T09:30:00.000Z"
     },
     {
-      "entryId": "cmqm0a80y0029s8s3wu81f3mt",
+      "entryId": "cmqm63bsk00298sw3nozqt5de",
       "riderName": "rider_bob",
       "projectName": "Memory Tuner",
       "caProvider": "claude",
@@ -63,19 +63,19 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-cmqm0a80y0029s8s3wu81f3mt-session",
-        "entryId": "cmqm0a80y0029s8s3wu81f3mt",
+        "messageId": "msg-cmqm63bsk00298sw3nozqt5de-session",
+        "entryId": "cmqm63bsk00298sw3nozqt5de",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "Memory Tuner finished the performance run and captured the final summary.",
-        "createdAt": "2026-06-20T06:58:04.330Z",
+        "createdAt": "2026-06-20T09:40:39.936Z",
         "displayMode": "ticker"
       },
       "updatedAt": "2026-06-17T09:30:00.000Z"
     },
     {
-      "entryId": "cmqm0a83k002os8s39oqvdi5v",
+      "entryId": "cmqm63btf002o8sw3g64r6b7d",
       "riderName": "rider_charlie",
       "projectName": "Lazy Load Expert",
       "caProvider": "codex",
@@ -93,19 +93,19 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-cmqm0a83k002os8s39oqvdi5v-session",
-        "entryId": "cmqm0a83k002os8s39oqvdi5v",
+        "messageId": "msg-cmqm63btf002o8sw3g64r6b7d-session",
+        "entryId": "cmqm63btf002o8sw3g64r6b7d",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "Lazy Load Expert finished the performance run and captured the final summary.",
-        "createdAt": "2026-06-20T06:58:04.330Z",
+        "createdAt": "2026-06-20T09:40:39.936Z",
         "displayMode": "ticker"
       },
       "updatedAt": "2026-06-17T09:30:00.000Z"
     },
     {
-      "entryId": "cmqm0a85u0033s8s3u6ux2ozn",
+      "entryId": "cmqm63buc00338sw3qb1zqhtg",
       "riderName": "rider_diana",
       "projectName": "Cache Master",
       "caProvider": "claude",
@@ -123,19 +123,19 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-cmqm0a85u0033s8s3u6ux2ozn-session",
-        "entryId": "cmqm0a85u0033s8s3u6ux2ozn",
+        "messageId": "msg-cmqm63buc00338sw3qb1zqhtg-session",
+        "entryId": "cmqm63buc00338sw3qb1zqhtg",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "Cache Master finished the performance run and captured the final summary.",
-        "createdAt": "2026-06-20T06:58:04.330Z",
+        "createdAt": "2026-06-20T09:40:39.936Z",
         "displayMode": "ticker"
       },
       "updatedAt": "2026-06-17T09:30:00.000Z"
     },
     {
-      "entryId": "cmqm0a87z003hs8s3p5p1oand",
+      "entryId": "cmqm63bvc003h8sw30bedz5uk",
       "riderName": "rider_eve",
       "projectName": "Frame Rate Fury",
       "caProvider": "codex",
@@ -153,19 +153,19 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-cmqm0a87z003hs8s3p5p1oand-session",
-        "entryId": "cmqm0a87z003hs8s3p5p1oand",
+        "messageId": "msg-cmqm63bvc003h8sw30bedz5uk-session",
+        "entryId": "cmqm63bvc003h8sw30bedz5uk",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "Frame Rate Fury finished the performance run and captured the final summary.",
-        "createdAt": "2026-06-20T06:58:04.330Z",
+        "createdAt": "2026-06-20T09:40:39.936Z",
         "displayMode": "ticker"
       },
       "updatedAt": "2026-06-17T09:30:00.000Z"
     },
     {
-      "entryId": "cmqm0a8a2003vs8s386r22klt",
+      "entryId": "cmqm63bwd003v8sw3ksh4b9yb",
       "riderName": "rider_frank",
       "projectName": "Refactor Unit",
       "caProvider": "claude",
@@ -183,19 +183,19 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-cmqm0a8a2003vs8s386r22klt-session",
-        "entryId": "cmqm0a8a2003vs8s386r22klt",
+        "messageId": "msg-cmqm63bwd003v8sw3ksh4b9yb-session",
+        "entryId": "cmqm63bwd003v8sw3ksh4b9yb",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "Refactor Unit finished the performance run and captured the final summary.",
-        "createdAt": "2026-06-20T06:58:04.330Z",
+        "createdAt": "2026-06-20T09:40:39.936Z",
         "displayMode": "ticker"
       },
       "updatedAt": "2026-06-17T09:30:00.000Z"
     }
   ],
-  "generatedAt": "2026-06-20T06:58:04.330Z",
+  "generatedAt": "2026-06-20T09:40:39.936Z",
   "kpis": {
     "completionRate": 100,
     "totalTokens": 24200,
@@ -218,7 +218,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "Performance Marathon has finished and results are published.",
-      "createdAt": "2026-06-20T06:58:04.330Z",
+      "createdAt": "2026-06-20T09:40:39.936Z",
       "displayMode": "ticker"
     },
     {
@@ -228,7 +228,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "Render Rocket finished the performance run and captured the final summary.",
-      "createdAt": "2026-06-20T06:58:04.330Z",
+      "createdAt": "2026-06-20T09:40:39.936Z",
       "displayMode": "ticker"
     },
     {
@@ -238,7 +238,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "Memory Tuner finished the performance run and captured the final summary.",
-      "createdAt": "2026-06-20T06:58:04.330Z",
+      "createdAt": "2026-06-20T09:40:39.936Z",
       "displayMode": "ticker"
     },
     {
@@ -248,7 +248,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "Lazy Load Expert finished the performance run and captured the final summary.",
-      "createdAt": "2026-06-20T06:58:04.330Z",
+      "createdAt": "2026-06-20T09:40:39.936Z",
       "displayMode": "ticker"
     },
     {
@@ -258,7 +258,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "Cache Master finished the performance run and captured the final summary.",
-      "createdAt": "2026-06-20T06:58:04.330Z",
+      "createdAt": "2026-06-20T09:40:39.936Z",
       "displayMode": "ticker"
     },
     {
@@ -268,7 +268,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "Frame Rate Fury finished the performance run and captured the final summary.",
-      "createdAt": "2026-06-20T06:58:04.330Z",
+      "createdAt": "2026-06-20T09:40:39.936Z",
       "displayMode": "ticker"
     },
     {
@@ -278,7 +278,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "Refactor Unit finished the performance run and captured the final summary.",
-      "createdAt": "2026-06-20T06:58:04.330Z",
+      "createdAt": "2026-06-20T09:40:39.936Z",
       "displayMode": "ticker"
     },
     {
@@ -288,7 +288,7 @@
       "type": "milestone",
       "severity": "info",
       "summary": "Current process leaderboard is available.",
-      "createdAt": "2026-06-20T06:58:04.330Z",
+      "createdAt": "2026-06-20T09:40:39.936Z",
       "displayMode": "ticker"
     }
   ],

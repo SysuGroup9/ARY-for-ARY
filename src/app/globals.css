@@ -191,7 +191,7 @@ main {
   box-shadow: var(--shadow-card);
   transition: box-shadow 0.25s ease;
 }
-.panel h2 { margin: 0; line-height: 1.15; }
+.panel h2 { margin: 0 0 var(--space-3); line-height: 1.15; }
 
 /* ── Section Label ── */
 .section-label {

@@ -7,7 +7,7 @@
       "severity": "medium",
       "summary": "Late Night Commit: 检测到诱导词，扣 10 分",
       "status": "active",
-      "createdAt": "2026-06-20T06:58:04.245Z"
+      "createdAt": "2026-06-20T09:40:39.905Z"
     }
   ],
   "competition": {
@@ -21,11 +21,11 @@
     "currentRound": 1,
     "nextPhase": "已结束",
     "elapsedTime": 0,
-    "systemTime": "2026-06-20T06:58:04.243Z"
+    "systemTime": "2026-06-20T09:40:39.904Z"
   },
   "entries": [
     {
-      "entryId": "cmqm0a7l60000s8s3r88214oq",
+      "entryId": "cmqm63bke00008sw34quo8ex3",
       "riderName": "rider_alice",
       "projectName": "rider_alice",
       "caProvider": "codex",
@@ -43,19 +43,19 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-cmqm0a7l60000s8s3r88214oq-session",
-        "entryId": "cmqm0a7l60000s8s3r88214oq",
+        "messageId": "msg-cmqm63bke00008sw34quo8ex3-session",
+        "entryId": "cmqm63bke00008sw34quo8ex3",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "rider_alice is pushing the active race implementation forward.",
-        "createdAt": "2026-06-20T06:58:04.244Z",
+        "createdAt": "2026-06-20T09:40:39.905Z",
         "displayMode": "ticker"
       },
       "updatedAt": "2026-06-19T02:00:00.000Z"
     },
     {
-      "entryId": "cmqm0a7o00008s8s3iafclvc1",
+      "entryId": "cmqm63blw00088sw30scly4mq",
       "riderName": "rider_bob",
       "projectName": "rider_bob",
       "caProvider": "codex",
@@ -73,19 +73,19 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-cmqm0a7o00008s8s3iafclvc1-session",
-        "entryId": "cmqm0a7o00008s8s3iafclvc1",
+        "messageId": "msg-cmqm63blw00088sw30scly4mq-session",
+        "entryId": "cmqm63blw00088sw30scly4mq",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "rider_bob is pushing the active race implementation forward.",
-        "createdAt": "2026-06-20T06:58:04.245Z",
+        "createdAt": "2026-06-20T09:40:39.905Z",
         "displayMode": "ticker"
       },
       "updatedAt": "2026-06-19T02:00:00.000Z"
     },
     {
-      "entryId": "cmqm0a7pg000gs8s37qwdrrq0",
+      "entryId": "cmqm63bmh000g8sw37hturopn",
       "riderName": "rider_charlie",
       "projectName": "rider_charlie",
       "caProvider": "codex",
@@ -103,19 +103,19 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-cmqm0a7pg000gs8s37qwdrrq0-session",
-        "entryId": "cmqm0a7pg000gs8s37qwdrrq0",
+        "messageId": "msg-cmqm63bmh000g8sw37hturopn-session",
+        "entryId": "cmqm63bmh000g8sw37hturopn",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "rider_charlie is pushing the active race implementation forward.",
-        "createdAt": "2026-06-20T06:58:04.245Z",
+        "createdAt": "2026-06-20T09:40:39.905Z",
         "displayMode": "ticker"
       },
       "updatedAt": "2026-06-19T02:00:00.000Z"
     },
     {
-      "entryId": "cmqm0a7qz000os8s300sbk9ra",
+      "entryId": "cmqm63bnc000o8sw3ac5na9ve",
       "riderName": "rider_diana",
       "projectName": "rider_diana",
       "caProvider": "codex",
@@ -132,10 +132,10 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "running",
-      "updatedAt": "2026-06-20T06:58:03.363Z"
+      "updatedAt": "2026-06-20T09:40:39.504Z"
     },
     {
-      "entryId": "cmqm0a7sc000vs8s34x3544n6",
+      "entryId": "cmqm63bo7000v8sw3jelyfgbh",
       "riderName": "rider_eve",
       "projectName": "rider_eve",
       "caProvider": "codex",
@@ -152,10 +152,10 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "running",
-      "updatedAt": "2026-06-20T06:58:03.404Z"
+      "updatedAt": "2026-06-20T09:40:39.535Z"
     },
     {
-      "entryId": "cmqm0a7tg0012s8s3ezas96na",
+      "entryId": "cmqm63bp000128sw3skb7l05i",
       "riderName": "rider_frank",
       "projectName": "rider_frank",
       "caProvider": "codex",
@@ -172,10 +172,10 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "running",
-      "updatedAt": "2026-06-20T06:58:03.445Z"
+      "updatedAt": "2026-06-20T09:40:39.559Z"
     },
     {
-      "entryId": "cmqm0a7ul0019s8s3bmlk5mak",
+      "entryId": "cmqm63bpn00198sw3vi18eqmj",
       "riderName": "rider_grace",
       "projectName": "rider_grace",
       "caProvider": "codex",
@@ -192,10 +192,10 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "running",
-      "updatedAt": "2026-06-20T06:58:03.485Z"
+      "updatedAt": "2026-06-20T09:40:39.581Z"
     },
     {
-      "entryId": "cmqm0a7vq001gs8s3p4x9q9v2",
+      "entryId": "cmqm63bq9001g8sw3d623dy24",
       "riderName": "rider_henry",
       "projectName": "rider_henry",
       "caProvider": "codex",
@@ -212,10 +212,10 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "running",
-      "updatedAt": "2026-06-20T06:58:03.530Z"
+      "updatedAt": "2026-06-20T09:40:39.605Z"
     }
   ],
-  "generatedAt": "2026-06-20T06:58:04.243Z",
+  "generatedAt": "2026-06-20T09:40:39.904Z",
   "kpis": {
     "completionRate": 100,
     "totalTokens": 5270,
@@ -238,7 +238,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "Sorting Challenge is live. Teams should submit current progress for evaluation.",
-      "createdAt": "2026-06-20T06:58:04.245Z",
+      "createdAt": "2026-06-20T09:40:39.905Z",
       "displayMode": "ticker"
     },
     {
@@ -248,7 +248,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "rider_alice is pushing the active race implementation forward.",
-      "createdAt": "2026-06-20T06:58:04.245Z",
+      "createdAt": "2026-06-20T09:40:39.905Z",
       "displayMode": "ticker"
     },
     {
@@ -258,7 +258,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "rider_bob is pushing the active race implementation forward.",
-      "createdAt": "2026-06-20T06:58:04.245Z",
+      "createdAt": "2026-06-20T09:40:39.905Z",
       "displayMode": "ticker"
     },
     {
@@ -268,7 +268,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "rider_charlie is pushing the active race implementation forward.",
-      "createdAt": "2026-06-20T06:58:04.245Z",
+      "createdAt": "2026-06-20T09:40:39.905Z",
       "displayMode": "ticker"
     },
     {
@@ -278,7 +278,7 @@
       "type": "milestone",
       "severity": "info",
       "summary": "Current process leaderboard is available.",
-      "createdAt": "2026-06-20T06:58:04.245Z",
+      "createdAt": "2026-06-20T09:40:39.905Z",
       "displayMode": "ticker"
     }
   ],

@@ -103,17 +103,18 @@ export function ConsoleShell({
         </div>
         {user ? (
           <div style={{
-            padding: "10px 12px",
+            padding: "12px 14px",
             background: "var(--muted)",
             borderRadius: "var(--radius-md)",
             fontSize: "0.875rem",
+            lineHeight: 1.5,
           }}>
-            <div style={{ fontWeight: 600, color: "var(--foreground)", marginBottom: 4 }}>
+            <div style={{ fontWeight: 600, color: "var(--foreground)", marginBottom: 6 }}>
               {user.username}
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
               {roleLabels.map((label, i) => (
-                <span key={i} className="badge badge-accent" style={{ fontSize: "0.7rem", padding: "2px 8px" }}>
+                <span key={i} className="badge badge-accent" style={{ fontSize: "0.72rem", padding: "3px 9px" }}>
                   {label}
                 </span>
               ))}
@@ -176,16 +177,16 @@ export const consoleStyles = `
 
   .console-sidebar {
     display: grid;
-    gap: 16px;
+    gap: 20px;
     align-self: start;
-    padding: 20px;
+    padding: 24px;
     position: sticky;
     top: 24px;
   }
 
   .console-brand {
     display: grid;
-    gap: 4px;
+    gap: 8px;
   }
 
   .console-brand a {
@@ -204,7 +205,7 @@ export const consoleStyles = `
 
   .console-nav {
     display: grid;
-    gap: 10px;
+    gap: 12px;
   }
 
   .console-nav a,
@@ -217,20 +218,21 @@ export const consoleStyles = `
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.65);
     border: 1px solid rgba(59, 43, 27, 0.08);
-    padding: 0.75rem 0.9rem;
+    padding: 0.85rem 1rem;
     font-weight: 700;
+    font-size: 0.9375rem;
   }
 
   .console-main {
     display: grid;
-    gap: 20px;
+    gap: 24px;
     align-content: start;
   }
 
   .console-header {
     display: grid;
-    gap: 12px;
-    padding: 20px 22px;
+    gap: 14px;
+    padding: 24px 28px;
   }
 
   .console-breadcrumbs {
@@ -239,6 +241,7 @@ export const consoleStyles = `
     gap: 8px;
     color: var(--muted-foreground);
     font-size: 0.92rem;
+    line-height: 1.5;
   }
 
   .console-crumb {
@@ -254,35 +257,36 @@ export const consoleStyles = `
 
   .console-title-block {
     display: grid;
-    gap: 8px;
+    gap: 10px;
   }
 
   .console-title-block h1 {
     margin: 0;
     font-family: var(--font-display), sans-serif;
-    line-height: 1;
+    line-height: 1.15;
   }
 
   .console-content {
     display: grid;
-    gap: 20px;
+    gap: 24px;
   }
 
   .console-card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
+    gap: 20px;
   }
 
   .console-link-card {
     display: grid;
-    gap: 8px;
+    gap: 10px;
     border-radius: 16px;
     border: 1px solid rgba(59, 43, 27, 0.1);
     background: var(--panel-strong);
     color: inherit;
-    padding: 18px;
+    padding: 22px;
     text-decoration: none;
+    line-height: 1.5;
   }
 
   .console-link-card strong {
