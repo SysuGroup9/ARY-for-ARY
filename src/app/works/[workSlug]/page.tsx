@@ -1,4 +1,5 @@
 import { WorkPageView } from "@/app/_components/public/work-page";
+import { aryStyles } from "@/app/_components/ary-shared";
 import { getWorkBySlug } from "@/lib/services/public-routes";
 import { notFound } from "next/navigation";
 
@@ -17,20 +18,23 @@ export default async function WorkPage({ params }: Props) {
   }
 
   return (
-    <WorkPageView
-      author={work.author}
-      awards={work.awards}
-      demoUrl={work.demoUrl}
-      evidenceSummaries={work.evidenceSummaries}
-      excerpt={work.excerpt}
-      judgeComments={work.judgeComments}
-      raceSlug={work.raceSlug}
-      raceTitle={work.raceTitle}
-      repoUrl={work.repoUrl}
-      score={work.score}
-      techNotes={work.techNotes}
-      title={work.title}
-      videoUrl={work.videoUrl}
-    />
+    <main>
+      <WorkPageView
+        author={work.author}
+        awards={work.awards}
+        demoUrl={work.demoUrl}
+        evidenceSummaries={work.evidenceSummaries}
+        excerpt={work.excerpt}
+        judgeComments={work.judgeComments}
+        raceSlug={work.raceSlug}
+        raceTitle={work.raceTitle}
+        repoUrl={work.repoUrl}
+        score={work.score}
+        techNotes={work.techNotes}
+        title={work.title}
+        videoUrl={work.videoUrl}
+      />
+      <style>{aryStyles}</style>
+    </main>
   );
 }

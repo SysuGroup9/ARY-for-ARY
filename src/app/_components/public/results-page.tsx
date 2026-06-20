@@ -32,24 +32,24 @@ export function ResultsPageView({
 
   return (
     <div className="stack">
-      <section className="panel">
+      <div className="card">
         <p className="eyebrow">赛果</p>
         <h1>{race.title}</h1>
         <p className="muted">
           当前赛果页只读取已发布的 `Award` 与报告链路，不再把过程榜单当作最终结果来源。
         </p>
         {raceReport ? <p className="muted">{raceReport.summary}</p> : null}
-      </section>
+      </div>
 
-      <section className="panel">
+      <div className="card">
         <p className="eyebrow">奖项榜单</p>
         <h2>已发布奖项</h2>
         {awards.length === 0 ? (
           <p className="muted">暂无已发布的公开赛果。</p>
         ) : (
-          <div className="stack">
+          <div className="stack" style={{marginTop:16}}>
             {[...groupedAwards.entries()].map(([awardName, rows]) => (
-              <section className="panel" key={awardName}>
+              <div className="card" key={awardName} style={{background:"var(--muted)"}}>
                 <p className="eyebrow">{awardName}</p>
                 <h2>{awardName}</h2>
                 <div className="stack">
@@ -59,20 +59,20 @@ export function ResultsPageView({
                       key={`${awardName}-${award.rank}-${award.registration.user.username}`}
                     >
                       <strong>{award.registration.user.username}</strong>
-                      <span>名次：{award.rank}</span>
-                      <span>{award.work?.title ?? "未关联作品"}</span>
-                      <span>{award.decisionReason}</span>
+                      <span className="muted text-sm">名次：{award.rank}</span>
+                      <span className="text-sm">{award.work?.title ?? "未关联作品"}</span>
+                      <span className="muted text-sm">{award.decisionReason}</span>
                     </div>
                   ))}
                 </div>
-              </section>
+              </div>
             ))}
           </div>
         )}
-      </section>
+      </div>
 
-      <section className="grid">
-        <section className="panel">
+      <div className="grid-3">
+        <div className="card">
           <p className="eyebrow">获奖作品</p>
           <h2>获奖作品</h2>
           <div className="stack">
@@ -85,8 +85,8 @@ export function ResultsPageView({
                     key={`${award.awardName}-work-${award.work.title}`}
                   >
                     <strong>{award.work.title}</strong>
-                    <span>{award.awardName}</span>
-                    <span>{award.registration.user.username}</span>
+                    <span className="muted text-sm">{award.awardName}</span>
+                    <span className="text-sm">{award.registration.user.username}</span>
                   </a>
                 ) : (
                   <div
@@ -94,8 +94,8 @@ export function ResultsPageView({
                     key={`${award.awardName}-work-${award.work!.title}`}
                   >
                     <strong>{award.work!.title}</strong>
-                    <span>{award.awardName}</span>
-                    <span>{award.registration.user.username}</span>
+                    <span className="muted text-sm">{award.awardName}</span>
+                    <span className="text-sm">{award.registration.user.username}</span>
                   </div>
                 ),
               )
@@ -103,9 +103,9 @@ export function ResultsPageView({
               <p className="muted">暂无公开获奖作品。</p>
             )}
           </div>
-        </section>
+        </div>
 
-        <section className="panel">
+        <div className="card">
           <p className="eyebrow">骑行亮点</p>
           <h2>骑行亮点</h2>
           <div className="stack">
@@ -116,16 +116,16 @@ export function ResultsPageView({
                   key={`${highlight.riderName}-${highlight.label}-${index}`}
                 >
                   <strong>{highlight.riderName}</strong>
-                  <span>{highlight.label}</span>
+                  <span className="muted text-sm">{highlight.label}</span>
                 </div>
               ))
             ) : (
               <p className="muted">暂无已发布的骑行亮点。</p>
             )}
           </div>
-        </section>
+        </div>
 
-        <section className="panel">
+        <div className="card">
           <p className="eyebrow">评审总结入口</p>
           <h2>评审总结</h2>
           <a
@@ -134,8 +134,8 @@ export function ResultsPageView({
           >
             查看评审总结
           </a>
-        </section>
-      </section>
+        </div>
+      </div>
     </div>
   );
 }

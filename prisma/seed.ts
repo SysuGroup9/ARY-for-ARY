@@ -728,10 +728,10 @@ async function main() {
   }
 
   console.log("\nSeed data generated.");
-  console.log("   Organizer: organizer_demo / organizer123");
+  console.log("   Admin/Organizer: organizer_demo / organizer123");
   console.log("   Admin: admin_demo / organizer123");
   console.log("   Judge: judge_demo / rider123");
-  console.log("   Rider: rider_alice ~ rider_kate / rider123");
+  console.log("   Riders: rider_alice ~ rider_kate / rider123");
 }
 
 main()

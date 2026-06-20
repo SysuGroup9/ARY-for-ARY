@@ -1,4 +1,5 @@
 import { RacePageView } from "@/app/_components/public/race-page";
+import { aryStyles } from "@/app/_components/ary-shared";
 import { getRaceBySlug } from "@/lib/services/public-routes";
 import { notFound } from "next/navigation";
 
@@ -16,5 +17,10 @@ export default async function RacePage({ params }: Props) {
     notFound();
   }
 
-  return <RacePageView race={race} raceSlug={raceSlug} />;
+  return (
+    <main>
+      <RacePageView race={race} raceSlug={raceSlug} />
+      <style>{aryStyles}</style>
+    </main>
+  );
 }

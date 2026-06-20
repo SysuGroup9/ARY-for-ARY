@@ -1,4 +1,5 @@
 import { ReviewPageView } from "@/app/_components/public/review-page";
+import { aryStyles } from "@/app/_components/ary-shared";
 import { getRaceBySlug } from "@/lib/services/public-routes";
 import { getPublishedReviewSummaryForRace } from "@/lib/services/reports";
 import { buildPublicReviewModel } from "@/lib/services/review";
@@ -24,12 +25,15 @@ export default async function RaceReviewPage({ params }: Props) {
   ]);
 
   return (
-    <ReviewPageView
-      awards={reviewModel.awards}
-      evidenceHighlights={reviewModel.evidenceHighlights}
-      judgingRecords={reviewModel.judgingRecords}
-      race={race}
-      reviewReport={reviewReport}
-    />
+    <main>
+      <ReviewPageView
+        awards={reviewModel.awards}
+        evidenceHighlights={reviewModel.evidenceHighlights}
+        judgingRecords={reviewModel.judgingRecords}
+        race={race}
+        reviewReport={reviewReport}
+      />
+      <style>{aryStyles}</style>
+    </main>
   );
 }

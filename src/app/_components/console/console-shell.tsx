@@ -172,7 +172,7 @@ export const consoleStyles = `
   }
 
   .console-brand span {
-    color: var(--muted);
+    color: var(--muted-foreground);
     font-size: 0.92rem;
     font-weight: 600;
   }
@@ -212,7 +212,7 @@ export const consoleStyles = `
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    color: var(--muted);
+    color: var(--muted-foreground);
     font-size: 0.92rem;
   }
 
@@ -266,7 +266,7 @@ export const consoleStyles = `
 
   .console-link-card span,
   .console-link-card p {
-    color: var(--muted);
+    color: var(--muted-foreground);
     margin: 0;
   }
 

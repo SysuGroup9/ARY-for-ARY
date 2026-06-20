@@ -47,28 +47,28 @@ export function RiderProfilePageView({
 }) {
   return (
     <div className="stack">
-      <section className="panel">
+      <div className="card">
         <p className="eyebrow">骑手档案</p>
         <h1>{username}</h1>
-      </section>
+      </div>
 
-      <section className="panel">
+      <div className="card">
         <p className="eyebrow">公开资产</p>
         <h2>能力概览</h2>
-        <div className="stack">
-          <p>学校 / 组织：{orgLabel}</p>
-          <p>代表赛事：{featuredRaceTitle ?? "待补充"}</p>
-          <p>代表作品：{featuredWorkTitle ?? "待补充"}</p>
-          <p>赛事数量：{raceCount}</p>
-          <p>公开作品数：{workCount}</p>
+        <div className="detail-grid" style={{marginTop:12}}>
+          <div><dt>学校 / 组织</dt><dd>{orgLabel}</dd></div>
+          <div><dt>代表赛事</dt><dd>{featuredRaceTitle ?? "待补充"}</dd></div>
+          <div><dt>代表作品</dt><dd>{featuredWorkTitle ?? "待补充"}</dd></div>
+          <div><dt>赛事数量</dt><dd>{raceCount}</dd></div>
+          <div><dt>公开作品数</dt><dd>{workCount}</dd></div>
         </div>
-      </section>
+      </div>
 
-      <section className="grid">
-        <section className="panel">
+      <div className="grid-2">
+        <div className="card">
           <p className="eyebrow">骑行能力</p>
           <h2>能力标签</h2>
-          <div className="stack">
+          <div className="flex-row" style={{marginTop:8}}>
             {skillTags.length ? (
               skillTags.map((tag) => (
                 <span className="file-chip" key={tag}>
@@ -76,24 +76,24 @@ export function RiderProfilePageView({
                 </span>
               ))
             ) : (
-              <p className="muted">暂无已生成的能力标签。</p>
+              <p className="muted text-sm">暂无已生成的能力标签。</p>
             )}
           </div>
-        </section>
+        </div>
 
-        <section className="panel">
+        <div className="card">
           <p className="eyebrow">表现摘要</p>
           <h2>成本 / 进度 / 风险</h2>
-          <div className="stack">
-            <p>总 Tokens：{performanceSummary.totalTokens}</p>
-            <p>平均进度：{performanceSummary.averageProgressPercent}%</p>
-            <p>风险数量：{performanceSummary.riskCount}</p>
+          <div className="detail-grid" style={{marginTop:12}}>
+            <div><dt>总 Tokens</dt><dd>{performanceSummary.totalTokens}</dd></div>
+            <div><dt>平均进度</dt><dd>{performanceSummary.averageProgressPercent}%</dd></div>
+            <div><dt>风险数量</dt><dd>{performanceSummary.riskCount}</dd></div>
           </div>
-        </section>
-      </section>
+        </div>
+      </div>
 
-      <section className="grid">
-        <section className="panel">
+      <div className="grid-2">
+        <div className="card">
           <p className="eyebrow">参赛记录</p>
           <h2>报名、获奖与作品</h2>
           <div className="stack">
@@ -104,19 +104,19 @@ export function RiderProfilePageView({
                 key={record.raceId}
               >
                 <strong>{record.raceTitle}</strong>
-                <span>阶段：{record.phase}</span>
-                <span>获奖名次：{record.awardScore ?? "待补充"}</span>
-                <span>
+                <span className="muted text-sm">阶段：{record.phase}</span>
+                <span className="text-sm">获奖名次：{record.awardScore ?? "待补充"}</span>
+                <span className="muted text-sm">
                   奖项：{record.awardNames.length ? record.awardNames.join(", ") : "无"}
                 </span>
-                <span>作品：{record.workTitle ?? "待补充"}</span>
-                <span>证据数：{record.evidenceCount}</span>
+                <span className="text-sm">作品：{record.workTitle ?? "待补充"}</span>
+                <span className="muted text-sm">证据数：{record.evidenceCount}</span>
               </a>
             ))}
           </div>
-        </section>
+        </div>
 
-        <section className="panel">
+        <div className="card">
           <p className="eyebrow">报告与摘要</p>
           <h2>已发布摘要</h2>
           <div className="stack">
@@ -127,7 +127,7 @@ export function RiderProfilePageView({
                 </blockquote>
               ))
             ) : (
-              <p className="muted">暂无已发布的骑手报告。</p>
+              <p className="muted text-sm">暂无已发布的骑手报告。</p>
             )}
             {raceRecords
               .filter((record) => record.comment)
@@ -137,11 +137,11 @@ export function RiderProfilePageView({
                 </blockquote>
               ))}
           </div>
-        </section>
-      </section>
+        </div>
+      </div>
 
-      <section className="grid">
-        <section className="panel">
+      <div className="grid-2">
+        <div className="card">
           <p className="eyebrow">评委评语</p>
           <h2>评审记录</h2>
           <div className="stack">
@@ -152,17 +152,17 @@ export function RiderProfilePageView({
                 </blockquote>
               ))
             ) : (
-              <p className="muted">暂无公开评委评语。</p>
+              <p className="muted text-sm">暂无公开评委评语。</p>
             )}
           </div>
-        </section>
+        </div>
 
-        <section className="panel">
+        <div className="card">
           <p className="eyebrow">公开作品</p>
           <h2>作品链接</h2>
           <div className="stack">
             {publicWorkLinks.length === 0 ? (
-              <p className="muted">暂无公开作品链接。</p>
+              <p className="muted text-sm">暂无公开作品链接。</p>
             ) : (
               publicWorkLinks.map((work) => (
                 <a className="public-link-card" href={work.href} key={work.href}>
@@ -171,8 +171,8 @@ export function RiderProfilePageView({
               ))
             )}
           </div>
-        </section>
-      </section>
+        </div>
+      </div>
     </div>
   );
 }

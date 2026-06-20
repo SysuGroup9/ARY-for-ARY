@@ -43,16 +43,16 @@ export default async function LoginPage({ searchParams }: Props) {
       <HeroSection mode="auth" />
 
       <section className="auth-entry-layout">
-        <Panel title="身份入口" eyebrow="登录 / 注册">
+        <div className="card" style={{padding:32}}>
           <div className="auth-panel">
             <div className="auth-panel__header">
-              <h2>进入你的赛事工作流</h2>
-              <p className="muted">
-                继续使用已有账号，或先创建骑手账号。公开浏览仍保留在公开站，登录后再进入报名、提交和评审流程。
+              <h2 style={{fontSize:"1.5rem"}}>身份入口</h2>
+              <p className="muted" style={{fontSize:"0.9375rem"}}>
+                登录或创建骑手账号。公开浏览不需要登录，报名、提交和评审从登录后开始。
               </p>
             </div>
 
-            {oauthErrorMessage ? <p className="muted">{oauthErrorMessage}</p> : null}
+            {oauthErrorMessage ? <p className="muted" style={{color:"#DC2626"}}>{oauthErrorMessage}</p> : null}
 
             <AuthTabsPanel
               githubAction={loginWithGitHubAction}
@@ -61,29 +61,30 @@ export default async function LoginPage({ searchParams }: Props) {
               returnTo={returnTo}
             />
           </div>
-        </Panel>
+        </div>
 
         <aside className="auth-sidebar">
-          <Panel title="使用说明" eyebrow="访问边界">
+          <div className="card" style={{padding:24}}>
             <div className="auth-sidebar__header">
-              <p className="muted">
-                这里负责登录现有账号，或创建新的骑手账号。赛事报名、作品提交和评审入口，都在登录后根据身份进入对应控制台。
+              <h2 style={{fontSize:"1.125rem"}}>使用说明</h2>
+              <p className="muted" style={{fontSize:"0.875rem"}}>
+                这里负责登录现有账号或创建新的骑手账号。赛事报名、作品提交和评审入口在登录后根据身份进入对应控制台。
               </p>
             </div>
             <div className="auth-sidebar__card">
               <ul className="auth-sidebar__list">
                 <li>公开浏览赛事、作品和赛果时，不需要登录。</li>
-                <li>公开注册默认只创建骑手账号，不自动授予后台角色。</li>
-                <li>主办方、评委和管理员权限由系统已有角色分配决定。</li>
+                <li>公开注册默认只创建骑手账号。</li>
+                <li>主办方、评委和管理员权限由系统分配。</li>
               </ul>
             </div>
-          </Panel>
+          </div>
 
-          <div className="auth-sidebar__tip">
+          <div className="card" style={{padding:24,background:"var(--muted)",border:"none"}}>
             <div className="auth-sidebar__meta">
-              <strong>当前推荐路径</strong>
-              <p className="muted">
-                先注册或登录，再回到具体赛事页面完成报名；如果你已经具备主办方、评委或管理员身份，登录后会进入对应控制台入口。
+              <strong style={{fontSize:"0.9375rem"}}>推荐路径</strong>
+              <p className="muted" style={{fontSize:"0.875rem"}}>
+                先注册或登录，再回到具体赛事页面完成报名。如果你已有主办方、评委或管理员身份，登录后会自动进入对应控制台入口。
               </p>
             </div>
           </div>
@@ -91,7 +92,7 @@ export default async function LoginPage({ searchParams }: Props) {
           <SeedAccountsPanel />
 
           <Link className="button-secondary auth-sidebar__back" href="/">
-            返回公开首页
+            ← 返回公开首页
           </Link>
         </aside>
       </section>

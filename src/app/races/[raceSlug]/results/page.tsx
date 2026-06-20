@@ -1,4 +1,5 @@
 import { ResultsPageView } from "@/app/_components/public/results-page";
+import { aryStyles } from "@/app/_components/ary-shared";
 import { getRaceBySlug } from "@/lib/services/public-routes";
 import { getPublishedRaceReportForRace } from "@/lib/services/reports";
 import { buildPublicResultsModel } from "@/lib/services/results";
@@ -24,11 +25,14 @@ export default async function RaceResultsPage({ params }: Props) {
   ]);
 
   return (
-    <ResultsPageView
-      awards={resultsModel.awards}
-      race={race}
-      raceReport={raceReport}
-      ridingSkillHighlights={resultsModel.ridingSkillHighlights}
-    />
+    <main>
+      <ResultsPageView
+        awards={resultsModel.awards}
+        race={race}
+        raceReport={raceReport}
+        ridingSkillHighlights={resultsModel.ridingSkillHighlights}
+      />
+      <style>{aryStyles}</style>
+    </main>
   );
 }

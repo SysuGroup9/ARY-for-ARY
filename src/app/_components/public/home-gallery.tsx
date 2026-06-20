@@ -1,182 +1,122 @@
 import { formatDateTime } from "@/lib/format";
-import type { RaceListItem } from "@/lib/services/races";
 import type { ReturnTypeOfBuildPublicSiteModel } from "@/lib/public-site-types";
+type M = ReturnTypeOfBuildPublicSiteModel;
 
-type PublicHomeModel = ReturnTypeOfBuildPublicSiteModel;
-
-export function HomeGallery({
-  model,
-  canManage,
-  canRide,
-}: {
-  model: PublicHomeModel;
-  canManage: boolean;
-  canRide: boolean;
-}) {
+export function HomeGallery({ model, canManage, canRide }: { model: M; canManage: boolean; canRide: boolean }) {
   return (
-    <div className="public-gallery">
-      <section className="panel">
-        <p className="eyebrow">主推赛事</p>
-        <h2>赛事画廊</h2>
-        <div className="public-cards">
+    <div className="stack" style={{ gap: "var(--space-8)" }}>
+      {/* 赛事画廊 */}
+      <section>
+        <div className="section-label"><span className="section-label__dot" />赛事画廊</div>
+        <div className="grid-3">
           {model.featuredRaces.map((race) => (
-            <article className="public-card" key={race.id}>
-              <div className="public-card__top">
-                <strong>{race.title}</strong>
-                <span>{race.phase}</span>
+            <article className="card card-accent" key={race.id}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                <strong style={{ fontSize: "1rem", lineHeight: 1.3 }}>{race.title}</strong>
+                <span className="badge badge-accent" style={{ flexShrink: 0 }}>{race.phase}</span>
               </div>
-              <p>{race.summary}</p>
-              <small>
-                {formatDateTime(race.raceStart)} - {formatDateTime(race.raceEnd)}
-              </small>
-              <div className="button-row-inline" style={{ marginTop: "0.9rem" }}>
-                <a className="button-secondary" href={`/races/${race.slug}`}>
+              <p className="muted text-sm" style={{ marginBottom: 12, lineHeight: 1.6 }}>{race.summary}</p>
+              <small className="muted" style={{ fontSize: "0.8rem" }}>{formatDateTime(race.raceStart)} - {formatDateTime(race.raceEnd)}</small>
+              <div className="flex-row" style={{ marginTop: 16 }}>
+                <a className="button-secondary" href={`/races/${race.slug}`} style={{ fontSize: 13, minHeight: 36 }}>
                   进入赛事页
                 </a>
-                {(race.phase === "active" || race.phase === "frozen") && (
-                  <a className="button-secondary" href={`/races/${race.slug}/live`}>
-                    查看实况大厅
-                  </a>
-                )}
-                {race.phase === "finished" && (
-                  <a className="button-secondary" href={`/races/${race.slug}/results`}>
-                    查看赛果
-                  </a>
-                )}
+                {race.phase === "active" || race.phase === "frozen" ? (
+                  <a className="button-secondary" href={`/races/${race.slug}/live`} style={{ fontSize: 13, minHeight: 36 }}>实况大厅</a>
+                ) : race.phase === "finished" ? (
+                  <a className="button-secondary" href={`/races/${race.slug}/results`} style={{ fontSize: 13, minHeight: 36 }}>查看赛果</a>
+                ) : null}
               </div>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="grid">
-        <section className="panel">
-          <p className="eyebrow">最新赛果</p>
-          <h2>最新赛果</h2>
+      {/* 赛果 + 作品 */}
+      <div className="grid-2">
+        <div className="card">
+          <div className="section-label"><span className="section-label__dot" />最新赛果</div>
           <div className="stack">
-            {model.latestResults.length === 0 ? (
-              <p className="muted">暂无已结束赛事。</p>
-            ) : (
-              model.latestResults.map((race) => (
+            {model.latestResults.length === 0 ? <p className="muted text-sm">暂无已结束赛事。</p>
+              : model.latestResults.map((race) => (
                 <a className="public-link-card" href={`/races/${race.slug}/results`} key={race.id}>
-                  <strong>{race.title}</strong>
-                  <span>{race.summary}</span>
+                  <strong style={{fontSize:"0.9375rem"}}>{race.title}</strong>
+                  <span className="muted text-sm">{race.summary}</span>
                 </a>
-              ))
-            )}
+              ))}
           </div>
-        </section>
-
-        <section className="panel">
-          <p className="eyebrow">精选作品</p>
-          <h2>精选作品</h2>
+        </div>
+        <div className="card">
+          <div className="section-label"><span className="section-label__dot" />精选作品</div>
           <div className="stack">
-            {model.featuredWorks.length === 0 ? (
-              <p className="muted">暂无公开作品。</p>
-            ) : (
-              model.featuredWorks.map((work) => (
+            {model.featuredWorks.length === 0 ? <p className="muted text-sm">暂无公开作品。</p>
+              : model.featuredWorks.map((work) => (
                 <a className="public-link-card" href={`/works/${work.id}`} key={work.id}>
-                  <strong>{work.title}</strong>
-                  <span>作者：{work.author}</span>
-                  <span>{work.excerpt}</span>
+                  <strong style={{fontSize:"0.9375rem"}}>{work.title}</strong>
+                  <span className="muted text-sm">作者：{work.author}</span>
                 </a>
-              ))
+              ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 骑手 + 合作 */}
+      <div className="grid-2" style={{alignItems:"start"}}>
+        <div className="card">
+          <div className="section-label"><span className="section-label__dot" />优秀骑手</div>
+          <div className="stack">
+            {model.featuredRiders.slice(0, 4).map((rider) => (
+              <a className="public-link-card" href={`/riders/${rider.riderSlug}`} key={rider.id}>
+                <strong style={{fontSize:"0.9375rem"}}>{rider.username}</strong>
+                <span className="muted text-sm">{rider.orgLabel} · {rider.raceCount} 场赛事 / {rider.workCount} 个作品</span>
+              </a>
+            ))}
+            {model.featuredRiders.length > 4 && (
+              <a className="public-link-card" href="/riders" style={{textAlign:"center"}}>
+                <span className="muted text-sm">查看全部 {model.featuredRiders.length} 位骑手 →</span>
+              </a>
             )}
           </div>
-        </section>
-      </section>
+        </div>
+        <div className="card" style={{display:"flex",flexDirection:"column",justifyContent:"space-between",minHeight:200}}>
+          <div>
+            <div className="section-label"><span className="section-label__dot" />合作入口</div>
+            <p className="muted text-sm" style={{lineHeight:1.7}}>
+              合作入口独立存在，不埋在赛事面板或后台说明中。无论你是想办赛、赞助还是技术合作，我们都欢迎你加入。
+            </p>
+          </div>
+          <a className="button" href="/cooperation" style={{marginTop:16}}>进入合作页面 →</a>
+        </div>
+      </div>
 
-      <section className="grid">
-        <section className="panel">
-          <p className="eyebrow">优秀骑手</p>
-          <h2>优秀骑手</h2>
-          <div className="stack">
-            {model.featuredRiders.map((rider) => (
-              <a className="public-link-card" href={`/riders/${rider.riderSlug}`} key={rider.id}>
-                <strong>{rider.username}</strong>
-                <span>{rider.orgLabel}</span>
-                <span>代表赛事：{rider.featuredRaceTitle ?? "待补充"}</span>
-                <span>代表作品：{rider.featuredWorkTitle ?? "待补充"}</span>
-                <span>{rider.raceCount} 场赛事 / {rider.workCount} 个公开作品</span>
+      {/* 往届赛事 */}
+      {model.pastRaces.length > 0 && (
+        <div className="card" style={{background:"var(--muted)",boxShadow:"var(--shadow-ring)"}}>
+          <div className="section-label"><span className="section-label__dot" />往届赛事</div>
+          <div className="grid-3" style={{ marginTop: 8 }}>
+            {model.pastRaces.map((race) => (
+              <a className="public-link-card" href={`/races/${race.slug}/results`} key={race.id}>
+                <strong style={{fontSize:"0.9375rem"}}>{race.title}</strong>
+                <span className="muted text-sm">{race.summary}</span>
               </a>
             ))}
           </div>
-        </section>
-
-        <section className="panel">
-          <p className="eyebrow">合作入口</p>
-          <h2>合作入口</h2>
-          <div className="stack">
-            <p className="muted">
-              按 `grs003` 的公开站要求，合作入口应独立存在，而不是埋在赛事面板或后台说明中。
-            </p>
-            <a className="button" href="/cooperation">
-              进入合作页面
-            </a>
-            {(canManage || canRide) && (
-              <p className="muted">
-                控制台 / 工作台入口保留为次级能力，不占公开首页主视觉。
-              </p>
-            )}
-          </div>
-        </section>
-      </section>
-
-      <section className="panel">
-        <p className="eyebrow">往届赛事</p>
-        <h2>往届赛事</h2>
-        <div className="stack">
-          {model.pastRaces.length === 0 ? (
-            <p className="muted">暂无已归档赛事。</p>
-          ) : (
-            model.pastRaces.map((race) => (
-              <a className="public-link-card" href={`/races/${race.slug}/results`} key={race.id}>
-                <strong>{race.title}</strong>
-                <span>{race.summary}</span>
-              </a>
-            ))
-          )}
         </div>
-      </section>
+      )}
 
-      <section className="panel">
-        <p className="eyebrow">行动入口</p>
-        <h2>骑手注册 / 报名 / 办赛 / 合作</h2>
-        <div className="stack">
-          <p className="muted">
-            公开站先完成骑手注册或登录，再进入具体赛事执行报名；控制台入口只对具备对应角色的用户显示。
-          </p>
-          <div className="button-row-inline">
-            <a className="button-secondary" href="/login">
-              骑手注册 / 登录
-            </a>
-            <a className="button-secondary" href="/races">
-              查看赛事报名页
-            </a>
-            {canRide ? (
-              <a className="button-secondary" href="/console/races">
-                继续参赛
-              </a>
-            ) : null}
-            {canRide ? (
-              <a className="button-secondary" href="/console/races">
-                提交赛后材料
-              </a>
-            ) : null}
-            <a className="button-secondary" href="/races/new">
-              我要办赛
-            </a>
-            <a className="button-secondary" href="/cooperation">
-              我要赞助
-            </a>
-            <a className="button-secondary" href="/cooperation">
-              我要合作
-            </a>
-          </div>
+      {/* CTA */}
+      <div className="section-dark">
+        <h2 style={{ marginBottom: 12, textAlign: "center", fontSize: "1.75rem" }}>骑手注册 / 报名 / 办赛 / 合作</h2>
+        <p className="text-center" style={{ marginBottom: 28, fontSize: "0.9375rem" }}>
+          公开站先完成骑手注册或登录，再进入具体赛事执行报名
+        </p>
+        <div className="flex-row" style={{ justifyContent: "center" }}>
+          <a className="button" href="/login">骑手注册 / 登录</a>
+          <a className="button-secondary" href="/races">查看赛事</a>
+          <a className="button-secondary" href="/races/new">我要办赛</a>
+          <a className="button-secondary" href="/cooperation">合作赞助</a>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
-
-export type HomeGalleryRace = RaceListItem & { slug: string };

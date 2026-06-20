@@ -1,4 +1,5 @@
 import { LiveHallView } from "@/app/_components/public/live-hall";
+import { aryStyles } from "@/app/_components/ary-shared";
 import { getEffectiveTrackProfileFromSnapshot } from "@/lib/jumbotron/track-config";
 import { buildRaceSnapshot } from "@/lib/services/race-snapshot";
 import { getRaceBySlug } from "@/lib/services/public-routes";
@@ -22,9 +23,12 @@ export default async function RaceLivePage({ params }: Props) {
   const trackProfile = getEffectiveTrackProfileFromSnapshot(snapshot);
 
   return (
-    <LiveHallView
-      race={race}
-      jumbotronPreview={{ snapshot, trackProfile }}
-    />
+    <main>
+      <LiveHallView
+        race={race}
+        jumbotronPreview={{ snapshot, trackProfile }}
+      />
+      <style>{aryStyles}</style>
+    </main>
   );
 }

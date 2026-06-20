@@ -170,7 +170,7 @@ export function LiveHallView({
 
   return (
     <div className="stack">
-      <section className="panel">
+      <section className="card">
         <p className="eyebrow">实况大厅</p>
         <h1>{race.title}</h1>
         <p className="muted">
@@ -191,8 +191,8 @@ export function LiveHallView({
         ) : null}
       </section>
 
-      <section className="grid">
-        <section className="panel">
+      <div className="grid-2">
+        <div className="card">
           <p className="eyebrow">赛事状态</p>
           <h2>过程总览</h2>
           <div className="detail-grid">
@@ -221,9 +221,9 @@ export function LiveHallView({
               <dd>{processLeaderboardCount}</dd>
             </div>
           </div>
-        </section>
+        </div>
 
-        <section className="panel">
+        <div className="card">
           <p className="eyebrow">过程指标</p>
           <h2>成本 / 进度 / 风险</h2>
           <div className="detail-grid">
@@ -240,12 +240,11 @@ export function LiveHallView({
               <dd>{riskCount}</dd>
             </div>
           </div>
-        </section>
+        </div>
+      </div>
 
-      </section>
-
-      <section className="grid">
-        <section className="panel">
+      <div className="grid-3">
+        <div className="card">
           <p className="eyebrow">骑手动态</p>
           <h2>报名状态</h2>
           <div className="stack">
@@ -253,7 +252,7 @@ export function LiveHallView({
               riderActivity.slice(0, 8).map((item) => (
                 <div className="public-link-card" key={item.registrationId}>
                   <strong>{item.username}</strong>
-                  <span>
+                  <span className="muted text-sm">
                     {item.aggregateIngestionStatus} / {item.sessionCount} 次会话
                   </span>
                 </div>
@@ -262,9 +261,9 @@ export function LiveHallView({
               <p className="muted">暂时还没有可展示的骑手动态。</p>
             )}
           </div>
-        </section>
+        </div>
 
-        <section className="panel">
+        <div className="card">
           <p className="eyebrow">当前榜单</p>
           <h2>过程榜单</h2>
           {processLeaderboardCount === 0 ? (
@@ -289,9 +288,9 @@ export function LiveHallView({
               </tbody>
             </table>
           )}
-        </section>
+        </div>
 
-        <section className="panel">
+        <div className="card">
           <p className="eyebrow">事件流</p>
           <h2>最近事件</h2>
           <div className="stack">
@@ -302,15 +301,15 @@ export function LiveHallView({
                   key={`${item.type}-${item.createdAt}-${index}`}
                 >
                   <strong>{item.username ?? item.type}</strong>
-                  <span>{item.summary}</span>
+                  <span className="muted text-sm">{item.summary}</span>
                 </div>
               ))
             ) : (
               <p className="muted">暂时还没有生成新的事件流条目。</p>
             )}
           </div>
-        </section>
-      </section>
+        </div>
+      </div>
     </div>
   );
 }

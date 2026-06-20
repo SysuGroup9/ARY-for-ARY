@@ -1,4 +1,5 @@
 import { WorksPageView } from "@/app/_components/public/works-page";
+import { aryStyles } from "@/app/_components/ary-shared";
 import { getRaceBySlug } from "@/lib/services/public-routes";
 import { notFound } from "next/navigation";
 
@@ -16,5 +17,10 @@ export default async function RaceWorksPage({ params }: Props) {
     notFound();
   }
 
-  return <WorksPageView race={race} />;
+  return (
+    <main>
+      <WorksPageView race={race} />
+      <style>{aryStyles}</style>
+    </main>
+  );
 }

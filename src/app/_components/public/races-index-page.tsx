@@ -2,94 +2,80 @@ import { formatDateTime } from "@/lib/format";
 import { groupPublicRacesByPhase } from "@/lib/public-site";
 import type { ReturnTypeOfBuildPublicSiteModel } from "@/lib/public-site-types";
 
-export function RacesIndexPageView({
-  model,
-}: {
-  model: ReturnTypeOfBuildPublicSiteModel;
-}) {
+export function RacesIndexPageView({ model }: { model: ReturnTypeOfBuildPublicSiteModel }) {
   const grouped = groupPublicRacesByPhase(model.featuredRaces);
+  const active = [...grouped.active, ...grouped.frozen];
+  const upcoming = [...grouped.registration, ...grouped.preparation];
 
   return (
-    <div className="stack">
-      <section className="panel">
-        <p className="eyebrow">Races</p>
-        <h1>All Races</h1>
-        <p className="muted">
-          `/races` 是 `grs003` 里 Home / Race Gallery 的完整赛事列表入口，不应只是首页的副本。
-        </p>
+    <div className="stack" style={{ gap: 28 }}>
+      <section className="hero" style={{ textAlign: "left", padding: "32px 0 8px" }}>
+        <div className="section-label"><span className="section-label__dot" />Races</div>
+        <h1 style={{ fontSize: "clamp(2rem,4vw,2.75rem)" }}>全部赛事</h1>
+        <p className="muted" style={{ marginTop: 8, maxWidth: "100%" }}>赛事画廊的完整列表入口，按赛事阶段分组浏览。</p>
       </section>
 
-      <section className="panel">
-        <p className="eyebrow">Featured Races</p>
-        <h2>当前主推赛事</h2>
-        <div className="public-cards">
-          {model.featuredRaces.map((race) => (
-            <article className="public-card" key={race.id}>
-              <div className="public-card__top">
-                <strong>{race.title}</strong>
-                <span>{race.phase}</span>
-              </div>
-              <p>{race.summary}</p>
-              <small>
-                {formatDateTime(race.raceStart)} - {formatDateTime(race.raceEnd)}
-              </small>
-              <div className="button-row-inline" style={{ marginTop: "0.9rem" }}>
-                <a className="button-secondary" href={`/races/${race.slug}`}>
-                  进入赛事页
-                </a>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="grid">
-        <section className="panel">
-          <p className="eyebrow">Active / Registration</p>
-          <h2>当前赛事分组</h2>
-          <div className="stack">
-            <div>
-              <strong>进行中 / 封榜中</strong>
-              <div className="stack">
-                {[...grouped.active, ...grouped.frozen].map((race) => (
-                  <a className="public-link-card" href={`/races/${race.slug}`} key={race.id}>
-                    <strong>{race.title}</strong>
-                    <span>{race.phase}</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-            <div>
-              <strong>报名中 / 准备中</strong>
-              <div className="stack">
-                {[...grouped.registration, ...grouped.preparation].map((race) => (
-                  <a className="public-link-card" href={`/races/${race.slug}`} key={race.id}>
-                    <strong>{race.title}</strong>
-                    <span>{race.phase}</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="panel">
-          <p className="eyebrow">Past Races</p>
-          <h2>已结束赛事</h2>
-          <div className="stack">
-            {model.pastRaces.length === 0 ? (
-              <p className="muted">暂无往届赛事。</p>
-            ) : (
-              model.pastRaces.map((race) => (
-                <a className="public-link-card" href={`/races/${race.slug}/results`} key={race.id}>
+      {model.featuredRaces.length > 0 && (
+        <section>
+          <div className="section-label"><span className="section-label__dot section-label__dot--live" />主推赛事</div>
+          <div className="grid-3">
+            {model.featuredRaces.map((race) => (
+              <article className="public-card card-accent" key={race.id}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
                   <strong>{race.title}</strong>
-                  <span>{race.summary}</span>
-                </a>
-              ))
-            )}
+                  <span className="badge badge-accent">{race.phase}</span>
+                </div>
+                <p className="muted text-sm">{race.summary}</p>
+                <small className="muted">{formatDateTime(race.raceStart)} - {formatDateTime(race.raceEnd)}</small>
+                <div style={{ marginTop: 14 }}>
+                  <a className="button-secondary" href={`/races/${race.slug}`} style={{ fontSize: 13, minHeight: 36 }}>进入赛事页</a>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
-      </section>
+      )}
+
+      <div className="grid-2">
+        <div className="card">
+          <div className="section-label"><span className="section-label__dot section-label__dot--live" />进行中</div>
+          <div className="stack" style={{ marginTop: 8 }}>
+            {active.length === 0 ? <p className="muted text-sm">暂无进行中赛事。</p>
+              : active.map((race) => (
+                <a className="public-link-card" href={`/races/${race.slug}`} key={race.id}>
+                  <strong>{race.title}</strong>
+                  <span className="badge badge-accent">{race.phase}</span>
+                </a>
+              ))}
+          </div>
+        </div>
+        <div className="card">
+          <div className="section-label"><span className="section-label__dot" />报名中</div>
+          <div className="stack" style={{ marginTop: 8 }}>
+            {upcoming.length === 0 ? <p className="muted text-sm">暂无报名中赛事。</p>
+              : upcoming.map((race) => (
+                <a className="public-link-card" href={`/races/${race.slug}`} key={race.id}>
+                  <strong>{race.title}</strong>
+                  <span className="badge badge-accent">{race.phase}</span>
+                </a>
+              ))}
+          </div>
+        </div>
+      </div>
+
+      {model.pastRaces.length > 0 && (
+        <div className="card" style={{background:"var(--muted)",boxShadow:"var(--shadow-ring)"}}>
+          <div className="section-label"><span className="section-label__dot" />往届赛事</div>
+          <div className="grid-3" style={{ marginTop: 8 }}>
+            {model.pastRaces.map((race) => (
+              <a className="public-link-card" href={`/races/${race.slug}/results`} key={race.id}>
+                <strong>{race.title}</strong>
+                <span className="muted text-sm">{race.summary}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
