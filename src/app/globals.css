@@ -138,6 +138,8 @@ p { margin: 0; line-height: 1.6; font-size: 1rem; }
 
 /* ── Layout ── */
 main {
+  position: relative;
+  z-index: 1;
   width: min(1200px, calc(100vw - 40px));
   margin: 0 auto;
   padding: 32px 20px 80px;
