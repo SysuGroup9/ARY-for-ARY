@@ -8,6 +8,7 @@
 - [陈怀容's riding_record](./陈怀容's%20riding_record.md) — 陈怀容的验收、GitHub 登录调试、UI 重构与页面优化记录。
 - [陈诗翰's riding_record](./陈诗翰's%20riding_record.md) — 陈诗翰的文档体系整理、Rider 主链路恢复与 Jumbotron 问题定位记录。
 - [阮依成's riding_record](./阮依成's%20riding_record.md) — 阮依成 2026-06-18 之后围绕真实大屏数据、登录页面、大屏控制台与校准器修复的记录。
+- [黄智亮's riding_record](./黄智亮's%20riding_record.md) — 黄智亮的 Agent 驾驭能力评估记录，负责功能验收、项目细节补充&修复。
 - [小组分工](./小组分工.md) — GRS003 阶段团队角色、职责分工和关键协作节点。
 
 ## Directory structure
@@ -19,6 +20,7 @@ riding_record_grs003/
 ├── 陈怀容's riding_record.md
 ├── 陈诗翰's riding_record.md
 ├── 阮依成's riding_record.md
+├── 黄智亮's riding_record.md
 └── 小组分工.md
 ```
 
