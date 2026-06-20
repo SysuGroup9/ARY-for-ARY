@@ -20,7 +20,7 @@
 
 - GitHub 登录优先做到真实可用，保留现有本地账号流作为开发兜底，避免 seed 与现有演示账号体系立即失效。
 - 真实 agent 接入复用现有 `CAConnection`、handshake、signal、snapshot 服务层，不重写整套 ingest 模型。
-- 旧 `Runner Pull` 链路本轮不删除，只降级为兼容层，避免影响现有提交/评分演示路径。
+- 旧 `Runner Pull` 链路本轮不删除，只降级为兼容层，避免影响现有提交/评分演示路径；当前已恢复 Rider 侧提交入口，但独立 Runner 操作按钮仍未回补。
 - 大屏控制台与赛事控制台继续分离，但先按现状把大屏能力收口为仅 `Admin` 可见；“企业能力”暂不新增角色，先由 `Admin` 代理，避免在角色模型尚未成型时继续把 Organizer 当成大屏默认用户。
 
 原因：
@@ -111,6 +111,7 @@
   - 新增 `isValidPhaseTransition()` 校验合法状态迁移。
   - Seed 数据三个赛事设置显式 status（running/registration/completed）。
 - **Runner 主路径降级**：`submissions.ts` 中 `enqueueSubmissionTestTask` 和 `enqueueHarnessEvalTaskForArtifact` 调用注释掉，提交通路不再自动入 Runner 队列。CA Connector → JudgingRecord 成为主评分路径。
+- **Rider 提交链路回归修复**：补齐 GRS003 8 状态和旧 5 状态之间的兼容判断后，Rider 工作台已重新显示赛中本地代码提交、赛后本地最终代码 + `Riding Record` 提交；服务层也同步恢复对 `running / submitting / completed` 的接受。
 - **Console 权限验证**：确认 `console-routes.ts` 中 Organizer 按 `organizerId` 过滤、Rider 按 `registration` 过滤、Judge 按 `judgeAssignment` 过滤，权限已正确加固。
 - **GitHub OAuth 验收**：验证 `github-oauth.ts` → callback route → login page 全链路完整，缺 GitHub App 配置时自动重定向到 `/login?oauthError=` 并显示中文提示。
 - 最终验证：`npx tsc --noEmit` 零错误，`npm run build` 通过，`npm run db:seed` 生成 3 赛事 + 11 骑手 + Registration/RaceProject 数据。
@@ -129,4 +130,6 @@
 - **Jumbotron 状态修复**：adapter.ts 适配 GRS003 8 状态（running→LIVE，completed→FINISHED）。
 - **赛事详情页**：进行中赛事新增"选手提交入口"按钮。
 - **演示账号更新**：5 个清晰标签+角色展示。
+- **提交链路验证回补**：Rider 提交页重新可见本地代码提交、赛后 `Riding Record` 提交；提交服务与 Runner 阶段守卫同步兼容新状态机。
 - 验证：`npx tsc --noEmit` 零错误，`npm run build` 通过。
+- 补充验证：`node --import tsx --test src/app/_components/console/rider-console-page.test.tsx src/app/_components/submission-form-client.test.tsx src/app/_components/final-submission-form-client.test.tsx src/lib/services/submissions.test.ts src/lib/services/submission-registration-first.test.ts`（24 项通过）。

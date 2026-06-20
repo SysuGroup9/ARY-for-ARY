@@ -212,6 +212,14 @@ export async function submitEntryAction(formData: FormData) {
   redirect(returnTo || "/");
 }
 
+export async function submitEntryForTestAction(formData: FormData) {
+  const user = await requireRole("RIDER");
+  const returnTo = String(formData.get("returnTo") ?? "");
+  await createSubmission(user.id, formData, { enqueueSubmissionTest: true });
+  revalidatePath("/");
+  redirect(returnTo || "/");
+}
+
 export async function submitFinalEntryAction(formData: FormData) {
   const user = await requireRole("RIDER");
   const returnTo = String(formData.get("returnTo") ?? "");

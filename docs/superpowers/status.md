@@ -15,6 +15,31 @@
 
 ## 已完成收口
 
+## 2026-06-20 Rider 提交链路、顶部导航与文档同步修复
+
+- `src/app/_components/console/rider-console-page.tsx`
+  - Rider 提交区重新兼容 GRS003 8 状态：`running / submitting / completed`，不再只识别旧的 `active / frozen / finished`。
+  - 赛中重新显示本地代码提交通道。
+  - 赛后重新显示本地最终代码与 `Riding Record` 提交通道。
+  - 独立的“赛中代码测试”按钮已恢复，不再只有“提交即进入待评测队列”这一条路径。
+- `src/app/actions.ts`
+  - 新增 `submitEntryForTestAction()`，赛中代码测试可单独创建 `SUBMISSION_TEST` 任务。
+- `src/app/_components/submission-form-client.tsx`
+  - 提交表单支持自定义 `submitLabel`，用于区分普通提交和赛中代码测试。
+- `src/lib/services/submissions.ts`
+  - 赛中提交放宽到 `active / frozen / running / submitting`。
+  - 普通提交与赛中测试共用提交通道，但赛中测试会额外入 `SUBMISSION_TEST` 队列。
+  - 赛后提交放宽到 `finished / completed`。
+- `src/lib/services/runner.ts`
+  - 进度评测与 Harness 评测的阶段判断同步兼容新 8 状态，避免 UI 恢复后服务层仍旧拒绝。
+- `src/app/_components/ary-shared.tsx`
+  - 公开页头部改为三栏网格布局，首页顶部 `赛事 / 作品 / 骑手 / 合作` 四个按钮改为居中显示，同时保留左侧品牌和右侧身份/控制台按钮的独立对齐。
+- `README.md`
+  - Rider 教程改回当前真实链路：比赛中可选择本地代码文件提交；赛后可选择本地最终代码和本地 `Riding Record` 提交。
+- 对应验证
+  - `node --import tsx --test src/app/_components/console/rider-console-page.test.tsx src/app/_components/submission-form-client.test.tsx src/app/_components/final-submission-form-client.test.tsx src/lib/services/submissions.test.ts src/lib/services/submission-registration-first.test.ts`（24 项通过）
+  - `node --import tsx --test src/app/actions.return-to.test.ts src/app/_components/console/rider-console-page.test.tsx src/app/_components/public/public-header.test.tsx src/app/_components/submission-form-client.test.tsx`（7 项通过）
+
 ## 2026-06-20 UI 全面重构与视觉升级
 
 ### 设计系统重构
@@ -774,7 +799,7 @@
 - `docs/grs003` 的全部要求尚未完全完成，当前只是在持续推进收口。
 - GitHub OAuth 主链路已可运行（`2026-06-19`），但尚未完成全面生产验证。
 - `Team` 兼容层仍然存在，深层 `teamId -> registrationId` 迁移尚未完成。
-- `runner` 路径和 `CA Push + Fetch` 目标之间仍有差距。
+- `runner` 路径和 `CA Push + Fetch` 目标之间仍有差距；当前独立的赛中代码测试按钮已恢复，但更完整的 Runner 操作与可视化控制仍未收口。
 - 除 `status.md` 之外，仓库中仍有不少旧文件或旧字符串可能带有历史编码问题。
 - 构建阶段存在独立环境问题：
   - `src/lib/prisma.ts` 在 `production` 分支里硬编码写入 `/tmp/ary-runtime`。
@@ -932,8 +957,7 @@
 - GitHub OAuth 主链路已完成（`2026-06-19`），生产级验证和错误处理闭环待后续。
 - `Team` 兼容层仍然存在，深层 `teamId -> registrationId` 迁移尚未完成。
 - `runner` 路径与 `CA Push + Fetch` 目标之间仍有差距。
-- 进行中赛事的公开赛事页仍没有直接暴露明显的 `进入提交` 按钮。
-  - 当前提交流程已可用，但主要仍通过 `/console/races/[raceSlug]/rider/submission` 进入。
+- 进行中赛事的公开赛事页已直接暴露 `选手提交入口` 按钮；Rider 提交页也已恢复独立的赛中代码测试按钮，但更完整的 Runner 操作入口仍待后续收口。
 - Organization 实体未建模（符合 GRS003 规范），企业能力由 Admin 代理。
 
 ## UI 相关问题进度
@@ -945,7 +969,7 @@
 | 3 | 同上 | ✅ |
 | 4 | Jumbotron 比赛状态显示 | ✅ 已修复 — adapter.ts 适配 GRS003 8 状态（running→LIVE，completed→FINISHED） |
 | 5 | 实况大厅布局错位 | ✅ 已修复 — `<main>` 包裹 + JumbotronInline overflow:clip+contain:strict |
-| 6 | Rider 提交需走控制台 | ✅ 已修复 — 赛事详情页进行中赛事新增"选手提交入口"按钮 |
+| 6 | Rider 提交需走控制台 | ✅ 已修复 — 赛事详情页进行中赛事新增"选手提交入口"按钮，Rider 提交页也已重新显示本地代码提交、赛后代码与 Riding Record 提交 |
 | 7 | 创建赛事页面字段不足 | ✅ 合作表单已完整复刻创建赛事全部字段 |
 
 ### 2026-06-20 UI 重构后已验证

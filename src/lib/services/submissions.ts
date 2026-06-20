@@ -15,7 +15,11 @@ import {
   createSubmissionSchema,
 } from "@/lib/validation";
 
-export async function createSubmission(riderId: string, formData: FormData) {
+export async function createSubmission(
+  riderId: string,
+  formData: FormData,
+  options?: { enqueueSubmissionTest?: boolean },
+) {
   const parsed = createSubmissionSchema.parse({
     raceId: formData.get("raceId"),
     codeLabel: formData.get("codeLabel"),
@@ -51,8 +55,13 @@ export async function createSubmission(riderId: string, formData: FormData) {
   }
 
   const phase = getRacePhase(race);
-  if (phase !== "active" && phase !== "frozen") {
-    throw new Error("只有比赛中或封榜期才能提交作品");
+  if (
+    phase !== "active" &&
+    phase !== "frozen" &&
+    phase !== "running" &&
+    phase !== "submitting"
+  ) {
+    throw new Error("只有比赛中、封榜期或提交中阶段才能提交作品");
   }
 
   const lastSubmission = await prisma.submission.findFirst({
@@ -104,9 +113,16 @@ export async function createSubmission(riderId: string, formData: FormData) {
       },
     });
 
-    // Legacy Runner path: no longer auto-enqueued.
-    // Organizer can still manually trigger via console if needed.
-    // Primary evaluation path is now CA Connector → JudgingRecord.
+    if (options?.enqueueSubmissionTest) {
+      await enqueueSubmissionTestTask({
+        artifactId: artifact.id,
+        raceId: parsed.raceId,
+        registrationId,
+        submissionId: submission.id,
+        teamId: team.id,
+        tx,
+      });
+    }
 
     return submission;
   });
@@ -149,7 +165,8 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
     throw new Error("赛事不存在");
   }
 
-  if (getRacePhase(race) !== "finished") {
+  const phase = getRacePhase(race);
+  if (phase !== "finished" && phase !== "completed") {
     throw new Error("只有比赛结束后才能提交赛后代码与 Riding Record");
   }
 

@@ -6,12 +6,18 @@ interface Props {
   action: (formData: FormData) => void | Promise<void>;
   raceId: string;
   returnTo?: string;
+  submitLabel?: string;
 }
 
 const defaultCode =
   "export function solve(input: number[]) {\n  return [...input].sort((a, b) => a - b);\n}";
 
-export default function SubmissionFormClient({ action, raceId, returnTo }: Props) {
+export default function SubmissionFormClient({
+  action,
+  raceId,
+  returnTo,
+  submitLabel = "提交代码并进入待评测队列",
+}: Props) {
   const [codeLabel, setCodeLabel] = useState("solution.ts");
   const [codeContent, setCodeContent] = useState(defaultCode);
   const codeInputRef = useRef<HTMLInputElement>(null);
@@ -75,7 +81,7 @@ export default function SubmissionFormClient({ action, raceId, returnTo }: Props
         代码内容
         <textarea name="codeContent" required rows={8} value={codeContent} onChange={(event) => setCodeContent(event.target.value)} />
       </label>
-      <button type="submit">提交代码并进入待评测队列</button>
+      <button type="submit">{submitLabel}</button>
     </form>
   );
 }

@@ -36,7 +36,7 @@ test("submission service reaches the registration-first submission path for an a
         tokenUsed: "321",
       }),
     ),
-    /只有比赛中或封榜期才能提交作品/,
+    /只有比赛中、封榜期或提交中阶段才能提交作品/,
   );
 });
 
