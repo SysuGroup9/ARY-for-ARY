@@ -139,7 +139,11 @@ export class AryDerivedDataProvider implements DCRaceDataProvider {
 export function mapToCompetition(race: AryRaceData, now: Date = new Date()): Competition {
   const phase = getRaceLivePhase(race, now);
   const liveStatus: Competition["liveStatus"] =
-    phase === "finished" ? "finished" : phase === "active" || phase === "frozen" ? "live" : "not_started";
+    phase === "finished" || phase === "completed" || phase === "archived"
+      ? "finished"
+      : phase === "active" || phase === "frozen" || phase === "running" || phase === "submitting" || phase === "judging"
+        ? "live"
+        : "not_started";
 
   return {
     competitionId: race.id,

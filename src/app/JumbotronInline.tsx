@@ -18,11 +18,13 @@ export default function JumbotronInline({ raceId, snapshot, trackProfile }: Prop
       style={{
         marginTop: 12,
         width: "100%",
-        height: "clamp(480px, 70vh, 800px)",
+        maxWidth: "100%",
+        height: "clamp(360px, 50vh, 600px)",
         border: "2px solid #8b3a2e",
         borderRadius: 12,
-        overflow: "hidden",
+        overflow: "clip",
         background: "#1a1a2e",
+        contain: "strict",
       }}
     >
       <JumbotronClient snapshot={snapshot} trackProfile={trackProfile} />

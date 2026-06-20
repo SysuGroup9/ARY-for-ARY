@@ -104,17 +104,16 @@ export function HomeGallery({ model, canManage, canRide }: { model: M; canManage
         </div>
       )}
 
-      {/* CTA */}
-      <div className="section-dark">
-        <h2 style={{ marginBottom: 12, textAlign: "center", fontSize: "1.75rem" }}>骑手注册 / 报名 / 办赛 / 合作</h2>
-        <p className="text-center" style={{ marginBottom: 28, fontSize: "0.9375rem" }}>
-          公开站先完成骑手注册或登录，再进入具体赛事执行报名
-        </p>
-        <div className="flex-row" style={{ justifyContent: "center" }}>
-          <a className="button" href="/login">骑手注册 / 登录</a>
-          <a className="button-secondary" href="/races">查看赛事</a>
-          <a className="button-secondary" href="/cooperation">我要办赛</a>
-          <a className="button-secondary" href="/cooperation">合作赞助</a>
+      {/* 创作团队 */}
+      <div className="section-dark" style={{ padding: "var(--space-8) var(--space-10)" }}>
+        <div style={{ textAlign: "center" }}>
+          <h2 style={{ marginBottom: 8, fontSize: "1.5rem" }}>Sysu-Group9</h2>
+          <p style={{ marginBottom: 4, fontSize: "0.9375rem" }}>
+            中山大学 · 软件工程 2024 级
+          </p>
+          <p style={{ fontSize: "0.8125rem", opacity: 0.6 }}>
+            Agent Racing Yard — AI 编程代理竞赛平台
+          </p>
         </div>
       </div>
     </div>

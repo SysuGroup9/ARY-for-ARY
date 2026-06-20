@@ -29,6 +29,7 @@ export default async function ConsoleRacesPage() {
       description="选择一个你可进入的赛事工作台。"
       navItems={buildConsoleRootNavItems(sections)}
       title="赛事控制台"
+      user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
       <ConsoleRacesPageView races={races} />
     </ConsoleShell>

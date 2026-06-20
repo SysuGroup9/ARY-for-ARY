@@ -288,7 +288,10 @@ export const aryStyles = `
 
   /* ── Public Header ── */
   .public-header {
-    display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-4);
     max-width: 1240px; margin: 0 auto; padding: 12px 20px;
     background: rgba(255,255,255,0.75); backdrop-filter: blur(20px);
     box-shadow: var(--shadow-ring);
@@ -306,6 +309,8 @@ export const aryStyles = `
   .meta-pills {
     display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center;
   }
+  .public-header__brand { justify-self: start; }
+  .public-header__nav { justify-content: center; justify-self: center; }
   .public-header__nav a {
     text-decoration: none; color: var(--muted-foreground); font-weight: 500; font-size: 0.9375rem;
     padding: 6px 10px; border-radius: var(--radius-sm); transition: all 0.15s;
@@ -317,6 +322,8 @@ export const aryStyles = `
     flex-wrap: wrap;
     gap: var(--space-2);
     align-items: center;
+    justify-content: flex-end;
+    justify-self: end;
   }
 
   /* ── Public Cards ── */

@@ -58,6 +58,7 @@ export default async function AdminConsoleSectionPage({ params }: Props) {
         labels: adminSectionLabels,
       })}
       title="管理控制台"
+      user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
       {section === "race-requests" ? (
         <RaceRequestsPageView requests={cooperationRequests} />

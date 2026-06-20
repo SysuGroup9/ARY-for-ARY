@@ -4,6 +4,7 @@ import {
   registerCAConnectionAction,
   sendFeedbackAction,
   submitEntryAction,
+  submitEntryForTestAction,
   submitFinalEntryAction,
 } from "@/app/actions";
 import { Panel } from "@/app/_components/ary-shared";
@@ -269,15 +270,28 @@ function renderRiderSection({
             <Panel title="提交已锁定" eyebrow="Rider View">
               <p className="muted">需要先完成报名并生成参赛上下文，作品提交入口才会解锁。</p>
             </Panel>
-          ) : race.phase === "active" || race.phase === "frozen" ? (
-            <Panel title="提交作品" eyebrow="Rider View">
-              <SubmissionFormClient
-                action={submitEntryAction}
-                raceId={race.id}
-                returnTo={riderSubmissionHref}
-              />
-            </Panel>
-          ) : race.phase === "finished" ? (
+          ) : race.phase === "active" ||
+            race.phase === "frozen" ||
+            race.phase === "running" ||
+            race.phase === "submitting" ? (
+            <>
+              <Panel title="提交作品" eyebrow="Rider View">
+                <SubmissionFormClient
+                  action={submitEntryAction}
+                  raceId={race.id}
+                  returnTo={riderSubmissionHref}
+                />
+              </Panel>
+              <Panel title="赛中代码测试" eyebrow="Rider View">
+                <SubmissionFormClient
+                  action={submitEntryForTestAction}
+                  raceId={race.id}
+                  returnTo={riderSubmissionHref}
+                  submitLabel="提交代码并发起赛中测试"
+                />
+              </Panel>
+            </>
+          ) : race.phase === "finished" || race.phase === "completed" ? (
             <Panel title="提交赛后代码与记录" eyebrow="Rider View">
               <FinalSubmissionFormClient
                 action={submitFinalEntryAction}
@@ -287,7 +301,7 @@ function renderRiderSection({
             </Panel>
           ) : (
             <Panel title="提交窗口" eyebrow="Rider View">
-              <p className="muted">作品提交会在赛事进入进行中阶段后开放。</p>
+              <p className="muted">作品提交会在赛事进入比赛中或提交中阶段后开放；赛后代码与 Riding Record 会在赛事结束后开放。</p>
             </Panel>
           )}
 

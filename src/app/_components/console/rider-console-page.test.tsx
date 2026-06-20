@@ -11,7 +11,7 @@ function buildRace(overrides?: Partial<RaceListItem>): RaceListItem {
     id: "race_active",
     leaderboardEntries: [],
     organizerComment: "",
-    phase: "active",
+    phase: "running",
     raceEnd: new Date("2026-06-20T12:00:00Z"),
     raceStart: new Date("2026-06-19T12:00:00Z"),
     submissions: [],
@@ -50,6 +50,24 @@ test("骑手工作台在报名与提交区块中不再暴露 compatibility 层�
   assert.match(html, /报名状态/);
   assert.match(html, /你已经进入骑手工作台；下一步是对当前赛事提交正式报名/);
   assert.match(html, /提交已锁定/);
+});
+
+test("比赛中提交区同时显示普通提交和赛中代码测试入口", () => {
+  const html = renderToStaticMarkup(
+    <RiderConsolePageView
+      race={buildRace()}
+      registration={{ id: "reg_1" } as never}
+      reviewSummary={null}
+      riderReports={[]}
+      riderTeam={{ id: "team_1", name: "solo" } as never}
+      section="submission"
+    />,
+  );
+
+  assert.match(html, /提交作品/);
+  assert.match(html, /赛中代码测试/);
+  assert.match(html, /提交代码并进入待评测队列/);
+  assert.match(html, /提交代码并发起赛中测试/);
 });
 
 test("骑手报告区块优先使用骑手报告语义，而不是暴露过渡层标题", () => {

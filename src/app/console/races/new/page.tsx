@@ -33,6 +33,7 @@ export default async function ConsoleNewRacePage() {
       description="该页面承接原先位于公开首页的创建赛事入口。"
       navItems={buildConsoleRootNavItems(sections)}
       title="创建赛事"
+      user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
       <Panel title="创建赛事" eyebrow="主办方视图">
         <div className="stack">

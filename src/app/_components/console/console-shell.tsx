@@ -1,5 +1,6 @@
 import { logoutAction } from "@/app/actions";
 import type { ReactNode } from "react";
+import { getRoleLabels, type AppRole } from "@/lib/user-roles";
 
 export type ConsoleNavItem = {
   href: string;
@@ -82,13 +83,17 @@ export function ConsoleShell({
   description,
   navItems,
   title,
+  user,
 }: {
   breadcrumbs: Array<{ href?: string; label: string }>;
   children: ReactNode;
   description?: string;
   navItems: ConsoleNavItem[];
   title: string;
+  user?: { username: string; roles: readonly AppRole[] };
 }) {
+  const roleLabels = user ? getRoleLabels(user.roles) : [];
+
   return (
     <main className="console-shell">
       <aside className="console-sidebar">
@@ -96,6 +101,25 @@ export function ConsoleShell({
           <a href="/">ARY</a>
           <span>控制台</span>
         </div>
+        {user ? (
+          <div style={{
+            padding: "10px 12px",
+            background: "var(--muted)",
+            borderRadius: "var(--radius-md)",
+            fontSize: "0.875rem",
+          }}>
+            <div style={{ fontWeight: 600, color: "var(--foreground)", marginBottom: 4 }}>
+              {user.username}
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+              {roleLabels.map((label, i) => (
+                <span key={i} className="badge badge-accent" style={{ fontSize: "0.7rem", padding: "2px 8px" }}>
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
         <form action={logoutAction}>
           <button className="button-secondary" type="submit">
             退出登录

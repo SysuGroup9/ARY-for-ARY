@@ -72,14 +72,14 @@ npm run db:seed
   2. 点击 `报名参赛`
   3. 报名成功后进入 Rider 工作台的 `报名` 页面
 
-- 进行中赛事：
+- 比赛中 / 提交中赛事：
   1. 打开 `/console/races/race_active--sorting-challenge/rider/submission`
-  2. 在 `作品提交` 页面填写代码文件名、Agent 类型、Token 消耗和代码内容
+  2. 在 `作品提交` 页面选择本地代码文件，或直接填写代码文件名、Agent 类型、Token 消耗和代码内容
   3. 点击 `提交代码并进入待评测队列`
 
 - 已结束赛事：
   1. 打开 `/console/races/race_finished--performance-marathon/rider/submission`
-  2. 在赛后提交页填写最终代码和 `Riding Record`
+  2. 在赛后提交页分别选择本地最终代码和本地 `Riding Record`
   3. 点击 `提交赛后代码与 Riding Record`
 
 Rider 控制台的主要分区：
@@ -263,8 +263,8 @@ npm run build
 1. `npm run db:seed`
 2. 登录 `rider_alice / rider123`
 3. 在 `/races/race_signup--api-design-race/register` 报名
-4. 在 `/console/races/race_active--sorting-challenge/rider/submission` 提交赛中作品
-5. 在 `/console/races/race_finished--performance-marathon/rider/submission` 提交赛后代码与记录
+4. 在 `/console/races/race_active--sorting-challenge/rider/submission` 选择本地代码并提交赛中作品
+5. 在 `/console/races/race_finished--performance-marathon/rider/submission` 选择本地最终代码与 Riding Record 后提交
 
 ### 体验 Organizer 路径
 

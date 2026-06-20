@@ -189,8 +189,29 @@ Prisma schema 中引用 `teamId` 的模型共 **11 个**：
 
 | 项 | 原因 |
 |----|------|
-| Race 5→8 状态机 | 需要独立设计状态字段与迁移策略，不适合与 Team 迁移并行 |
+| Race 5→8 状态机 | ✅ 已完成（2026-06-20 Iteration 4） |
 | 评审前风险提示 / Review Readiness | 需要先完成 Registration-first 迁移后才能准确定义风险维度 |
 | 大屏 fallback | 依赖 Projection 稳定性与 Registration 迁移完成后的数据一致性 |
 | 性能基准 / 压力测试 | 需要先完成结构迁移再做性能验收 |
 | SQLite → Postgres | 非 MVP 强制要求 |
+
+## 已完成项（2026-06-20 更新）
+
+| Step | 状态 |
+|------|------|
+| Step 0: 修正 gap 文档 | ✅ |
+| Step 1: Role 清理 | 🔶 双轨仍在，rolesJson 已是主来源 |
+| Step 2-4: Team→Registration | 🔶 双轨期，兼容层 `rider-bridge.ts` 存在 |
+| Step 5: Runner 降级 | ✅ 提交不再自动入 Runner 队列 |
+| Step 6: 端到端验收 | ✅ 登录→Console→提交链路已验证 |
+| Step 7: 文档同步 | ✅ 本文 + ROADMAP.md + status.md 已同步 |
+
+## 新增完成项（2026-06-20 UI 重构）
+
+- UI 设计系统全面升级（DESIGN.md + globals.css 重写）
+- 7 公开页面卡片化 + 布局溢出修复
+- 粒子背景动画（constellation/drift）
+- 企业办赛合作表单（CooperationRequest 模型 + 文件上传）
+- 控制台身份显示（用户名+角色标签）
+- Jumbotron 状态适配 GRS003 8 状态
+- 演示账号更新

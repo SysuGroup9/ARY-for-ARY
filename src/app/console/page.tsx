@@ -28,6 +28,7 @@ export default async function ConsoleEntryPage() {
       description="独立的工作台入口，用于进入赛事控制台、管理控制台和大屏控制台。"
       navItems={buildConsoleRootNavItems(sections)}
       title="控制台首页"
+      user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
       <ConsoleHomeView raceCount={races.length} sections={sections} />
     </ConsoleShell>

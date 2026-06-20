@@ -68,8 +68,13 @@ export async function enqueueProgressEvalTasks(raceId: string) {
   }
 
   const phase = getRacePhase(race);
-  if (phase !== "active" && phase !== "frozen") {
-    throw new Error("只有比赛中或封榜期才能发起进度评测");
+  if (
+    phase !== "active" &&
+    phase !== "frozen" &&
+    phase !== "running" &&
+    phase !== "submitting"
+  ) {
+    throw new Error("只有比赛中、封榜期或提交中阶段才能发起进度评测");
   }
 
   const latestArtifacts = await getLatestArtifactsForRace(raceId);
@@ -110,7 +115,8 @@ export async function enqueueHarnessEvalTasks(raceId: string) {
     throw new Error("赛事不存在");
   }
 
-  if (getRacePhase(race) !== "finished") {
+  const phase = getRacePhase(race);
+  if (phase !== "finished" && phase !== "completed") {
     throw new Error("只有比赛结束后才能发起 Harness 评测");
   }
 
