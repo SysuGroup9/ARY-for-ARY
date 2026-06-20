@@ -172,6 +172,7 @@ model Race {
   harnessWeightReasoning     Float    @default(0.6)
   harnessWeightKeyword       Float    @default(0.4)
   organizerComment           String   @default("")
+  status                     String?   // explicit 8-state; null=auto from time windows
   lastLeaderboardSyncAt      DateTime?
   lastShowcaseSyncAt         DateTime?
   createdAt                  DateTime @default(now())

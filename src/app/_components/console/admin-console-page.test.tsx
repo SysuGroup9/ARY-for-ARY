@@ -1,19 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
+import type { AppRole } from "@/lib/user-roles";
 import { AdminConsolePageView } from "./admin-console-page";
 
 const demoUsers = [
   {
     id: "admin_01",
     profileCompleted: true,
-    roles: ["ADMIN", "ORGANIZER"] as const,
+    roles: ["ADMIN", "ORGANIZER"] as AppRole[],
     username: "admin_demo",
   },
   {
     id: "judge_01",
     profileCompleted: false,
-    roles: ["JUDGE"] as const,
+    roles: ["JUDGE"] as AppRole[],
     username: "judge_demo",
   },
 ];

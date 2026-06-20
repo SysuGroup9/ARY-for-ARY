@@ -29,7 +29,9 @@ export default async function LoginPage({ searchParams }: Props) {
         ? "GitHub 回调缺少必要参数，请重新发起登录。"
         : oauthError === "github_callback_failed"
           ? "GitHub 登录回调失败，请检查环境变量与回调地址配置。"
-          : null;
+          : oauthError === "github_not_configured"
+            ? "GitHub 登录尚未配置。请在 .env 中设置 GITHUB_CLIENT_ID 和 GITHUB_CLIENT_SECRET，或使用本地账号登录。"
+            : null;
 
   const redirectTarget = getLoginRedirectTarget(Boolean(sessionUser));
   if (redirectTarget) {

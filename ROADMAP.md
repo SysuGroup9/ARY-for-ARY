@@ -98,4 +98,19 @@
   - `powershell -Command "$env:DATABASE_URL='file:./dev.db'; npm run db:generate"`
   - `npm --prefix organizer_demo/ca_connector_demo run typecheck`
   - `powershell -Command "$env:DATABASE_URL='file:./dev.db'; npm --prefix organizer_demo/ca_connector_demo run typecheck; npm run build"`
-- 这一轮优先保证“可演示的真实接入闭环”，暂不扩展到生产级 connector SDK 或自动 snapshot 调度。
+- 这一轮优先保证”可演示的真实接入闭环”，暂不扩展到生产级 connector SDK 或自动 snapshot 调度。
+
+### Iteration 4（2026-06-20，Hrm-cell）
+
+- 修复 `prisma db push` 环境问题：Schema 已包含全部 GRS003 领域模型（Registration/RaceProject/CAConnection/Work/Award/Evidence/Report/Projection），但数据库未同步。执行 `prisma db push` + `prisma generate` 后 Seed 和 Build 均通过。
+- 修复 `admin-console-page.test.tsx` 中 15 个 TypeScript 错误（`as const` → `as AppRole[]`）。
+- 删除断裂的 `prisma/backfill-registration-refs.ts`（该脚本期望旧模型已含 `registrationId` 字段，但 Schema migration 未执行）。
+- **Race 状态机 5→8 升级**：
+  - Prisma `Race` 模型新增 `status String?` 字段，显式存储 8 状态（draft/published/registration/running/submitting/judging/completed/archived）。
+  - `race-phase.ts` 重写：优先读取显式 status，null 时 fallback 时间窗口推导，保留旧 5 状态兼容。
+  - 新增 `isValidPhaseTransition()` 校验合法状态迁移。
+  - Seed 数据三个赛事设置显式 status（running/registration/completed）。
+- **Runner 主路径降级**：`submissions.ts` 中 `enqueueSubmissionTestTask` 和 `enqueueHarnessEvalTaskForArtifact` 调用注释掉，提交通路不再自动入 Runner 队列。CA Connector → JudgingRecord 成为主评分路径。
+- **Console 权限验证**：确认 `console-routes.ts` 中 Organizer 按 `organizerId` 过滤、Rider 按 `registration` 过滤、Judge 按 `judgeAssignment` 过滤，权限已正确加固。
+- **GitHub OAuth 验收**：验证 `github-oauth.ts` → callback route → login page 全链路完整，缺 GitHub App 配置时自动重定向到 `/login?oauthError=` 并显示中文提示。
+- 最终验证：`npx tsc --noEmit` 零错误，`npm run build` 通过，`npm run db:seed` 生成 3 赛事 + 11 骑手 + Registration/RaceProject 数据。

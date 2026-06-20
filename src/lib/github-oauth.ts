@@ -9,6 +9,24 @@ import {
   type AppRole,
 } from "@/lib/user-roles";
 
+let _proxyAgent: unknown;
+async function proxyFetch(url: string, init?: RequestInit): Promise<Response> {
+  const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || "";
+  if (!proxyUrl) return fetch(url, init);
+
+  if (!_proxyAgent) {
+    try {
+      const { HttpsProxyAgent } = await import("https-proxy-agent");
+      _proxyAgent = new HttpsProxyAgent(proxyUrl, { rejectUnauthorized: false });
+      console.log("[github-oauth] using proxy:", proxyUrl);
+    } catch (e) {
+      console.warn("[github-oauth] proxy setup failed, direct fetch:", String(e));
+      return fetch(url, init);
+    }
+  }
+  return fetch(url, { ...init, agent: _proxyAgent } as RequestInit);
+}
+
 const GITHUB_STATE_COOKIE = "ary_github_oauth_state";
 const STATE_TTL_SECONDS = 60 * 10;
 const GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize";
@@ -108,7 +126,7 @@ function buildUsernameCandidates(login: string): string[] {
 }
 
 async function exchangeCodeForAccessToken(code: string): Promise<string> {
-  const response = await fetch(GITHUB_TOKEN_URL, {
+  const response = await proxyFetch(GITHUB_TOKEN_URL, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -142,7 +160,7 @@ async function exchangeCodeForAccessToken(code: string): Promise<string> {
 }
 
 async function fetchGitHubProfile(accessToken: string): Promise<GitHubUserProfile> {
-  const response = await fetch(GITHUB_USER_URL, {
+  const response = await proxyFetch(GITHUB_USER_URL, {
     headers: {
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${accessToken}`,
@@ -216,8 +234,14 @@ export async function startGitHubOAuth(returnTo: string): Promise<void> {
     secure: getEnv().NODE_ENV === "production",
   });
 
+  const clientId = (getEnv().GITHUB_CLIENT_ID ?? "").trim();
+  if (!clientId || !(getEnv().GITHUB_CLIENT_SECRET ?? "").trim()) {
+    const query = new URLSearchParams({ oauthError: "github_not_configured" }).toString();
+    redirect(`/login?${query}`);
+  }
+
   const authorizeUrl = new URL(GITHUB_AUTHORIZE_URL);
-  authorizeUrl.searchParams.set("client_id", getRequiredEnv("GITHUB_CLIENT_ID"));
+  authorizeUrl.searchParams.set("client_id", clientId);
   authorizeUrl.searchParams.set("redirect_uri", getGitHubCallbackUrl());
   authorizeUrl.searchParams.set("scope", "read:user user:email");
   authorizeUrl.searchParams.set("state", state);

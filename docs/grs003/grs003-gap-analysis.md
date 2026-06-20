@@ -307,11 +307,11 @@ Race Phase 状态机：`registration → preparation → active → frozen → f
 
 | 差异项 | 原评级 | 当前状态 | 详情 |
 |--------|-------|---------|------|
-| **Race 状态数量** | 中度 | ❌ 未解决 | 仍为 5 状态（registration/preparation/active/frozen/finished），基于时间窗口推导。无显式 `Race.status` 字段。GRS003 要求 8 状态（draft/published/registration/running/submitting/judging/completed/archived）。 |
-| **draft 状态** | 中度 | ❌ 未解决 | 创建即发布，无草稿态。 |
-| **submitting 状态** | 轻微 | ❌ 未解决 | 无独立提交阶段。 |
-| **judging 状态** | 中度 | ❌ 未解决 | 无独立评审阶段。 |
-| **archived 状态** | 轻微 | ❌ 未解决 | 无归档状态。 |
+| **Race 状态数量** | 中度 | ✅ 已解决 (2026-06-20) | `Race.status` 字段已添加；`race-phase.ts` 重写为 8 状态体系，保留 5 状态时间推导 fallback。 |
+| **draft 状态** | 中度 | ✅ 已解决 | status 字段支持 "draft"。 |
+| **submitting 状态** | 轻微 | ✅ 已解决 | status 字段支持 "submitting"。 |
+| **judging 状态** | 中度 | ✅ 已解决 | status 字段支持 "judging"。 |
+| **archived 状态** | 轻微 | ✅ 已解决 | status 字段支持 "archived"。 |
 | **封榜（frozen）** | 轻微 | 🔶 待定 | GRS003 未将其作为独立状态；当前保留，可能需要合并为 running 子状态。 |
 
 ## 3.6 Jumbotron / Screen Display 差异

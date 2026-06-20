@@ -104,14 +104,9 @@ export async function createSubmission(riderId: string, formData: FormData) {
       },
     });
 
-    await enqueueSubmissionTestTask({
-      artifactId: artifact.id,
-      raceId: parsed.raceId,
-      registrationId,
-      submissionId: submission.id,
-      teamId: team.id,
-      tx,
-    });
+    // Legacy Runner path: no longer auto-enqueued.
+    // Organizer can still manually trigger via console if needed.
+    // Primary evaluation path is now CA Connector → JudgingRecord.
 
     return submission;
   });
@@ -189,20 +184,8 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
       },
     });
 
-    await enqueueHarnessEvalTaskForArtifact(tx, {
-      id: artifact.id,
-      raceId: parsed.raceId,
-      registrationId,
-      teamId: team.id,
-      submissionId: submission.id,
-      codeLabel: parsed.codeLabel,
-      codeContent: parsed.codeContent,
-      recordLabel: parsed.recordLabel,
-      ridingRecord: parsed.ridingRecord,
-      tokenUsed: parsed.tokenUsed,
-      agentType: parsed.agentType,
-      createdAt: artifact.createdAt,
-    });
+    // Legacy Harness evaluation path demoted.
+    // await enqueueHarnessEvalTaskForArtifact(tx, { ... });
 
     return submission;
   });

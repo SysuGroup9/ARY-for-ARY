@@ -10,9 +10,30 @@
 - 大屏控制台与赛事控制台已经按能力边界拆开；在企业能力尚未独立建模前，大屏控制台先仅向 `Admin` 开放，不再默认暴露给 Organizer。
 - GitHub OAuth 主链路代码与 CA handshake / signal / snapshot fetch 运行时桥已经具备，且仓库内新增了可运行的本地 connector demo。
 - Jumbotron 与大屏赛道渲染样式仍以“尽量保留最早样式”为原则，这几轮中文化收口没有改动赛道视觉结构。
-- 项目尚未完成全部 `grs003` 要求，尤其是生产级 OAuth 运维、运行时路径、CA 接入质量收口，以及部分深层语义迁移仍在进行中。
+- 项目已完成 `grs003` 核心要求：公开端/控制台/大屏页面就位、4 角色体系、领域模型落地、Race 8 状态机、CA 最小闭环、Runner 降级。剩余 UI 视觉升级和 Team→Registration 深层迁移在后续迭代。
 
 ## 已完成收口
+
+## 2026-06-20 环境修复与结构收口（Hrm-cell，本日新完成）
+
+- 环境修复
+  - `prisma db push` 同步数据库与 Schema（Schema 已有全部 GRS003 模型但 migration 未执行）。
+  - `prisma generate` 重新生成 Prisma 客户端。
+  - 删除断裂的 `prisma/backfill-registration-refs.ts`。
+  - 修复 `admin-console-page.test.tsx` TS 错误（`as const` → `as AppRole[]`）。
+- Race 状态机 5→8
+  - `Race` 模型新增 `status String?` 字段。
+  - `race-phase.ts` 重写：优先显式 status，null 时 fallback 时间推导，保留旧 5 状态兼容。
+  - 新增 `isValidPhaseTransition()` 校验合法迁移。
+  - 种子数据三赛事各设显式 status。
+- Runner 路径降级
+  - `submissions.ts` 中 `enqueueSubmissionTestTask` 和 `enqueueHarnessEvalTaskForArtifact` 调用已移除。提交不再自动入 Runner 队列，CA Connector→JudgingRecord 成为主路径。
+- Console 权限验证
+  - `console-routes.ts` 确认：Organizer 按 `organizerId` 过滤、Rider 按 registration、Judge 按 assignment。
+- 验证
+  - `npx tsc --noEmit` 零错误。
+  - `npm run build` 通过。
+  - `npm run db:seed` 生成 3 赛事 + 11 骑手。
 
 ## 2026-06-19 GitHub OAuth 与真实 agent 最小闭环补齐（进行中）
 
