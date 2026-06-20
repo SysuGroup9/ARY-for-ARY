@@ -30,6 +30,7 @@ import { rebuildRaceProcessProjections } from "@/lib/services/projections";
 import { registerTeam, updateTeamComment } from "@/lib/services/teams";
 import { registerForRace } from "@/lib/services/registrations";
 import { loginUser, registerUser, updateUserRoles } from "@/lib/services/users";
+import { submitCooperationRequest } from "@/lib/services/cooperation";
 import { normalizeRoles } from "@/lib/user-roles";
 
 export async function registerAction(formData: FormData) {
@@ -282,4 +283,37 @@ export async function scoreRunnerTaskAction(formData: FormData) {
     finishedAt: String(formData.get("finishedAt") ?? "") || undefined,
   });
   revalidatePath("/");
+}
+
+export async function cooperationRequestAction(formData: FormData) {
+  await submitCooperationRequest({
+    companyName: String(formData.get("companyName") ?? ""),
+    contactName: String(formData.get("contactName") ?? ""),
+    contactEmail: String(formData.get("contactEmail") ?? ""),
+    contactPhone: String(formData.get("contactPhone") ?? ""),
+    raceTitle: String(formData.get("raceTitle") ?? ""),
+    raceSummary: String(formData.get("raceSummary") ?? ""),
+    taskDescription: String(formData.get("taskDescription") ?? ""),
+    trainingDataSummary: String(formData.get("trainingDataSummary") ?? ""),
+    evaluationNotes: String(formData.get("evaluationNotes") ?? ""),
+    keywordsText: String(formData.get("keywordsText") ?? ""),
+    signupStart: String(formData.get("signupStart") ?? ""),
+    signupEnd: String(formData.get("signupEnd") ?? ""),
+    raceStart: String(formData.get("raceStart") ?? ""),
+    raceEnd: String(formData.get("raceEnd") ?? ""),
+    tokenLimit: Number(formData.get("tokenLimit")) || 4000,
+    maxTeamSize: Number(formData.get("maxTeamSize")) || 5,
+    submissionIntervalHours: Number(formData.get("submissionIntervalHours")) || 24,
+    freezeMinutesBeforeEnd: Number(formData.get("freezeMinutesBeforeEnd")) || 30,
+    hasTrainingData: formData.get("hasTrainingData") === "on",
+    enableFreeze: formData.get("enableFreeze") === "on",
+    displayShowTrainingData: formData.get("displayShowTrainingData") === "on",
+    displayShowOrganizerComment: formData.get("displayShowOrganizerComment") === "on",
+    displayShowTopHighlights: formData.get("displayShowTopHighlights") === "on",
+    displayShowRiderCode: formData.get("displayShowRiderCode") === "on",
+    notes: String(formData.get("notes") ?? ""),
+    taskPackageFile: formData.get("taskPackageFile") as File | null,
+    proposalFile: formData.get("proposalFile") as File | null,
+  });
+  redirect("/cooperation?submitted=1");
 }

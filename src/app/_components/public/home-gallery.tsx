@@ -113,7 +113,7 @@ export function HomeGallery({ model, canManage, canRide }: { model: M; canManage
         <div className="flex-row" style={{ justifyContent: "center" }}>
           <a className="button" href="/login">骑手注册 / 登录</a>
           <a className="button-secondary" href="/races">查看赛事</a>
-          <a className="button-secondary" href="/races/new">我要办赛</a>
+          <a className="button-secondary" href="/cooperation">我要办赛</a>
           <a className="button-secondary" href="/cooperation">合作赞助</a>
         </div>
       </div>

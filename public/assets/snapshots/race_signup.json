@@ -11,11 +11,11 @@
     "currentRound": 1,
     "nextPhase": "比赛中",
     "elapsedTime": 0,
-    "systemTime": "2026-06-20T04:49:00.856Z"
+    "systemTime": "2026-06-20T05:16:58.238Z"
   },
   "entries": [
     {
-      "entryId": "cmqlvo9df001o3ow3cyexlfhx",
+      "entryId": "cmqlwo7mn001o54w3xin1l8yv",
       "riderName": "rider_iris",
       "projectName": "rider_iris",
       "caProvider": "other",
@@ -32,10 +32,10 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-20T04:49:00.856Z"
+      "updatedAt": "2026-06-20T05:16:58.238Z"
     },
     {
-      "entryId": "cmqlvo9dl001q3ow3x7abxzgl",
+      "entryId": "cmqlwo7mr001q54w37qx3r4yd",
       "riderName": "rider_jack",
       "projectName": "rider_jack",
       "caProvider": "other",
@@ -52,10 +52,10 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-20T04:49:00.857Z"
+      "updatedAt": "2026-06-20T05:16:58.238Z"
     },
     {
-      "entryId": "cmqlvo9dq001s3ow3enembgdm",
+      "entryId": "cmqlwo7mw001s54w3kwbpp4lr",
       "riderName": "rider_kate",
       "projectName": "rider_kate",
       "caProvider": "other",
@@ -72,10 +72,10 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "idle",
-      "updatedAt": "2026-06-20T04:49:00.857Z"
+      "updatedAt": "2026-06-20T05:16:58.238Z"
     }
   ],
-  "generatedAt": "2026-06-20T04:49:00.856Z",
+  "generatedAt": "2026-06-20T05:16:58.238Z",
   "kpis": {
     "completionRate": 0,
     "totalTokens": 0,
@@ -98,7 +98,7 @@
       "type": "milestone",
       "severity": "info",
       "summary": "Current process leaderboard is available.",
-      "createdAt": "2026-06-20T04:49:00.857Z",
+      "createdAt": "2026-06-20T05:16:58.238Z",
       "displayMode": "ticker"
     }
   ],

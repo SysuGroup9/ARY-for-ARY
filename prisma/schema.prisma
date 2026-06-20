@@ -694,3 +694,48 @@ model TeamComment {
   @@unique([raceId, teamId])
   @@index([registrationId])
 }
+
+model CooperationRequest {
+  id               String   @id @default(cuid())
+  // 企业信息
+  companyName      String
+  contactName      String
+  contactEmail     String
+  contactPhone     String   @default("")
+  // 赛事基本信息
+  raceTitle        String
+  raceSummary      String
+  taskDescription  String
+  trainingDataSummary String @default("")
+  evaluationNotes  String
+  keywordsText     String
+  // 赛程
+  signupStart      String
+  signupEnd        String
+  raceStart        String
+  raceEnd          String
+  // 赛事设置
+  tokenLimit              Int    @default(4000)
+  maxTeamSize             Int    @default(5)
+  submissionIntervalHours Int    @default(24)
+  freezeMinutesBeforeEnd  Int    @default(30)
+  hasTrainingData         Boolean @default(true)
+  enableFreeze            Boolean @default(true)
+  displayShowTrainingData      Boolean @default(true)
+  displayShowOrganizerComment  Boolean @default(true)
+  displayShowTopHighlights     Boolean @default(true)
+  displayShowRiderCode         Boolean @default(true)
+  // 文件
+  taskPackageFileName String @default("")
+  taskPackageFilePath String @default("")
+  proposalFileName    String @default("")
+  proposalFilePath    String @default("")
+  // 补充
+  notes             String   @default("")
+  status            String   @default("PENDING")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+
+
