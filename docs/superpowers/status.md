@@ -16,6 +16,34 @@
 ## 已完成收口
 - 企业合作办赛审批链路：`submitCooperationRequest` → `listCooperationRequests` → `approveCooperationRequest` / `rejectCooperationRequest`，Admin 可在 `/console/admin/race-requests` 查看并审批
 
+## 2026-06-20 Rider 控制台「作品提交」Section 收口
+
+### 概述
+
+整理骑手控制台 `submission` section 的提交入口，按赛事阶段收口为单一操作入口：
+- **比赛中**（active/frozen/running/submitting）：只保留「赛中代码测试」，去掉独立的「提交作品」
+- **比赛结束后**（finished/completed）：统一为「作品提交」，使用 `FinalSubmissionFormClient`（自带代码文件 + Riding Record 双入口）
+
+### 修改前
+
+```
+比赛中:  Panel "提交作品" (submitEntryAction) + Panel "赛中代码测试" (submitEntryForTestAction)
+比赛后:  Panel "提交赛后代码与记录" (FinalSubmissionFormClient)
+```
+
+### 修改后
+
+```
+比赛中:  Panel "赛中代码测试" (submitEntryForTestAction)   ← 仅一个入口
+比赛后:  Panel "作品提交" (FinalSubmissionFormClient)     ← 统一入口，含代码+Riding Record
+```
+
+### 变更文件
+
+| 文件 | 操作 | 变更摘要 |
+|---|---|---|
+| `src/app/_components/console/rider-console-page.tsx` | 修改 | 移除 `submitEntryAction` import；比赛中去掉 `Panel "提交作品"`，只保留 `Panel "赛中代码测试"`；比赛后 `Panel "提交赛后代码与记录"` 更名为 `Panel "作品提交"`；更新未开放阶段提示文案 |
+
 ## 2026-06-20 环境修复与结构收口（Hrm-cell，本日新完成）
 
 - 环境修复

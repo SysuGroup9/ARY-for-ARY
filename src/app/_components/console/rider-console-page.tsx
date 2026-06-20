@@ -3,7 +3,6 @@ import {
   registerForRaceAction,
   registerCAConnectionAction,
   sendFeedbackAction,
-  submitEntryAction,
   submitEntryForTestAction,
   submitFinalEntryAction,
 } from "@/app/actions";
@@ -274,25 +273,16 @@ function renderRiderSection({
             race.phase === "frozen" ||
             race.phase === "running" ||
             race.phase === "submitting" ? (
-            <>
-              <Panel title="提交作品" eyebrow="Rider View">
-                <SubmissionFormClient
-                  action={submitEntryAction}
-                  raceId={race.id}
-                  returnTo={riderSubmissionHref}
-                />
-              </Panel>
-              <Panel title="赛中代码测试" eyebrow="Rider View">
-                <SubmissionFormClient
-                  action={submitEntryForTestAction}
-                  raceId={race.id}
-                  returnTo={riderSubmissionHref}
-                  submitLabel="提交代码并发起赛中测试"
-                />
-              </Panel>
-            </>
+            <Panel title="赛中代码测试" eyebrow="Rider View">
+              <SubmissionFormClient
+                action={submitEntryForTestAction}
+                raceId={race.id}
+                returnTo={riderSubmissionHref}
+                submitLabel="提交代码并发起赛中测试"
+              />
+            </Panel>
           ) : race.phase === "finished" || race.phase === "completed" ? (
-            <Panel title="提交赛后代码与记录" eyebrow="Rider View">
+            <Panel title="作品提交" eyebrow="Rider View">
               <FinalSubmissionFormClient
                 action={submitFinalEntryAction}
                 raceId={race.id}
@@ -301,7 +291,7 @@ function renderRiderSection({
             </Panel>
           ) : (
             <Panel title="提交窗口" eyebrow="Rider View">
-              <p className="muted">作品提交会在赛事进入比赛中或提交中阶段后开放；赛后代码与 Riding Record 会在赛事结束后开放。</p>
+              <p className="muted">赛中代码测试会在比赛开始后开放；作品提交会在比赛结束后开放，届时可同时提交代码与 Riding Record。</p>
             </Panel>
           )}
 
