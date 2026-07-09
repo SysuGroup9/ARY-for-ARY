@@ -4,6 +4,7 @@
 
 ## 当前状态
 
+- 2026-07-09 已新增 `docs/grs004/防伪与防篡改计划.md`，把 GRS003 旧安全计划按当前实现重写为 GRS004 版本：安全中心从旧 Runner / 自动 DQ / 固定客户端表述，转向 `Registration → RaceProject → CAConnection → Session → Evidence → Projection → Organizer/Judge review` 主链路，并列明消息级签名、防重放增强、材料 hash、Evidence 可信度字段和统一审计模型等后续缺口。
 - 当前代码库已经从单页混合模式推进到分层结构，核心分区包括公开站、赛事控制台、管理控制台、大屏控制台和大屏展示层。
 - 公开页面主路线已经落到 `/races`、`/works`、`/riders`、`/cooperation`、`/console/*` 这一组 `grs003` 推荐路径上。
 - 控制台入口、评委视图、骑手视图、主办方视图，以及公开页中的大部分用户可见文案，已经收口到中文。
