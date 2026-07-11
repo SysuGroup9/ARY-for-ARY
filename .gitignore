@@ -28,6 +28,8 @@ coverage/
 # Prisma / SQLite local data
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
 dev.db
 prisma/dev.db
 prisma/dev.db-journal
