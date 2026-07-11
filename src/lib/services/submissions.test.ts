@@ -9,6 +9,8 @@ function buildSubmissionFormData(input: {
   codeLabel?: string;
   raceId: string;
   tokenUsed?: string;
+  workSummary?: string;
+  workTitle?: string;
 }) {
   const formData = new FormData();
   formData.set("raceId", input.raceId);
@@ -16,10 +18,19 @@ function buildSubmissionFormData(input: {
   formData.set("codeContent", input.codeContent ?? "export const value = 1;");
   formData.set("tokenUsed", input.tokenUsed ?? "100");
   formData.set("agentType", input.agentType ?? "CUSTOM");
+  formData.set(
+    "workSummary",
+    input.workSummary ?? "把当前提交沉淀成正式作品资产。",
+  );
+  formData.set("workTitle", input.workTitle ?? "Submission Work");
+  formData.set("demoUrl", "");
+  formData.set("repoUrl", "");
+  formData.set("videoUrl", "");
+  formData.set("techNotes", "");
   return formData;
 }
 
-test("submission service reaches the registration-first submission path for an approved rider", async () => {
+test("submission service keeps pending registrations out of the formal work submission path", async () => {
   const user = await prisma.user.findFirst({
     where: {
       username: "rider_iris",
@@ -36,7 +47,7 @@ test("submission service reaches the registration-first submission path for an a
         tokenUsed: "321",
       }),
     ),
-    /只有比赛中、封榜期或提交中阶段才能提交作品/,
+    /当前报名尚未通过审核/,
   );
 });
 

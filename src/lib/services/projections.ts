@@ -12,6 +12,21 @@ export async function rebuildRaceProcessProjections(raceId: string) {
   const race = await prisma.race.findUnique({
     where: { id: raceId },
     include: {
+      awards: {
+        where: {
+          publishedAt: {
+            not: null,
+          },
+        },
+        orderBy: [
+          {
+            awardName: "asc",
+          },
+          {
+            rank: "asc",
+          },
+        ],
+      },
       registrations: {
         include: {
           raceProject: {
@@ -24,6 +39,7 @@ export async function rebuildRaceProcessProjections(raceId: string) {
             },
           },
           user: true,
+          work: true,
         },
       },
       leaderboardEntries: {
@@ -107,6 +123,10 @@ export async function rebuildRaceProcessProjections(raceId: string) {
     raceId,
     totalRegistrations: race.registrations.length,
   });
+  const publicWorkCount = race.registrations.filter(
+    (registration) => registration.work?.visibility === "PUBLIC",
+  ).length;
+  const publishedAwardCount = race.awards.length;
 
   const screenFeed = buildScreenFeedProjectionPayload({
     items: [
@@ -114,6 +134,22 @@ export async function rebuildRaceProcessProjections(raceId: string) {
         summary: item.content,
         type: "announcement" as const,
       })),
+      ...(publishedAwardCount > 0
+        ? [
+            {
+              summary: "Published final leaderboard is available.",
+              type: "leaderboard_read_model" as const,
+            },
+          ]
+        : []),
+      ...(publicWorkCount > 0
+        ? [
+            {
+              summary: `${publicWorkCount} public works are available for showcase.`,
+              type: "works" as const,
+            },
+          ]
+        : []),
       ...race.registrations.flatMap((registration) =>
         registration.raceProject?.caConnections.flatMap((connection) =>
           connection.sessions.slice(0, 1).map((session) => ({

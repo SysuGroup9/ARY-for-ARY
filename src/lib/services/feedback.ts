@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { assertManagedRaceActionAccess } from "@/lib/services/races";
 import { getCompatibilityContainerForRegistration } from "@/lib/services/rider-bridge";
 import { feedbackReplySchema, feedbackSchema } from "@/lib/validation";
 
@@ -65,11 +66,15 @@ export async function sendFeedback(authorId: string, formData: FormData) {
   });
 }
 
-export async function replyFeedback(organizerId: string, formData: FormData) {
+export async function replyFeedback(input: {
+  allowSystem?: boolean;
+  formData: FormData;
+  organizerId: string;
+}) {
   const parsed = feedbackReplySchema.parse({
-    threadId: formData.get("threadId"),
-    content: formData.get("content"),
-    markResolved: formData.get("markResolved") === "on",
+    threadId: input.formData.get("threadId"),
+    content: input.formData.get("content"),
+    markResolved: input.formData.get("markResolved") === "on",
   });
 
   const thread = await prisma.feedbackThread.findUnique({
@@ -81,15 +86,22 @@ export async function replyFeedback(organizerId: string, formData: FormData) {
     },
   });
 
-  if (!thread || thread.race.organizerId !== organizerId) {
+  if (!thread) {
     throw new Error("无权回复这条反馈");
   }
+
+  await assertManagedRaceActionAccess({
+    allowSystem: input.allowSystem,
+    errorMessage: "无权回复这条反馈",
+    raceId: thread.raceId,
+    userId: input.organizerId,
+  });
 
   return prisma.$transaction(async (tx) => {
     await tx.feedbackMessage.create({
       data: {
         threadId: parsed.threadId,
-        authorId: organizerId,
+        authorId: input.organizerId,
         content: parsed.content,
       },
     });

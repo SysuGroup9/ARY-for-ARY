@@ -2,14 +2,16 @@ import {
   AgentType,
   SubmissionStatus,
 } from "@/generated/prisma/enums";
+import { buildPayloadDigest } from "@/lib/ca-integrity-helpers";
+import { buildSubmissionBindingJson } from "@/lib/material-integrity-helpers";
 import { prisma } from "@/lib/prisma";
 import { getRacePhase } from "@/lib/race-phase";
-import { getRegistrationForUser } from "@/lib/services/registrations";
-import { getCompatibilityContainerForRegistration } from "@/lib/services/rider-bridge";
 import {
-  enqueueHarnessEvalTaskForArtifact,
-  enqueueSubmissionTestTask,
-} from "@/lib/services/runner";
+  ensureCompatibilityContainerForApprovedRegistration,
+  getRegistrationForUser,
+} from "@/lib/services/registrations";
+import { recordSecurityAudit } from "@/lib/services/security-audit";
+import { upsertSubmittedWorkForRegistration } from "@/lib/services/works";
 import {
   createFinalSubmissionSchema,
   createSubmissionSchema,
@@ -18,14 +20,19 @@ import {
 export async function createSubmission(
   riderId: string,
   formData: FormData,
-  options?: { enqueueSubmissionTest?: boolean },
 ) {
   const parsed = createSubmissionSchema.parse({
     raceId: formData.get("raceId"),
     codeLabel: formData.get("codeLabel"),
     codeContent: formData.get("codeContent"),
+    demoUrl: formData.get("demoUrl"),
+    repoUrl: formData.get("repoUrl"),
+    techNotes: formData.get("techNotes"),
     tokenUsed: formData.get("tokenUsed"),
     agentType: formData.get("agentType"),
+    videoUrl: formData.get("videoUrl"),
+    workSummary: formData.get("workSummary"),
+    workTitle: formData.get("workTitle"),
   });
 
   const registration = await getRegistrationForUser(parsed.raceId, riderId);
@@ -33,14 +40,14 @@ export async function createSubmission(
     throw new Error("请先完成个人报名");
   }
 
-  const team = await getCompatibilityContainerForRegistration({
+  if (registration.status !== "APPROVED") {
+    throw new Error("当前报名尚未通过审核");
+  }
+
+  const team = await ensureCompatibilityContainerForApprovedRegistration({
     raceId: parsed.raceId,
     userId: riderId,
   });
-
-  if (!team) {
-    throw new Error("当前报名尚未生成可用的提交容器");
-  }
 
   const registrationId = registration.id;
 
@@ -83,16 +90,42 @@ export async function createSubmission(
   }
 
   return prisma.$transaction(async (tx) => {
+    const submittedAt = new Date();
+    const codeContentHash = buildPayloadDigest(parsed.codeContent);
+    const ridingRecordHash = buildPayloadDigest("");
+    const submitterBindingJson = buildSubmissionBindingJson({
+      raceId: parsed.raceId,
+      registrationId,
+      submittedAt,
+      userId: riderId,
+    });
+
+    await upsertSubmittedWorkForRegistration(tx, {
+      fallbackRepoUrl: registration.raceProject?.githubRepoUrl ?? "",
+      registrationId,
+      work: {
+        demoUrl: parsed.demoUrl,
+        repoUrl: parsed.repoUrl,
+        summary: parsed.workSummary,
+        techNotes: parsed.techNotes,
+        title: parsed.workTitle,
+        videoUrl: parsed.videoUrl,
+      },
+    });
+
     const submission = await tx.submission.create({
       data: {
         agentType: parsed.agentType,
         codeContent: parsed.codeContent,
+        codeContentHash,
         codeLabel: parsed.codeLabel,
         raceId: parsed.raceId,
         registrationId,
         recordLabel: null,
         ridingRecord: null,
+        ridingRecordHash,
         status: SubmissionStatus.QUEUED,
+        submitterBindingJson,
         teamId: team.id,
         tokenUsed: parsed.tokenUsed,
       },
@@ -102,27 +135,37 @@ export async function createSubmission(
       data: {
         agentType: parsed.agentType,
         codeContent: parsed.codeContent,
+        codeContentHash,
         codeLabel: parsed.codeLabel,
         raceId: parsed.raceId,
         registrationId,
         recordLabel: null,
         ridingRecord: null,
+        ridingRecordHash,
         submissionId: submission.id,
+        submitterBindingJson,
         teamId: team.id,
         tokenUsed: parsed.tokenUsed,
       },
     });
 
-    if (options?.enqueueSubmissionTest) {
-      await enqueueSubmissionTestTask({
-        artifactId: artifact.id,
-        raceId: parsed.raceId,
-        registrationId,
+    await recordSecurityAudit(tx, {
+      action: "submission_artifact.create",
+      actorKind: "USER",
+      details: {
+        codeContentHash,
+        ridingRecordHash,
         submissionId: submission.id,
-        teamId: team.id,
-        tx,
-      });
-    }
+        submissionPhase: "active",
+        submitterBindingJson,
+      },
+      raceId: parsed.raceId,
+      registrationId,
+      result: "accepted",
+      targetId: artifact.id,
+      targetType: "SubmissionArtifact",
+      userId: riderId,
+    });
 
     return submission;
   });
@@ -133,10 +176,16 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
     raceId: formData.get("raceId"),
     codeLabel: formData.get("codeLabel"),
     codeContent: formData.get("codeContent"),
+    demoUrl: formData.get("demoUrl"),
     recordLabel: formData.get("recordLabel"),
+    repoUrl: formData.get("repoUrl"),
     ridingRecord: formData.get("ridingRecord"),
+    techNotes: formData.get("techNotes"),
     tokenUsed: formData.get("tokenUsed"),
     agentType: formData.get("agentType"),
+    videoUrl: formData.get("videoUrl"),
+    workSummary: formData.get("workSummary"),
+    workTitle: formData.get("workTitle"),
   });
 
   const registration = await getRegistrationForUser(parsed.raceId, riderId);
@@ -144,14 +193,14 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
     throw new Error("请先完成个人报名");
   }
 
-  const team = await getCompatibilityContainerForRegistration({
+  if (registration.status !== "APPROVED") {
+    throw new Error("当前报名尚未通过审核");
+  }
+
+  const team = await ensureCompatibilityContainerForApprovedRegistration({
     raceId: parsed.raceId,
     userId: riderId,
   });
-
-  if (!team) {
-    throw new Error("当前报名尚未生成可用的提交容器");
-  }
 
   const registrationId = registration.id;
 
@@ -171,16 +220,42 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
   }
 
   return prisma.$transaction(async (tx) => {
+    const submittedAt = new Date();
+    const codeContentHash = buildPayloadDigest(parsed.codeContent);
+    const ridingRecordHash = buildPayloadDigest(parsed.ridingRecord);
+    const submitterBindingJson = buildSubmissionBindingJson({
+      raceId: parsed.raceId,
+      registrationId,
+      submittedAt,
+      userId: riderId,
+    });
+
+    await upsertSubmittedWorkForRegistration(tx, {
+      fallbackRepoUrl: registration.raceProject?.githubRepoUrl ?? "",
+      registrationId,
+      work: {
+        demoUrl: parsed.demoUrl,
+        repoUrl: parsed.repoUrl,
+        summary: parsed.workSummary,
+        techNotes: parsed.techNotes,
+        title: parsed.workTitle,
+        videoUrl: parsed.videoUrl,
+      },
+    });
+
     const submission = await tx.submission.create({
       data: {
         agentType: parsed.agentType,
         codeContent: parsed.codeContent,
+        codeContentHash,
         codeLabel: parsed.codeLabel,
         raceId: parsed.raceId,
         registrationId,
         recordLabel: parsed.recordLabel,
         ridingRecord: parsed.ridingRecord,
+        ridingRecordHash,
         status: SubmissionStatus.QUEUED,
+        submitterBindingJson,
         teamId: team.id,
         tokenUsed: parsed.tokenUsed,
       },
@@ -190,15 +265,36 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
       data: {
         agentType: parsed.agentType,
         codeContent: parsed.codeContent,
+        codeContentHash,
         codeLabel: parsed.codeLabel,
         raceId: parsed.raceId,
         registrationId,
         recordLabel: parsed.recordLabel,
         ridingRecord: parsed.ridingRecord,
+        ridingRecordHash,
         submissionId: submission.id,
+        submitterBindingJson,
         teamId: team.id,
         tokenUsed: parsed.tokenUsed,
       },
+    });
+
+    await recordSecurityAudit(tx, {
+      action: "submission_artifact.create",
+      actorKind: "USER",
+      details: {
+        codeContentHash,
+        ridingRecordHash,
+        submissionId: submission.id,
+        submissionPhase: "final",
+        submitterBindingJson,
+      },
+      raceId: parsed.raceId,
+      registrationId,
+      result: "accepted",
+      targetId: artifact.id,
+      targetType: "SubmissionArtifact",
+      userId: riderId,
     });
 
     // Legacy Harness evaluation path demoted.

@@ -1,9 +1,9 @@
 import { ConsoleShell, buildConsoleSectionNavItems, judgeConsoleSections } from "@/app/_components/console/console-shell";
 import { JudgeConsolePageView } from "@/app/_components/console/judge-console-page";
-import { loadDatabaseUser } from "@/lib/auth";
-import { getConsoleRaceBySlug } from "@/lib/services/console-routes";
+import { getActionFeedbackContent } from "@/lib/action-feedback";
+import { requireConsoleUser } from "@/lib/auth";
+import { getConsoleRaceBySlugForAccess } from "@/lib/services/console-routes";
 import { listJudgeAssignmentsForUserInRace } from "@/lib/services/judging";
-import { getConsoleRaceViewAccess } from "@/lib/viewer-access";
 import { notFound, redirect } from "next/navigation";
 
 const judgeSectionLabels: Record<string, string> = {
@@ -16,41 +16,43 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ raceSlug: string; section: string }>;
+  searchParams?: Promise<{
+    feedbackMessage?: string;
+    feedbackScope?: string;
+  }>;
 }
 
-export default async function JudgeConsoleSectionPage({ params }: Props) {
-  const sessionUser = await loadDatabaseUser();
-
-  if (!sessionUser) {
-    redirect("/login");
-  }
-
+export default async function JudgeConsoleSectionPage({
+  params,
+  searchParams,
+}: Props) {
   const { raceSlug, section } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const sessionUser = await requireConsoleUser(
+    `/console/races/${raceSlug}/judge/${section}`,
+  );
   if (!judgeConsoleSections.includes(section as (typeof judgeConsoleSections)[number])) {
     notFound();
   }
 
-  const context = await getConsoleRaceBySlug(raceSlug);
+  const context = await getConsoleRaceBySlugForAccess({
+    access: "judge",
+    raceSlug,
+    roles: sessionUser.roles,
+    userId: sessionUser.id,
+  });
   if (!context) {
-    notFound();
+    redirect("/console/races");
   }
 
   const assignments = await listJudgeAssignmentsForUserInRace({
     raceId: context.race.id,
     userId: sessionUser.id,
   });
-
-  const scopedAccess = getConsoleRaceViewAccess({
-    roles: sessionUser.roles,
-    view: "judge",
-    isRaceOrganizer: false,
-    isRaceJudge: assignments.length > 0,
-    isRaceRider: false,
+  const feedback = getActionFeedbackContent({
+    message: resolvedSearchParams?.feedbackMessage,
+    scope: resolvedSearchParams?.feedbackScope,
   });
-
-  if (!scopedAccess.allowed) {
-    redirect(scopedAccess.redirectTo ?? "/console/races");
-  }
 
   return (
     <ConsoleShell
@@ -71,6 +73,7 @@ export default async function JudgeConsoleSectionPage({ params }: Props) {
     >
       <JudgeConsolePageView
         assignments={assignments}
+        feedback={feedback}
         race={context.race}
         raceSlug={raceSlug}
         section={section as (typeof judgeConsoleSections)[number]}

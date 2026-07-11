@@ -8,6 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:p0": "node scripts/grs004-p0-regression.mjs",
+    "qa:p0": "node scripts/grs004-p0-regression.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev --name init",
     "db:deploy": "prisma migrate deploy",

@@ -5,7 +5,17 @@ import { useRef, useState, type ChangeEvent } from "react";
 interface Props {
   action: (formData: FormData) => void | Promise<void>;
   raceId: string;
+  raceSlug?: string;
   returnTo?: string;
+  saveDraftAction?: (formData: FormData) => void | Promise<void>;
+  workDefaults?: {
+    demoUrl?: string;
+    repoUrl?: string;
+    techNotes?: string;
+    workSummary?: string;
+    workTitle?: string;
+    videoUrl?: string;
+  };
 }
 
 const defaultCode =
@@ -13,7 +23,14 @@ const defaultCode =
 const defaultRecord =
   "先澄清输入边界，再回顾关键决策，最后总结验证结果与遗留问题。";
 
-export default function FinalSubmissionFormClient({ action, raceId, returnTo }: Props) {
+export default function FinalSubmissionFormClient({
+  action,
+  raceId,
+  raceSlug,
+  returnTo,
+  saveDraftAction,
+  workDefaults,
+}: Props) {
   const [codeLabel, setCodeLabel] = useState("solution.ts");
   const [codeContent, setCodeContent] = useState(defaultCode);
   const [recordLabel, setRecordLabel] = useState("riding-record.txt");
@@ -36,7 +53,45 @@ export default function FinalSubmissionFormClient({ action, raceId, returnTo }: 
   return (
     <form action={action} className="form-grid">
       <input name="raceId" type="hidden" value={raceId} />
+      {raceSlug ? <input name="raceSlug" type="hidden" value={raceSlug} /> : null}
       {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
+      <label>
+        作品名称
+        <input
+          defaultValue={workDefaults?.workTitle ?? ""}
+          name="workTitle"
+          required
+        />
+      </label>
+      <label className="full">
+        作品简介
+        <textarea
+          defaultValue={workDefaults?.workSummary ?? ""}
+          name="workSummary"
+          required
+          rows={3}
+        />
+      </label>
+      <label>
+        Demo URL
+        <input defaultValue={workDefaults?.demoUrl ?? ""} name="demoUrl" />
+      </label>
+      <label>
+        代码仓库 URL
+        <input defaultValue={workDefaults?.repoUrl ?? ""} name="repoUrl" />
+      </label>
+      <label>
+        演示视频 URL
+        <input defaultValue={workDefaults?.videoUrl ?? ""} name="videoUrl" />
+      </label>
+      <label className="full">
+        技术说明
+        <textarea
+          defaultValue={workDefaults?.techNotes ?? ""}
+          name="techNotes"
+          rows={4}
+        />
+      </label>
       <div className="full local-picker-grid">
         <div className="picker-card">
           <strong>赛后代码文件</strong>
@@ -105,7 +160,14 @@ export default function FinalSubmissionFormClient({ action, raceId, returnTo }: 
         Riding Record
         <textarea name="ridingRecord" required rows={6} value={ridingRecord} onChange={(event) => setRidingRecord(event.target.value)} />
       </label>
-      <button type="submit">提交赛后代码与 Riding Record</button>
+      <div className="button-row-inline">
+        {saveDraftAction ? (
+          <button formAction={saveDraftAction} formNoValidate type="submit">
+            保存作品草稿
+          </button>
+        ) : null}
+        <button type="submit">提交赛后代码与 Riding Record</button>
+      </div>
     </form>
   );
 }

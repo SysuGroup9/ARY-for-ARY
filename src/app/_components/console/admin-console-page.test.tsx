@@ -61,6 +61,10 @@ test("admin console uses Chinese role-governance labels and actions", () => {
   assert.match(html, /评委/);
   assert.match(html, /主办方/);
   assert.match(html, /骑手/);
+  assert.match(
+    html,
+    /type="hidden" name="returnTo" value="\/console\/admin\/roles"/,
+  );
   assert.doesNotMatch(html, /Role Governance/);
   assert.doesNotMatch(html, /Save Roles/);
 });

@@ -1,6 +1,7 @@
 import { formatDateTime } from "@/lib/format";
-import { groupPublicRacesByPhase } from "@/lib/public-site";
+import { getRacePrimaryCta, groupPublicRacesByPhase } from "@/lib/public-site";
 import type { ReturnTypeOfBuildPublicSiteModel } from "@/lib/public-site-types";
+import { getRacePhaseLabel } from "@/lib/race-phase";
 
 export function RacesIndexPageView({ model }: { model: ReturnTypeOfBuildPublicSiteModel }) {
   const grouped = groupPublicRacesByPhase(model.featuredRaces);
@@ -21,15 +22,25 @@ export function RacesIndexPageView({ model }: { model: ReturnTypeOfBuildPublicSi
           <div className="grid-3">
             {model.featuredRaces.map((race) => (
               <article className="public-card card-accent" key={race.id}>
+                {(() => {
+                  const primaryCta = getRacePrimaryCta(race);
+
+                  return (
+                    <>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
                   <strong>{race.title}</strong>
-                  <span className="badge badge-accent">{race.phase}</span>
+                  <span className="badge badge-accent">{getRacePhaseLabel(race.phase)}</span>
                 </div>
                 <p className="muted text-sm">{race.summary}</p>
                 <small className="muted">{formatDateTime(race.raceStart)} - {formatDateTime(race.raceEnd)}</small>
                 <div style={{ marginTop: 14 }}>
-                  <a className="button-secondary" href={`/races/${race.slug}`} style={{ fontSize: 13, minHeight: 36 }}>进入赛事页</a>
+                  <a className="button-secondary" href={primaryCta.href} style={{ fontSize: 13, minHeight: 36 }}>
+                    {primaryCta.label}
+                  </a>
                 </div>
+                    </>
+                  );
+                })()}
               </article>
             ))}
           </div>
@@ -41,24 +52,34 @@ export function RacesIndexPageView({ model }: { model: ReturnTypeOfBuildPublicSi
           <div className="section-label"><span className="section-label__dot section-label__dot--live" />进行中</div>
           <div className="stack" style={{ marginTop: 8 }}>
             {active.length === 0 ? <p className="muted text-sm">暂无进行中赛事。</p>
-              : active.map((race) => (
-                <a className="public-link-card" href={`/races/${race.slug}`} key={race.id}>
+              : active.map((race) => {
+                const cta = getRacePrimaryCta(race);
+
+                return (
+                <a className="public-link-card" href={cta.href} key={race.id}>
                   <strong>{race.title}</strong>
-                  <span className="badge badge-accent">{race.phase}</span>
+                  <span className="badge badge-accent">{getRacePhaseLabel(race.phase)}</span>
+                  <span className="muted text-sm">{cta.label}</span>
                 </a>
-              ))}
+                );
+              })}
           </div>
         </div>
         <div className="card">
           <div className="section-label"><span className="section-label__dot" />报名中</div>
           <div className="stack" style={{ marginTop: 8 }}>
             {upcoming.length === 0 ? <p className="muted text-sm">暂无报名中赛事。</p>
-              : upcoming.map((race) => (
-                <a className="public-link-card" href={`/races/${race.slug}`} key={race.id}>
+              : upcoming.map((race) => {
+                const cta = getRacePrimaryCta(race);
+
+                return (
+                <a className="public-link-card" href={cta.href} key={race.id}>
                   <strong>{race.title}</strong>
-                  <span className="badge badge-accent">{race.phase}</span>
+                  <span className="badge badge-accent">{getRacePhaseLabel(race.phase)}</span>
+                  <span className="muted text-sm">{cta.label}</span>
                 </a>
-              ))}
+                );
+              })}
           </div>
         </div>
       </div>

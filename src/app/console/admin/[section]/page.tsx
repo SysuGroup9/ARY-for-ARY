@@ -1,11 +1,13 @@
 import { AdminConsolePageView } from "@/app/_components/console/admin-console-page";
 import { RaceRequestsPageView } from "@/app/_components/console/race-requests-page";
+import { ErrorNotice } from "@/app/_components/ary-shared";
 import {
   ConsoleShell,
   adminConsoleSections,
   buildConsoleSectionNavItems,
 } from "@/app/_components/console/console-shell";
-import { loadDatabaseUser } from "@/lib/auth";
+import { getActionFeedbackContent } from "@/lib/action-feedback";
+import { requireConsoleUser } from "@/lib/auth";
 import { listCooperationRequests } from "@/lib/services/cooperation";
 import { listUsers } from "@/lib/services/users";
 import { getConsoleAdminAccess } from "@/lib/viewer-access";
@@ -22,17 +24,24 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ section: string }>;
+  searchParams?: Promise<{
+    feedbackMessage?: string;
+    feedbackScope?: string;
+  }>;
 }
 
-export default async function AdminConsoleSectionPage({ params }: Props) {
-  const sessionUser = await loadDatabaseUser();
-  const access = getConsoleAdminAccess(sessionUser?.roles ?? null);
+export default async function AdminConsoleSectionPage({
+  params,
+  searchParams,
+}: Props) {
+  const { section } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const sessionUser = await requireConsoleUser(`/console/admin/${section}`);
+  const access = getConsoleAdminAccess(sessionUser.roles);
 
   if (!access.allowed) {
     redirect(access.redirectTo ?? "/console");
   }
-
-  const { section } = await params;
   if (
     !adminConsoleSections.includes(
       section as (typeof adminConsoleSections)[number],
@@ -43,6 +52,10 @@ export default async function AdminConsoleSectionPage({ params }: Props) {
 
   const users = await listUsers();
   const cooperationRequests = await listCooperationRequests();
+  const feedback = getActionFeedbackContent({
+    message: resolvedSearchParams?.feedbackMessage,
+    scope: resolvedSearchParams?.feedbackScope,
+  });
 
   return (
     <ConsoleShell
@@ -60,11 +73,14 @@ export default async function AdminConsoleSectionPage({ params }: Props) {
       title="管理控制台"
       user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
+      {feedback ? (
+        <ErrorNotice message={feedback.message} title={feedback.title} />
+      ) : null}
       {section === "race-requests" ? (
         <RaceRequestsPageView requests={cooperationRequests} />
       ) : (
         <AdminConsolePageView
-          section={section as (typeof adminConsoleSections)[number]}
+          section={section as "profile-completion" | "roles" | "users"}
           users={users}
         />
       )}

@@ -39,6 +39,18 @@ test("marks a connection active when a live session starts", () => {
   );
 });
 
+test("marks a connection active when a milestone signal arrives", () => {
+  assert.equal(
+    getNextConnectionStatusFromSignal({
+      currentStatus: "CONNECTED",
+      signal: buildSignal({
+        type: "milestone_reached" as unknown as RidingSignalInput["type"],
+      }),
+    }),
+    "ACTIVE",
+  );
+});
+
 test("marks a connection failed when the signal carries ingestion failure", () => {
   assert.equal(
     getNextConnectionStatusFromSignal({
@@ -169,6 +181,7 @@ test("builds a session patch from a fetched snapshot", () => {
         riskReason: "One failing test remains near task deadline",
       },
       task: {
+        taskId: "DEV-12",
         progressPercent: 43,
         taskStatus: "in_progress",
       },
@@ -178,10 +191,10 @@ test("builds a session patch from a fetched snapshot", () => {
         lastActiveAt: new Date("2026-06-19T10:17:58Z"),
         messageCount: 318,
         startedAt: new Date("2026-06-19T09:02:11Z"),
-        tokenCost: 12344,
+        tokens: 12344,
         toolCallCount: 57,
       },
-    },
+    } as never,
   });
 
   assert.deepEqual(patch, {

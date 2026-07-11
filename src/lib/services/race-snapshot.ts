@@ -14,6 +14,18 @@ import type { RaceSnapshot } from "@/lib/jumbotron/track-runtime/types";
 
 const SNAPSHOT_DIR = path.join(process.cwd(), "public", "assets", "snapshots");
 
+export interface RaceSnapshotDisplayResult {
+  fallbackReason: null | string;
+  snapshot: RaceSnapshot | null;
+  source: "live" | "stable" | "static";
+}
+
+interface ResolveRaceSnapshotForDisplayOptions {
+  buildSnapshot?: (raceId: string) => Promise<RaceSnapshot>;
+  loadSnapshot?: (raceId: string) => RaceSnapshot | null;
+  saveSnapshot?: (raceId: string, snapshot: RaceSnapshot) => void;
+}
+
 export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
   const race = await prisma.race.findUnique({
     where: { id: raceId },
@@ -195,10 +207,7 @@ export async function generateRaceSnapshot(
   raceId: string,
 ): Promise<RaceSnapshot> {
   const snapshot = await buildRaceSnapshot(raceId);
-
-  ensureSnapshotDir();
-  const filePath = path.join(SNAPSHOT_DIR, `${raceId}.json`);
-  fs.writeFileSync(filePath, JSON.stringify(snapshot, null, 2), "utf-8");
+  saveRaceSnapshot(raceId, snapshot);
 
   return snapshot;
 }
@@ -207,8 +216,46 @@ export function loadRaceSnapshot(raceId: string): RaceSnapshot | null {
   const filePath = path.join(SNAPSHOT_DIR, `${raceId}.json`);
   if (!fs.existsSync(filePath)) return null;
 
-  const raw = fs.readFileSync(filePath, "utf-8");
-  return JSON.parse(raw) as RaceSnapshot;
+  try {
+    const raw = fs.readFileSync(filePath, "utf-8");
+    return JSON.parse(raw) as RaceSnapshot;
+  } catch {
+    return null;
+  }
+}
+
+export async function resolveRaceSnapshotForDisplay(
+  raceId: string,
+  options: ResolveRaceSnapshotForDisplayOptions = {},
+): Promise<RaceSnapshotDisplayResult> {
+  const buildSnapshot = options.buildSnapshot ?? buildRaceSnapshot;
+  const loadSnapshot = options.loadSnapshot ?? loadRaceSnapshot;
+  const saveSnapshot = options.saveSnapshot ?? saveRaceSnapshot;
+
+  try {
+    const snapshot = await buildSnapshot(raceId);
+    saveSnapshot(raceId, snapshot);
+    return {
+      fallbackReason: null,
+      snapshot,
+      source: "live",
+    };
+  } catch (error) {
+    const stableSnapshot = loadSnapshot(raceId);
+    if (stableSnapshot) {
+      return {
+        fallbackReason: normalizeSnapshotFallbackReason(error),
+        snapshot: stableSnapshot,
+        source: "stable",
+      };
+    }
+
+    return {
+      fallbackReason: normalizeSnapshotFallbackReason(error),
+      snapshot: null,
+      source: "static",
+    };
+  }
 }
 
 export function listSnapshotIds(): string[] {
@@ -230,4 +277,18 @@ function ensureSnapshotDir(): void {
   if (!fs.existsSync(SNAPSHOT_DIR)) {
     fs.mkdirSync(SNAPSHOT_DIR, { recursive: true });
   }
+}
+
+function saveRaceSnapshot(raceId: string, snapshot: RaceSnapshot): void {
+  ensureSnapshotDir();
+  const filePath = path.join(SNAPSHOT_DIR, `${raceId}.json`);
+  fs.writeFileSync(filePath, JSON.stringify(snapshot, null, 2), "utf-8");
+}
+
+function normalizeSnapshotFallbackReason(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim();
+  }
+
+  return "snapshot_build_failed";
 }

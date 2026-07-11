@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { listAwardsForRace } from "@/lib/services/awards";
+import { listPublishedAwardsForRace } from "@/lib/services/awards";
 import { listJudgingRecordsForRace } from "@/lib/services/judging";
 
 export async function buildPublicReviewModel(raceId: string) {
   const [awards, judgingRecords, evidenceHighlights] = await Promise.all([
-    listAwardsForRace(raceId),
-    listJudgingRecordsForRace(raceId),
+    listPublishedAwardsForRace(raceId),
+    listJudgingRecordsForRace(raceId, { submittedOnly: true }),
     prisma.evidence.findMany({
       where: {
         registration: {

@@ -233,13 +233,49 @@ test("does not synthesize featured works from highlight-only races", () => {
 });
 
 test("groups public races by phase for the races index page", () => {
-  const model = buildPublicSiteModel(sampleRaces);
+  const model = buildPublicSiteModel([
+    ...sampleRaces,
+    {
+      ...sampleRaces[0],
+      id: "race_running",
+      title: "Running Race",
+      summary: "running race",
+      phase: "running",
+    },
+    {
+      ...sampleRaces[0],
+      id: "race_submitting",
+      title: "Submitting Race",
+      summary: "submitting race",
+      phase: "submitting",
+    },
+    {
+      ...sampleRaces[0],
+      id: "race_judging",
+      title: "Judging Race",
+      summary: "judging race",
+      phase: "judging",
+    },
+    {
+      ...sampleRaces[0],
+      id: "race_published",
+      title: "Published Preview",
+      summary: "published race",
+      phase: "published",
+    },
+  ]);
   const grouped = groupPublicRacesByPhase(model.featuredRaces);
 
-  assert.equal(grouped.active.length, 1);
+  assert.equal(grouped.active.length, 2);
+  assert.equal(grouped.frozen.length, 2);
   assert.equal(grouped.registration.length, 0);
+  assert.equal(grouped.preparation.length, 1);
   assert.equal(grouped.finished.length, 1);
   assert.equal(grouped.active[0].id, "race_active");
+  assert.equal(grouped.active.some((race) => race.id === "race_running"), true);
+  assert.equal(grouped.frozen.some((race) => race.id === "race_submitting"), true);
+  assert.equal(grouped.frozen.some((race) => race.id === "race_judging"), true);
+  assert.equal(grouped.preparation[0].id, "race_published");
 });
 
 test("sorts featured works by score and title", () => {
@@ -306,11 +342,70 @@ test("maps race phase to public home CTA", () => {
     { href: "/races/race_signup--test/register", label: "立即报名" },
   );
   assert.deepEqual(
+    getRacePrimaryCta({ slug: "race_preview--test", phase: "published" }),
+    { href: "/races/race_preview--test", label: "查看赛题" },
+  );
+  assert.deepEqual(
+    getRacePrimaryCta({ slug: "race_running--test", phase: "running" }),
+    { href: "/races/race_running--test/live", label: "进入实况大厅" },
+  );
+  assert.deepEqual(
     getRacePrimaryCta({ slug: "race_active--test", phase: "active" }),
     { href: "/races/race_active--test/live", label: "进入实况大厅" },
+  );
+  assert.deepEqual(
+    getRacePrimaryCta({ slug: "race_submitting--test", phase: "submitting" }),
+    { href: "/races/race_submitting--test/works", label: "查看作品" },
+  );
+  assert.deepEqual(
+    getRacePrimaryCta({ slug: "race_judging--test", phase: "judging" }),
+    { href: "/races/race_judging--test/works", label: "查看作品" },
   );
   assert.deepEqual(
     getRacePrimaryCta({ slug: "race_finished--test", phase: "finished" }),
     { href: "/races/race_finished--test/results", label: "查看赛果" },
   );
+  assert.deepEqual(
+    getRacePrimaryCta({ slug: "race_completed--test", phase: "completed" }),
+    { href: "/races/race_completed--test/results", label: "查看赛果" },
+  );
+  assert.deepEqual(
+    getRacePrimaryCta({ slug: "race_archived--test", phase: "archived" }),
+    { href: "/races/race_archived--test/results", label: "查看赛果" },
+  );
+});
+
+test("treats running races as live-race public assets under the 8-state lifecycle", () => {
+  const model = buildPublicSiteModel([
+    {
+      ...sampleRaces[0],
+      id: "race_running",
+      title: "Running Race",
+      phase: "running",
+      summary: "running race",
+    },
+  ]);
+
+  assert.equal(model.liveRaces.length, 1);
+  assert.equal(model.liveRaces[0]?.id, "race_running");
+});
+
+test("treats archived races as past-race public assets", () => {
+  const model = buildPublicSiteModel([
+    sampleRaces[0],
+    {
+      ...sampleRaces[1],
+      id: "race_archived",
+      phase: "archived",
+      summary: "archived race",
+      title: "Archived Marathon",
+    },
+  ]);
+
+  assert.equal(model.latestResults[0]?.id, "race_archived");
+  assert.equal(model.pastRaces[0]?.id, "race_archived");
+  assert.equal(model.featuredWorks[0]?.raceId, "race_archived");
+
+  const grouped = groupPublicRacesByPhase(model.featuredRaces);
+  assert.equal(grouped.finished.some((race) => race.id === "race_archived"), true);
 });

@@ -8,7 +8,7 @@ import {
   type RegistrationStatusLike,
 } from "./registration-helpers";
 
-test("creates registration, race project, and compatibility team for a new rider", () => {
+test("creates a submitted registration first and waits for approval before provisioning rider context", () => {
   assert.deepEqual(
     planRegistrationBridgeFlow({
       hasCompatibilityTeam: false,
@@ -16,9 +16,9 @@ test("creates registration, race project, and compatibility team for a new rider
       registrationStatus: null,
     }),
     {
-      ensureCompatibilityTeam: true,
-      ensureRaceProject: true,
-      nextRegistrationStatus: "APPROVED",
+      ensureCompatibilityTeam: false,
+      ensureRaceProject: false,
+      nextRegistrationStatus: "SUBMITTED",
       shouldCreateRegistration: true,
     },
   );
@@ -27,12 +27,12 @@ test("creates registration, race project, and compatibility team for a new rider
 test("keeps approved registration idempotent while backfilling missing race project", () => {
   assert.deepEqual(
     planRegistrationBridgeFlow({
-      hasCompatibilityTeam: true,
+      hasCompatibilityTeam: false,
       hasRaceProject: false,
       registrationStatus: "APPROVED",
     }),
     {
-      ensureCompatibilityTeam: false,
+      ensureCompatibilityTeam: true,
       ensureRaceProject: true,
       nextRegistrationStatus: "APPROVED",
       shouldCreateRegistration: false,

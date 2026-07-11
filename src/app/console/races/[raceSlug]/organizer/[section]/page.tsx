@@ -1,10 +1,10 @@
 import { ConsoleShell, buildConsoleSectionNavItems, organizerConsoleSections } from "@/app/_components/console/console-shell";
 import { OrganizerConsolePageView } from "@/app/_components/console/organizer-console-page";
-import { loadDatabaseUser } from "@/lib/auth";
-import { getConsoleRaceBySlug } from "@/lib/services/console-routes";
+import { getActionFeedbackContent } from "@/lib/action-feedback";
+import { requireConsoleUser } from "@/lib/auth";
+import { getConsoleRaceBySlugForAccess } from "@/lib/services/console-routes";
 import { listJudgeAssignmentsForRace } from "@/lib/services/judging";
 import { listUsersByRole } from "@/lib/services/users";
-import { getConsoleRaceViewAccess } from "@/lib/viewer-access";
 import { notFound, redirect } from "next/navigation";
 
 const organizerSectionLabels: Record<string, string> = {
@@ -16,6 +16,7 @@ const organizerSectionLabels: Record<string, string> = {
   works: "作品",
   judges: "评委分配",
   judging: "评审进度",
+  announcements: "公告",
   awards: "奖项",
   reports: "报告",
   maintenance: "维护",
@@ -25,40 +26,43 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ raceSlug: string; section: string }>;
+  searchParams?: Promise<{
+    feedbackMessage?: string;
+    feedbackScope?: string;
+  }>;
 }
 
-export default async function OrganizerConsoleSectionPage({ params }: Props) {
-  const sessionUser = await loadDatabaseUser();
-
-  if (!sessionUser) {
-    redirect("/login");
-  }
-
+export default async function OrganizerConsoleSectionPage({
+  params,
+  searchParams,
+}: Props) {
   const { raceSlug, section } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const sessionUser = await requireConsoleUser(
+    `/console/races/${raceSlug}/organizer/${section}`,
+  );
   if (!organizerConsoleSections.includes(section as (typeof organizerConsoleSections)[number])) {
     notFound();
   }
 
-  const context = await getConsoleRaceBySlug(raceSlug);
-  if (!context) {
-    notFound();
-  }
-
-  const access = getConsoleRaceViewAccess({
+  const context = await getConsoleRaceBySlugForAccess({
+    access: "organizer",
+    raceSlug,
     roles: sessionUser.roles,
-    view: "organizer",
-    isRaceOrganizer: context.race.organizerId === sessionUser.id,
-    isRaceRider: false,
+    userId: sessionUser.id,
   });
-
-  if (!access.allowed) {
-    redirect(access.redirectTo ?? "/console/races");
+  if (!context) {
+    redirect("/console/races");
   }
 
   const [judgeAssignments, judges] = await Promise.all([
     listJudgeAssignmentsForRace(context.race.id),
     listUsersByRole("JUDGE"),
   ]);
+  const feedback = getActionFeedbackContent({
+    message: resolvedSearchParams?.feedbackMessage,
+    scope: resolvedSearchParams?.feedbackScope,
+  });
 
   return (
     <ConsoleShell
@@ -78,6 +82,7 @@ export default async function OrganizerConsoleSectionPage({ params }: Props) {
       user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
       <OrganizerConsolePageView
+        feedback={feedback}
         judgeAssignments={judgeAssignments}
         judges={judges.map((judge) => ({ id: judge.id, username: judge.username }))}
         race={context.race}

@@ -77,8 +77,8 @@ export type CalibratorAction =
   | { type: "LOAD_PROFILE"; payload: TrackProfile }
   | { type: "SET_SCALE"; payload: number };
 
-export function createInitialState(): CalibratorState {
-  return {
+export function createInitialState(initialProfile?: TrackProfile): CalibratorState {
+  const defaultState: CalibratorState = {
     trackId: `track-${Date.now()}`,
     name: "新赛道",
     schemaVersion: "1.0",
@@ -120,6 +120,24 @@ export function createInitialState(): CalibratorState {
     isPlaying: false,
     validationErrors: [],
     validationWarnings: [],
+  };
+
+  if (!initialProfile) {
+    return defaultState;
+  }
+
+  return {
+    ...defaultState,
+    background: initialProfile.background,
+    centerline: initialProfile.centerline,
+    checkpoints: initialProfile.checkpoints,
+    direction: initialProfile.direction,
+    lanes: initialProfile.lanes,
+    name: initialProfile.name,
+    schemaVersion: initialProfile.schemaVersion,
+    startFinish: initialProfile.startFinish,
+    trackId: initialProfile.trackId,
+    viewBox: initialProfile.viewBox,
   };
 }
 
@@ -252,19 +270,12 @@ export function calibratorReducer(
       };
 
     case "LOAD_PROFILE": {
-      const p = action.payload;
       return {
-        ...state,
-        trackId: p.trackId,
-        name: p.name,
-        schemaVersion: p.schemaVersion,
-        viewBox: p.viewBox,
-        background: p.background,
-        centerline: p.centerline,
-        direction: p.direction,
-        startFinish: p.startFinish,
-        lanes: p.lanes,
-        checkpoints: p.checkpoints,
+        ...createInitialState(action.payload),
+        previewHorseCount: state.previewHorseCount,
+        previewProgress: state.previewProgress,
+        previewSpeed: state.previewSpeed,
+        isPlaying: state.isPlaying,
       };
     }
 

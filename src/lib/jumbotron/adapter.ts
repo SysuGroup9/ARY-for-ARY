@@ -401,7 +401,8 @@ export function generateMessages(race: AryRaceData): RidingMessageSnapshot[] {
           entryId: race.teams[index]?.id ?? race.id,
           source: "projection",
           type:
-            item.type === "current_leaderboard_projection"
+            item.type === "current_leaderboard_projection" ||
+            item.type === "leaderboard_read_model"
               ? "milestone"
               : "progress_update",
           severity: "info",

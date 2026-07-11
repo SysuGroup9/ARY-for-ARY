@@ -33,11 +33,13 @@ export function planRegistrationBridgeFlow(input: {
   shouldCreateRegistration: boolean;
 } {
   const nextRegistrationStatus: RegistrationStatusLike =
-    input.registrationStatus ?? "APPROVED";
+    input.registrationStatus ?? "SUBMITTED";
 
   return {
     ensureCompatibilityTeam:
-      getCompatibilityTeamMode() === "secondary" && !input.hasCompatibilityTeam,
+      getCompatibilityTeamMode() === "secondary" &&
+      nextRegistrationStatus === "APPROVED" &&
+      !input.hasCompatibilityTeam,
     ensureRaceProject:
       shouldEnsureRaceProject(nextRegistrationStatus) && !input.hasRaceProject,
     nextRegistrationStatus,

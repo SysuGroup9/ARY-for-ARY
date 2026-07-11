@@ -1,14 +1,21 @@
 import {
   fetchCASnapshotAction,
+  hideWorkAction,
   registerForRaceAction,
   registerCAConnectionAction,
+  rotateCAConnectionSecretAction,
   sendFeedbackAction,
-  submitEntryForTestAction,
+  saveWorkDraftAction,
+  submitEntryAction,
   submitFinalEntryAction,
+  withdrawRegistrationAction,
 } from "@/app/actions";
-import { Panel } from "@/app/_components/ary-shared";
+import { ErrorNotice, Panel } from "@/app/_components/ary-shared";
+import { ReviewReadinessCard } from "@/app/_components/console/review-readiness-card";
 import FinalSubmissionFormClient from "@/app/_components/final-submission-form-client";
 import SubmissionFormClient from "@/app/_components/submission-form-client";
+import { getRacePhaseLabel } from "@/lib/race-phase";
+import { buildReviewReadinessSummary } from "@/lib/review-readiness-helpers";
 import type { getRegistrationForUser } from "@/lib/services/registrations";
 import type { getTeamForCaptain } from "@/lib/services/teams";
 import type { RaceListItem } from "@/lib/services/races";
@@ -17,6 +24,7 @@ type RiderTeam = Awaited<ReturnType<typeof getTeamForCaptain>>;
 type RiderRegistration = Awaited<ReturnType<typeof getRegistrationForUser>>;
 
 export function RiderConsolePageView({
+  feedback,
   race,
   registration,
   reviewSummary,
@@ -25,6 +33,7 @@ export function RiderConsolePageView({
   raceSlug,
   section,
 }: {
+  feedback?: { message: string; title: string } | null;
   race: RaceListItem;
   registration: RiderRegistration;
   reviewSummary: null | { summary: string; title: string };
@@ -43,7 +52,8 @@ export function RiderConsolePageView({
 
   return (
     <>
-      <Panel title={riderSectionTitle[section]} eyebrow="Rider View">
+      {feedback ? <ErrorNotice message={feedback.message} title={feedback.title} /> : null}
+      <Panel title={riderSectionTitle[section]} eyebrow={riderEyebrow}>
         <p className="muted">
           赛事上下文始终保留在当前页面，骑手操作不再依赖公开首页入口。
         </p>
@@ -70,6 +80,46 @@ const riderSectionTitle = {
   submission: "作品提交",
 } as const;
 
+const riderEyebrow = "骑手视图";
+
+function formatConnectionTimestamp(value: Date | null | undefined) {
+  return value ? value.toISOString() : "尚未发生";
+}
+
+function getHandshakeStateLabel(value: Date | null | undefined) {
+  return value ? "已完成" : "需重新握手";
+}
+
+function getRegistrationStatusLabel(status: string) {
+  switch (String(status).trim().toUpperCase()) {
+    case "APPROVED":
+      return "已通过";
+    case "SUBMITTED":
+      return "待审核";
+    case "REJECTED":
+      return "已拒绝";
+    case "WITHDRAWN":
+      return "已撤回";
+    default:
+      return status;
+  }
+}
+
+function getAggregateIngestionStatusLabel(status: string) {
+  switch (String(status).trim().toUpperCase()) {
+    case "ACTIVE":
+      return "活跃中";
+    case "CONNECTED":
+      return "已连接";
+    case "FAILED":
+      return "接入失败";
+    case "NOT_CONFIGURED":
+      return "未接入";
+    default:
+      return status;
+  }
+}
+
 function renderRiderSection({
   race,
   raceSlug,
@@ -88,27 +138,127 @@ function renderRiderSection({
   section: keyof typeof riderSectionTitle;
 }) {
   const riderRegistrationHref = `/console/races/${raceSlug}/rider/registration`;
+  const riderCASetupHref = `/console/races/${raceSlug}/rider/ca-setup`;
   const riderSubmissionHref = `/console/races/${raceSlug}/rider/submission`;
+  const registrationStatus = String(registration?.status ?? "").toUpperCase();
+  const currentWork = registration?.work;
+  const workDefaults = {
+    demoUrl: currentWork?.demoUrl ?? "",
+    repoUrl: currentWork?.repoUrl ?? registration?.raceProject?.githubRepoUrl ?? "",
+    techNotes: currentWork?.techNotes ?? "",
+    videoUrl: currentWork?.videoUrl ?? "",
+    workSummary: currentWork?.summary ?? "",
+    workTitle: currentWork?.title ?? "",
+  };
+  const submissionReadiness = registration
+    ? buildReviewReadinessSummary({
+        aggregateIngestionStatus:
+          registration.raceProject?.aggregateIngestionStatus ?? "NOT_CONFIGURED",
+        evidences: registration.evidences ?? [],
+        hasWork: Boolean(currentWork),
+        phase: race.phase,
+        workSummary: currentWork?.summary,
+        workTitle: currentWork?.title,
+      })
+    : null;
+  const riderSubmissionRecords =
+    registration?.id
+      ? race.submissions.filter(
+          (submission) =>
+            submission.registrationId === registration.id ||
+            submission.teamId === riderTeam?.id,
+        )
+      : riderTeam
+        ? race.submissions.filter((submission) => submission.teamId === riderTeam.id)
+        : [];
 
   switch (section) {
     case "registration":
       return (
-        <Panel title="报名状态" eyebrow="Rider View">
+        <Panel title="报名状态" eyebrow={riderEyebrow}>
           {registration ? (
-            <div className="stack">
-              <strong>状态：{registration.status}</strong>
-              <span>报名用户：{registration.user.username}</span>
-              <span>
-                RaceProject：{registration.raceProject ? registration.raceProject.aggregateIngestionStatus : "未生成"}
-              </span>
-              {riderTeam ? <span>当前提交容器：{riderTeam.name}</span> : null}
-            </div>
+            registrationStatus === "APPROVED" ? (
+              <div className="stack">
+                <strong>状态：{getRegistrationStatusLabel(registration.status)}</strong>
+                <span>报名用户：{registration.user.username}</span>
+                <span>
+                  RaceProject：
+                  {registration.raceProject
+                    ? getAggregateIngestionStatusLabel(
+                        registration.raceProject.aggregateIngestionStatus,
+                      )
+                    : "未生成"}
+                </span>
+                {riderTeam ? <span>当前提交容器：{riderTeam.name}</span> : null}
+                {race.phase === "registration" ? (
+                  <form action={withdrawRegistrationAction}>
+                    <input
+                      name="registrationId"
+                      type="hidden"
+                      value={registration.id}
+                    />
+                    <input
+                      name="feedbackReturnTo"
+                      type="hidden"
+                      value={riderRegistrationHref}
+                    />
+                    <input name="raceSlug" type="hidden" value={raceSlug} />
+                    <button type="submit">撤回报名</button>
+                  </form>
+                ) : null}
+              </div>
+            ) : registrationStatus === "SUBMITTED" ? (
+              <div className="stack">
+                <strong>状态：{getRegistrationStatusLabel(registration.status)}</strong>
+                <span>报名用户：{registration.user.username}</span>
+                <p className="muted">
+                  报名已提交，正在等待主办方审核。审核通过后，系统才会生成 RaceProject 和作品提交上下文。
+                </p>
+                {race.phase === "registration" ? (
+                  <form action={withdrawRegistrationAction}>
+                    <input
+                      name="registrationId"
+                      type="hidden"
+                      value={registration.id}
+                    />
+                    <input
+                      name="feedbackReturnTo"
+                      type="hidden"
+                      value={riderRegistrationHref}
+                    />
+                    <input name="raceSlug" type="hidden" value={raceSlug} />
+                    <button type="submit">撤回报名</button>
+                  </form>
+                ) : null}
+              </div>
+            ) : registrationStatus === "WITHDRAWN" ? (
+              <div className="stack">
+                <strong>状态：{getRegistrationStatusLabel(registration.status)}</strong>
+                <span>报名用户：{registration.user.username}</span>
+                <p className="muted">
+                  这条报名已经撤回，当前不会进入正式参赛上下文。
+                </p>
+              </div>
+            ) : (
+              <div className="stack">
+                <strong>状态：{getRegistrationStatusLabel(registration.status)}</strong>
+                <span>报名用户：{registration.user.username}</span>
+                <p className="muted">
+                  当前报名还没有进入正式参赛上下文；如需继续参赛，请联系主办方。
+                </p>
+              </div>
+            )
           ) : (
             <div className="stack">
               <p className="muted">
                 你已经进入骑手工作台；下一步是对当前赛事提交正式报名，报名成功后才会生成后续参赛上下文。
               </p>
               <form action={registerForRaceAction} className="form-grid">
+                <input
+                  name="feedbackReturnTo"
+                  type="hidden"
+                  value={riderRegistrationHref}
+                />
                 <input name="raceId" type="hidden" value={race.id} />
                 <input name="returnTo" type="hidden" value={riderRegistrationHref} />
                 <button type="submit">报名参赛</button>
@@ -121,17 +271,26 @@ function renderRiderSection({
     case "ca-setup":
       return (
         <>
-          <Panel title="CA 接入" eyebrow="Rider View">
-            {!registration?.raceProject ? (
+          <Panel title="CA 接入" eyebrow={riderEyebrow}>
+            {!registration ? (
+              <p className="muted">请先完成报名并等待审核通过。</p>
+            ) : registrationStatus !== "APPROVED" ? (
+              <p className="muted">当前报名尚未通过审核，暂不能配置 CA 接入。</p>
+            ) : !registration.raceProject ? (
               <p className="muted">当前还没有生成 RaceProject。</p>
             ) : (
               <div className="stack">
                 <p className="muted">
-                  聚合接入状态：{registration.raceProject.aggregateIngestionStatus}
+                  聚合接入状态：
+                  {getAggregateIngestionStatusLabel(
+                    registration.raceProject.aggregateIngestionStatus,
+                  )}
                 </p>
                 <form action={registerCAConnectionAction} className="form-grid">
                   <input name="raceId" type="hidden" value={race.id} />
+                  <input name="raceSlug" type="hidden" value={raceSlug} />
                   <input name="raceProjectId" type="hidden" value={registration.raceProject.id} />
+                  <input name="returnTo" type="hidden" value={riderCASetupHref} />
                   <label>
                     CA 类型
                     <select defaultValue="CODEX" name="caType">
@@ -141,19 +300,19 @@ function renderRiderSection({
                     </select>
                   </label>
                   <label>
-                    Connector ID
+                    连接器 ID
                     <input name="connectorId" placeholder="codex_connector_001" required />
                   </label>
                   <label>
-                    Connector Base URL
+                    连接器 Base URL
                     <input name="connectorBaseUrl" placeholder="https://connector.example" />
                   </label>
                   <label>
-                    Connector Version
+                    连接器版本
                     <input defaultValue="0.1.0" name="connectorVersion" />
                   </label>
                   <label>
-                    CA Project ID
+                    CA 项目 ID
                     <input name="caProjectId" placeholder="codex_project_demo" required />
                   </label>
                   <button type="submit">登记 CA 连接</button>
@@ -162,28 +321,56 @@ function renderRiderSection({
             )}
           </Panel>
 
-          <Panel title="CA 连接" eyebrow="Rider View">
+          <Panel title="CA 连接" eyebrow={riderEyebrow}>
             <div className="stack">
               {registration?.raceProject?.caConnections.length ? (
                 registration.raceProject.caConnections.map((connection) => (
                   <div className="public-link-card" key={connection.id}>
                     <strong>{connection.caType}</strong>
-                    <span>状态：{connection.ingestionStatus}</span>
-                    <span>Connector：{connection.connectorId}</span>
-                    <span>Connector Secret：{connection.connectorSecret}</span>
-                    <span>Project：{connection.caProjectId}</span>
+                    <span>状态：{getAggregateIngestionStatusLabel(connection.ingestionStatus)}</span>
+                    <span>连接器：{connection.connectorId}</span>
+                    <span>连接器密钥：{connection.connectorSecret}</span>
+                    <span>项目 ID：{connection.caProjectId}</span>
+                    <span>密钥版本：{connection.secretVersion}</span>
+                    <span>
+                      最近轮换时间：{formatConnectionTimestamp(connection.secretRotatedAt)}
+                    </span>
+                    <span>是否禁用：{connection.disabledAt ? "是" : "否"}</span>
+                    {connection.disabledAt ? (
+                      <span>
+                        禁用时间：{formatConnectionTimestamp(connection.disabledAt)}
+                      </span>
+                    ) : null}
+                    <span>禁用原因：{connection.disabledReason || "正常"}</span>
                     <span>
                       握手：{connection.handshakeCompletedAt ? "已完成" : "待完成"}
                     </span>
-                    <span>Sessions：{connection.sessions.length}</span>
+                    <span>
+                      握手状态：{getHandshakeStateLabel(connection.handshakeCompletedAt)}
+                    </span>
+                    <span>会话数：{connection.sessions.length}</span>
                     <p className="muted">
-                      先让 connector 调用 handshake API 完成登记确认；只有出现 session 后，ARY 才能抓取对应 snapshot。
+                      先让连接器调用 handshake API 完成登记确认；只有出现会话后，ARY 才能抓取对应快照。
                     </p>
+                    {!connection.handshakeCompletedAt ? (
+                      <p className="muted">
+                        密钥轮换或重新启用连接器后，需要重新完成握手，才能继续抓取快照。
+                      </p>
+                    ) : null}
+                    <form action={rotateCAConnectionSecretAction} className="button-row-inline">
+                      <input name="caConnectionId" type="hidden" value={connection.id} />
+                      <input name="raceId" type="hidden" value={race.id} />
+                      <input name="raceSlug" type="hidden" value={raceSlug} />
+                      <input name="returnTo" type="hidden" value={riderCASetupHref} />
+                      <button type="submit">轮换连接器密钥</button>
+                    </form>
                     <form action={fetchCASnapshotAction} className="form-grid">
                       <input name="caConnectionId" type="hidden" value={connection.id} />
                       <input name="raceId" type="hidden" value={race.id} />
+                      <input name="raceSlug" type="hidden" value={raceSlug} />
+                      <input name="returnTo" type="hidden" value={riderCASetupHref} />
                       <label>
-                        CA Session ID
+                        CA 会话 ID
                         <input name="caSessionId" placeholder="codex_session_demo_001" required />
                       </label>
                       <button type="submit">抓取快照</button>
@@ -196,7 +383,7 @@ function renderRiderSection({
             </div>
           </Panel>
 
-          <Panel title="会话摘要证据" eyebrow="Rider View">
+          <Panel title="会话摘要证据" eyebrow={riderEyebrow}>
             <div className="stack">
               {registration?.evidences.length ? (
                 registration.evidences.map((evidence) => (
@@ -227,11 +414,11 @@ function renderRiderSection({
           : null;
 
       return (
-        <Panel title="骑行状态" eyebrow="Rider View">
+        <Panel title="骑行状态" eyebrow={riderEyebrow}>
           <div className="detail-grid">
             <div>
               <dt>阶段</dt>
-              <dd>{race.phase}</dd>
+              <dd>{getRacePhaseLabel(race.phase)}</dd>
             </div>
             <div>
               <dt>榜单名次</dt>
@@ -265,54 +452,97 @@ function renderRiderSection({
     case "submission":
       return (
         <>
-          {!riderTeam ? (
-            <Panel title="提交已锁定" eyebrow="Rider View">
-              <p className="muted">需要先完成报名并生成参赛上下文，作品提交入口才会解锁。</p>
+          <Panel title="作品提交" eyebrow={riderEyebrow}>
+            <div className="stack">
+              <span>当前阶段：{getRacePhaseLabel(race.phase)}</span>
+              <p className="muted">
+                赛事上下文始终保留在当前页面，骑手操作不再依赖公开首页入口。
+              </p>
+            </div>
+          </Panel>
+
+          {submissionReadiness ? (
+            <Panel title="提交前提示" eyebrow={riderEyebrow}>
+              <ReviewReadinessCard summary={submissionReadiness} />
+            </Panel>
+          ) : null}
+
+          <Panel title="当前作品资产" eyebrow={riderEyebrow}>
+            {currentWork ? (
+              <div className="stack">
+                <strong>{currentWork.title}</strong>
+                <span>状态：{currentWork.status}</span>
+                <span>可见性：{currentWork.visibility}</span>
+                <span>{currentWork.summary}</span>
+                {String(currentWork.status).toUpperCase() === "DRAFT" ? (
+                  <form action={hideWorkAction}>
+                    <input name="raceSlug" type="hidden" value={raceSlug} />
+                    <input name="workId" type="hidden" value={currentWork.id} />
+                    <button type="submit">隐藏当前草稿</button>
+                  </form>
+                ) : null}
+                <p className="muted">
+                  作品提交会更新这条正式 Work 资产；进入公开站点仍需主办方执行发布。
+                </p>
+              </div>
+            ) : (
+              <p className="muted">
+                当前还没有正式作品资产；可以先保存作品草稿，再提交正式代码材料。
+              </p>
+            )}
+          </Panel>
+
+          {!registration ? (
+            <Panel title="提交已锁定" eyebrow={riderEyebrow}>
+              <p className="muted">需要先完成报名并等待审核通过，作品提交入口才会解锁。</p>
+            </Panel>
+          ) : registrationStatus !== "APPROVED" ? (
+            <Panel title="提交已锁定" eyebrow={riderEyebrow}>
+              <p className="muted">当前报名尚未通过审核，作品提交入口暂未开放。</p>
             </Panel>
           ) : race.phase === "active" ||
             race.phase === "frozen" ||
             race.phase === "running" ||
             race.phase === "submitting" ? (
-            <Panel title="赛中代码测试" eyebrow="Rider View">
+            <Panel title="作品提交" eyebrow={riderEyebrow}>
               <SubmissionFormClient
-                action={submitEntryForTestAction}
+                action={submitEntryAction}
                 raceId={race.id}
+                raceSlug={raceSlug}
                 returnTo={riderSubmissionHref}
-                submitLabel="提交代码并发起赛中测试"
+                saveDraftAction={saveWorkDraftAction}
+                submitLabel="提交代码"
+                workDefaults={workDefaults}
               />
             </Panel>
           ) : race.phase === "finished" || race.phase === "completed" ? (
-            <Panel title="作品提交" eyebrow="Rider View">
+            <Panel title="作品提交" eyebrow={riderEyebrow}>
               <FinalSubmissionFormClient
                 action={submitFinalEntryAction}
                 raceId={race.id}
+                raceSlug={raceSlug}
                 returnTo={riderSubmissionHref}
+                saveDraftAction={saveWorkDraftAction}
+                workDefaults={workDefaults}
               />
             </Panel>
           ) : (
-            <Panel title="提交窗口" eyebrow="Rider View">
-              <p className="muted">赛中代码测试会在比赛开始后开放；作品提交会在比赛结束后开放，届时可同时提交代码与 Riding Record。</p>
+            <Panel title="提交窗口" eyebrow={riderEyebrow}>
+              <p className="muted">作品提交会在比赛开始后开放；比赛结束后可继续补交代码与 Riding Record。</p>
             </Panel>
           )}
 
-          <Panel title="最近提交" eyebrow="Rider View">
+          <Panel title="最近提交" eyebrow={riderEyebrow}>
             <div className="stack">
-              {!riderTeam ? (
+              {riderSubmissionRecords.length === 0 ? (
                 <p className="muted">当前还没有可用的作品提交记录。</p>
               ) : (
-                race.submissions
-                  .filter((submission) =>
-                    registration?.id
-                      ? submission.registrationId === registration.id ||
-                        submission.teamId === riderTeam.id
-                      : submission.teamId === riderTeam.id,
-                  )
-                  .map((submission) => (
-                    <div className="public-link-card" key={submission.id}>
-                      <strong>{submission.codeLabel}</strong>
-                      <span>状态：{submission.status}</span>
-                    </div>
-                  ))
+                riderSubmissionRecords.map((submission) => (
+                  <div className="public-link-card" key={submission.id}>
+                    <strong>{submission.codeLabel}</strong>
+                    <span>状态：{submission.status}</span>
+                  </div>
+                ))
               )}
             </div>
           </Panel>
@@ -331,9 +561,15 @@ function renderRiderSection({
 
       return (
         <section className="grid">
-          <Panel title="发给主办方的反馈" eyebrow="Rider View">
+          <Panel title="发给主办方的反馈" eyebrow={riderEyebrow}>
             <form action={sendFeedbackAction} className="form-grid">
               <input name="raceId" type="hidden" value={race.id} />
+              <input name="raceSlug" type="hidden" value={raceSlug} />
+              <input
+                name="returnTo"
+                type="hidden"
+                value={`/console/races/${raceSlug}/rider/review`}
+              />
               <label className="full">
                 反馈内容
                 <textarea
@@ -346,7 +582,7 @@ function renderRiderSection({
               <button type="submit">发送反馈</button>
             </form>
           </Panel>
-          <Panel title="评审结果" eyebrow="Rider View">
+          <Panel title="评审结果" eyebrow={riderEyebrow}>
             <div className="stack">
               {reviewSummary ? (
                 <blockquote className="comment-card">
@@ -372,7 +608,7 @@ function renderRiderSection({
 
     case "report":
       return (
-        <Panel title="骑手报告" eyebrow="Rider View">
+        <Panel title="骑手报告" eyebrow={riderEyebrow}>
           <div className="stack">
             {riderReports.length ? (
               riderReports.map((report, index) => (

@@ -46,7 +46,6 @@ test("public register page shows direct register action for rider users", () => 
       registration={null}
       sessionUser={{
         id: "user_1",
-        role: "RIDER",
         roles: ["RIDER"],
         username: "alice",
       }}
@@ -55,6 +54,29 @@ test("public register page shows direct register action for rider users", () => 
 
   assert.match(html, /提交正式报名/);
   assert.match(html, /报名参赛/);
+});
+
+test("public register page asks logged-in riders to complete their profile first when account setup is unfinished", () => {
+  const html = renderToStaticMarkup(
+    <RaceRegisterPageView
+      race={buildRace()}
+      raceSlug="race_active--sorting-challenge"
+      registration={null}
+      sessionUser={{
+        id: "user_1",
+        profileCompleted: false,
+        roles: ["RIDER"],
+        username: "alice",
+      }}
+    />,
+  );
+
+  assert.match(html, /先补全资料/);
+  assert.match(
+    html,
+    /href="\/profile\?returnTo=%2Fraces%2Frace_active--sorting-challenge%2Fregister"/,
+  );
+  assert.doesNotMatch(html, /报名参赛/);
 });
 
 test("public register page shows existing registration state", () => {
@@ -69,7 +91,6 @@ test("public register page shows existing registration state", () => {
       } as never}
       sessionUser={{
         id: "user_1",
-        role: "RIDER",
         roles: ["RIDER"],
         username: "alice",
       }}
@@ -78,6 +99,56 @@ test("public register page shows existing registration state", () => {
 
   assert.match(html, /你已完成报名/);
   assert.match(html, /进入骑手工作台/);
+});
+
+test("public register page shows submitted registrations as waiting for organizer review", () => {
+  const html = renderToStaticMarkup(
+    <RaceRegisterPageView
+      race={buildRace()}
+      raceSlug="race_active--sorting-challenge"
+      registration={
+        {
+          status: "SUBMITTED",
+          user: { username: "alice" },
+          raceProject: null,
+        } as never
+      }
+      sessionUser={{
+        id: "user_1",
+        roles: ["RIDER"],
+        username: "alice",
+      }}
+    />,
+  );
+
+  assert.match(html, /报名已提交/);
+  assert.match(html, /等待主办方审核/);
+  assert.match(html, /查看报名状态/);
+  assert.match(html, /撤回报名/);
+});
+
+test("public register page shows withdrawn registrations as exited participation context", () => {
+  const html = renderToStaticMarkup(
+    <RaceRegisterPageView
+      race={buildRace()}
+      raceSlug="race_active--sorting-challenge"
+      registration={
+        {
+          status: "WITHDRAWN",
+          user: { username: "alice" },
+          raceProject: null,
+        } as never
+      }
+      sessionUser={{
+        id: "user_1",
+        roles: ["RIDER"],
+        username: "alice",
+      }}
+    />,
+  );
+
+  assert.match(html, /报名已撤回/);
+  assert.match(html, /不会进入正式参赛上下文/);
 });
 
 test("public register page still lets previously registered riders enter during active phase", () => {
@@ -92,7 +163,6 @@ test("public register page still lets previously registered riders enter during 
       } as never}
       sessionUser={{
         id: "user_1",
-        role: "RIDER",
         roles: ["RIDER"],
         username: "alice",
       }}
@@ -112,7 +182,6 @@ test("public register page blocks new registration during active phase", () => {
       registration={null}
       sessionUser={{
         id: "user_1",
-        role: "RIDER",
         roles: ["RIDER"],
         username: "alice",
       }}
@@ -131,7 +200,6 @@ test("public register page blocks new registration during preparation phase", ()
       registration={null}
       sessionUser={{
         id: "user_1",
-        role: "RIDER",
         roles: ["RIDER"],
         username: "alice",
       }}
@@ -150,7 +218,6 @@ test("public register page carries returnTo into the registration action", () =>
       registration={null}
       sessionUser={{
         id: "user_1",
-        role: "RIDER",
         roles: ["RIDER"],
         username: "alice",
       }}
@@ -161,4 +228,31 @@ test("public register page carries returnTo into the registration action", () =>
     html,
     /type="hidden" name="returnTo" value="\/console\/races\/race_active--sorting-challenge\/rider\/registration"/,
   );
+  assert.match(
+    html,
+    /type="hidden" name="feedbackReturnTo" value="\/races\/race_active--sorting-challenge\/register"/,
+  );
+});
+
+test("public register page can render a friendly inline action error notice", () => {
+  const html = renderToStaticMarkup(
+    <RaceRegisterPageView
+      feedback={{
+        message: "当前赛事已不在报名阶段，暂不能提交报名。",
+        title: "报名未完成",
+      }}
+      race={buildRace()}
+      raceSlug="race_active--sorting-challenge"
+      registration={null}
+      sessionUser={{
+        id: "user_1",
+        roles: ["RIDER"],
+        username: "alice",
+      }}
+    />,
+  );
+
+  assert.match(html, /role="alert"/);
+  assert.match(html, /报名未完成/);
+  assert.match(html, /当前赛事已不在报名阶段，暂不能提交报名。/);
 });

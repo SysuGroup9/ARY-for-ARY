@@ -1,3 +1,6 @@
+import { buildPayloadDigest } from "@/lib/ca-integrity-helpers";
+import { buildWorkSourceRef } from "@/lib/material-integrity-helpers";
+
 export function buildWorkSeedRecord(input: {
   archiveCode: string;
   demoUrl: string;
@@ -8,10 +11,26 @@ export function buildWorkSeedRecord(input: {
   teamName: string;
   videoUrl: string;
 }) {
+  const sourceRef = buildWorkSourceRef({
+    demoUrl: input.demoUrl,
+    repoUrl: input.repoUrl,
+    techNotes: input.archiveCode,
+    videoUrl: input.videoUrl,
+  });
+
   return {
+    contentHash: buildPayloadDigest({
+      demoUrl: input.demoUrl,
+      repoUrl: input.repoUrl,
+      summary: input.excerpt,
+      techNotes: input.archiveCode,
+      title: input.teamName,
+      videoUrl: input.videoUrl,
+    }),
     demoUrl: input.demoUrl,
     registrationId: input.registrationId,
     repoUrl: input.repoUrl,
+    sourceRefJson: JSON.stringify(sourceRef),
     status: "SUBMITTED" as const,
     summary: input.excerpt,
     techNotes: input.archiveCode,
@@ -26,6 +45,7 @@ export function buildAwardSeedRecords(input: {
   overallRegistrationId: string;
   raceId: string;
   ridingRegistrationId: string;
+  sourceByRegistrationId?: Record<string, { sourceDigest: string; sourceRefJson: string }>;
   workIdByRegistrationId: Record<string, string>;
 }) {
   return [
@@ -36,6 +56,8 @@ export function buildAwardSeedRecords(input: {
       raceId: input.raceId,
       rank: 1,
       registrationId: input.overallRegistrationId,
+      sourceDigest: input.sourceByRegistrationId?.[input.overallRegistrationId]?.sourceDigest ?? "",
+      sourceRefJson: input.sourceByRegistrationId?.[input.overallRegistrationId]?.sourceRefJson ?? "{}",
       workId: input.workIdByRegistrationId[input.overallRegistrationId] ?? null,
     },
     {
@@ -45,6 +67,8 @@ export function buildAwardSeedRecords(input: {
       raceId: input.raceId,
       rank: 1,
       registrationId: input.bestWorkRegistrationId,
+      sourceDigest: input.sourceByRegistrationId?.[input.bestWorkRegistrationId]?.sourceDigest ?? "",
+      sourceRefJson: input.sourceByRegistrationId?.[input.bestWorkRegistrationId]?.sourceRefJson ?? "{}",
       workId: input.workIdByRegistrationId[input.bestWorkRegistrationId] ?? null,
     },
     {
@@ -54,6 +78,8 @@ export function buildAwardSeedRecords(input: {
       raceId: input.raceId,
       rank: 1,
       registrationId: input.ridingRegistrationId,
+      sourceDigest: input.sourceByRegistrationId?.[input.ridingRegistrationId]?.sourceDigest ?? "",
+      sourceRefJson: input.sourceByRegistrationId?.[input.ridingRegistrationId]?.sourceRefJson ?? "{}",
       workId: input.workIdByRegistrationId[input.ridingRegistrationId] ?? null,
     },
   ];
@@ -62,6 +88,8 @@ export function buildAwardSeedRecords(input: {
 export function buildReviewSummaryReportSeed(input: {
   body: string;
   raceId: string;
+  sourceDigest?: string;
+  sourceRefJson?: string;
   summary: string;
   title: string;
 }) {
@@ -69,6 +97,8 @@ export function buildReviewSummaryReportSeed(input: {
     body: input.body,
     publishedAt: new Date("2026-06-19T00:00:00Z"),
     raceId: input.raceId,
+    sourceDigest: input.sourceDigest ?? "",
+    sourceRefJson: input.sourceRefJson ?? "{}",
     status: "PUBLISHED" as const,
     subjectRegistrationId: null,
     summary: input.summary,
@@ -80,6 +110,8 @@ export function buildReviewSummaryReportSeed(input: {
 export function buildRiderReportSeed(input: {
   body: string;
   raceId: string;
+  sourceDigest?: string;
+  sourceRefJson?: string;
   subjectRegistrationId: string;
   summary: string;
   title: string;
@@ -88,6 +120,8 @@ export function buildRiderReportSeed(input: {
     body: input.body,
     publishedAt: new Date("2026-06-19T00:00:00Z"),
     raceId: input.raceId,
+    sourceDigest: input.sourceDigest ?? "",
+    sourceRefJson: input.sourceRefJson ?? "{}",
     status: "PUBLISHED" as const,
     subjectRegistrationId: input.subjectRegistrationId,
     summary: input.summary,

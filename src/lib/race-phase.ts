@@ -12,13 +12,17 @@ export function getRacePhase(
   race: Pick<Race, "signupStart" | "signupEnd" | "raceStart" | "raceEnd" | "enableFreeze" | "freezeMinutesBeforeEnd"> & { status?: string | null },
   now: Date = new Date(),
 ): RacePhase {
-  if (race.status) return race.status as RacePhase;
+  if (race.status === "draft") return "draft";
+  if (race.status === "archived") return "archived";
+  if (race.status === "submitting") return "submitting";
+  if (race.status === "judging") return "judging";
+  if (race.status === "completed") return "completed";
 
-  // legacy time-based fallback (5-state) — mapped to closest 8-state
+  // published / registration / running and legacy null state continue to auto-advance by time windows
   if (now >= race.raceEnd) return "completed";
   if (now >= race.raceStart) return "running";
-  if (now > race.signupEnd || now < race.signupStart) return "published";
-  return "registration";
+  if (now >= race.signupStart && now <= race.signupEnd) return "registration";
+  return "published";
 }
 
 const LABELS: Record<RacePhase, string> = {
@@ -29,8 +33,8 @@ const LABELS: Record<RacePhase, string> = {
   preparation: "报名结束", active: "比赛中", frozen: "封榜中", finished: "比赛结束",
 };
 
-export function getRacePhaseLabel(phase: RacePhase): string {
-  return LABELS[phase] ?? phase;
+export function getRacePhaseLabel(phase: RacePhase | string): string {
+  return LABELS[phase as RacePhase] ?? phase;
 }
 
 export function shouldHidePublicLeaderboard(phase: RacePhase): boolean {

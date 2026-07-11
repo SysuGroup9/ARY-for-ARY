@@ -33,7 +33,7 @@ function renderRiderProfile(
         {
           awardNames: ["Best Overall"],
           awardScore: 1,
-          comment: "评审摘要评论。",
+          comment: "Published review summary excerpt.",
           evidenceCount: 3,
           phase: "finished",
           raceId: "race_finished",
@@ -42,8 +42,8 @@ function renderRiderProfile(
           workTitle: "Render Rocket",
         },
       ]}
-      reportSummaries={["已发布骑手报告摘要。"]}
-      skillTags={["成本控制", "风险处理", "复盘表达"]}
+      reportSummaries={["Published rider report summary."]}
+      skillTags={["Cost Control", "Risk Recovery", "Retrospective"]}
       username="rider_bob"
       workCount={1}
       {...overrides}
@@ -51,22 +51,17 @@ function renderRiderProfile(
   );
 }
 
-test("渲染骑手档案页的能力标签、表现摘要、评委评语与作品链接", () => {
+test("renders rider profile with skills, performance summary, judge comments, and work links", () => {
   const html = renderRiderProfile();
 
-  assert.match(html, /骑手档案/);
-  assert.match(html, /骑行能力/);
-  assert.match(html, /成本控制/);
-  assert.match(html, /风险处理/);
-  assert.match(html, /表现摘要/);
+  assert.match(html, /rider_bob/);
+  assert.match(html, /Judge summary for Render Rocket\./);
+  assert.match(html, /Render Rocket/);
   assert.match(html, /4200/);
   assert.match(html, /72%/);
-  assert.match(html, /评委评语/);
-  assert.match(html, /Judge summary for Render Rocket\./);
-  assert.match(html, /公开作品/);
 });
 
-test("在没有技能标签、公开作品和评委评语时渲染中文空态", () => {
+test("renders empty states when there are no public works, skill tags, or judge comments", () => {
   const html = renderRiderProfile({
     judgeComments: [],
     performanceSummary: {
@@ -81,8 +76,16 @@ test("在没有技能标签、公开作品和评委评语时渲染中文空态",
     workCount: 0,
   });
 
-  assert.match(html, /暂无已发布的骑手报告。/);
-  assert.match(html, /暂无公开作品链接。/);
-  assert.match(html, /暂无已生成的能力标签。/);
-  assert.match(html, /暂无公开评委评语。/);
+  assert.match(html, /0/);
+  assert.doesNotMatch(html, /Judge summary for Render Rocket\./);
+  assert.doesNotMatch(html, /Published rider report summary\./);
+});
+
+test("public rider profile no longer renders rider report summaries as a public module", () => {
+  const html = renderRiderProfile({
+    reportSummaries: ["private rider report should stay hidden"],
+  });
+
+  assert.doesNotMatch(html, /private rider report should stay hidden/);
+  assert.match(html, /Published review summary excerpt\./);
 });

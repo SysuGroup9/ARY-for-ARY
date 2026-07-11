@@ -40,7 +40,7 @@ export function getCreateRacePageAccess(roles: readonly AppRole[] | null): {
 } {
   const normalized = roles ? normalizeRoles(roles) : [];
 
-  if (hasRole(normalized, "ORGANIZER")) {
+  if (hasRole(normalized, "ORGANIZER") || hasRole(normalized, "ADMIN")) {
     return {
       allowed: true,
       redirectTo: null,
@@ -87,6 +87,7 @@ export function getConsoleHomeSections(
   const sections = new Set<ConsoleSection>();
 
   if (
+    hasRole(normalized, "ADMIN") ||
     hasRole(normalized, "RIDER") ||
     hasRole(normalized, "JUDGE") ||
     hasRole(normalized, "ORGANIZER")
@@ -125,6 +126,33 @@ export function getConsoleDefaultHref(roles: readonly AppRole[] | null): string 
   return "/login";
 }
 
+export function getConsoleRacesRootAccess(
+  roles: readonly AppRole[] | null,
+): {
+  allowed: boolean;
+  redirectTo: "/console" | "/console/admin/users" | "/login" | null;
+} {
+  if (!roles) {
+    return {
+      allowed: false,
+      redirectTo: "/login",
+    };
+  }
+
+  const sections = getConsoleHomeSections(roles);
+  if (sections.includes("races")) {
+    return {
+      allowed: true,
+      redirectTo: null,
+    };
+  }
+
+  return {
+    allowed: false,
+    redirectTo: sections.length > 0 ? "/console/admin/users" : "/console",
+  };
+}
+
 export function getConsoleRaceViewAccess(input: {
   roles: readonly AppRole[] | null;
   view: ConsoleRaceView;
@@ -145,7 +173,9 @@ export function getConsoleRaceViewAccess(input: {
   const normalized = normalizeRoles(input.roles);
 
   if (input.view === "organizer") {
-    const allowed = hasRole(normalized, "ORGANIZER") && input.isRaceOrganizer;
+    const allowed =
+      hasRole(normalized, "ADMIN") ||
+      (hasRole(normalized, "ORGANIZER") && input.isRaceOrganizer);
     return {
       allowed,
       redirectTo: allowed ? null : "/console/races",

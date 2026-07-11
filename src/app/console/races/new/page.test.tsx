@@ -22,3 +22,15 @@ test("console new-race page uses Chinese user-facing route copy", () => {
     /Organizer-only race creation lives under Console instead of the public site\./,
   );
 });
+
+test("console new-race page reads action feedback and keeps the form on the same route", () => {
+  const source = readFileSync(
+    "src/app/console/races/new/page.tsx",
+    "utf8",
+  );
+
+  assert.match(source, /feedbackScope\?: string/);
+  assert.match(source, /getActionFeedbackContent/);
+  assert.match(source, /ErrorNotice/);
+  assert.match(source, /returnTo="\/console\/races\/new"/);
+});

@@ -2,13 +2,13 @@ import { Panel, aryStyles } from "@/app/_components/ary-shared";
 import { PublicHeader } from "@/app/_components/public/public-header";
 import { loadDatabaseUser } from "@/lib/auth";
 import { buildPublicSiteModel } from "@/lib/public-site";
-import { listRaces } from "@/lib/services/races";
+import { listPublicRaces } from "@/lib/services/public-routes";
 
 export const dynamic = "force-dynamic";
 
 export default async function RidersIndexPage() {
   const sessionUser = await loadDatabaseUser();
-  const races = await listRaces();
+  const races = await listPublicRaces();
   const model = buildPublicSiteModel(races);
 
   return (

@@ -1,4 +1,4 @@
-import type { RaceListItem } from "@/lib/services/races";
+import type { PublicRaceListItem } from "@/lib/services/public-routes";
 
 export function ReviewPageView({
   race,
@@ -7,7 +7,7 @@ export function ReviewPageView({
   judgingRecords,
   reviewReport,
 }: {
-  race: RaceListItem;
+  race: PublicRaceListItem;
   awards: Array<{
     awardName: string;
     decisionReason: string;

@@ -1,10 +1,13 @@
 import { submitJudgingRecordAction } from "@/app/actions";
-import { Panel } from "@/app/_components/ary-shared";
+import { ErrorNotice, Panel } from "@/app/_components/ary-shared";
+import { ReviewReadinessCard } from "@/app/_components/console/review-readiness-card";
 import { getJudgingRecordState } from "@/lib/judging-helpers";
+import { buildReviewReadinessSummary } from "@/lib/review-readiness-helpers";
 import type { RaceListItem } from "@/lib/services/races";
 
 export function JudgeConsolePageView({
   assignments,
+  feedback,
   race,
   raceSlug,
   section,
@@ -23,13 +26,24 @@ export function JudgeConsolePageView({
     work: {
       awards: Array<{ awardName: string; rank: number }>;
       registration: {
-        evidences: Array<{ summary: string; type: string }>;
+        evidences: Array<{
+          confidenceLevel?: null | string;
+          integrityStatus?: null | string;
+          reviewFlagJson?: null | string;
+          summary: string;
+          type: string;
+          visibility?: null | string;
+        }>;
+        raceProject?: null | {
+          aggregateIngestionStatus: string;
+        };
         user: { username: string };
       };
       summary: string;
       title: string;
     };
   }>;
+  feedback?: { message: string; title: string } | null;
   race: RaceListItem;
   raceSlug: string;
   section: "assigned" | "reviewing" | "submitted";
@@ -49,6 +63,7 @@ export function JudgeConsolePageView({
 
   return (
     <>
+      {feedback ? <ErrorNotice message={feedback.message} title={feedback.title} /> : null}
       <Panel title={judgeSectionTitle[section]} eyebrow="Judge View">
         <p className="muted">
           当前赛事：<a href={`/races/${raceSlug}`}>{race.title}</a>
@@ -68,6 +83,16 @@ export function JudgeConsolePageView({
             const currentRidingScore = parseScoreJson(
               assignment.judgingRecord?.scoreRidingJson,
             );
+            const reviewReadiness = buildReviewReadinessSummary({
+              aggregateIngestionStatus:
+                assignment.work.registration.raceProject?.aggregateIngestionStatus ??
+                "NOT_CONFIGURED",
+              evidences: assignment.work.registration.evidences,
+              hasWork: true,
+              phase: race.phase,
+              workSummary: assignment.work.summary,
+              workTitle: assignment.work.title,
+            });
 
             return (
               <Panel
@@ -96,6 +121,8 @@ export function JudgeConsolePageView({
                     </div>
                   </div>
 
+                  <ReviewReadinessCard summary={reviewReadiness} />
+
                   <div className="stack">
                     {assignment.work.registration.evidences.slice(0, 3).map((evidence, index) => (
                       <div className="public-link-card" key={`${assignment.id}-evidence-${index}`}>
@@ -107,6 +134,11 @@ export function JudgeConsolePageView({
 
                   <form action={submitJudgingRecordAction} className="form-grid">
                     <input name="assignmentId" type="hidden" value={assignment.id} />
+                    <input
+                      name="returnTo"
+                      type="hidden"
+                      value={`/console/races/${raceSlug}/judge/${section}`}
+                    />
                     <label>
                       结果评分
                       <input

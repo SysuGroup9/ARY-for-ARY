@@ -1,0 +1,5 @@
+ALTER TABLE "Race"
+ADD COLUMN "evaluationConfigVersion" INTEGER NOT NULL DEFAULT 1;
+
+ALTER TABLE "Race"
+ADD COLUMN "evaluationConfigHash" TEXT NOT NULL DEFAULT '';

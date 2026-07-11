@@ -25,6 +25,11 @@ export const loginSchema = z.object({
   password: z.string().min(6, "密码至少 6 个字符").max(128),
 });
 
+export const profileCompletionSchema = z.object({
+  profileName: z.string().trim().min(2, "姓名至少 2 个字符").max(80),
+  profileOrgLabel: z.string().trim().max(80).default(""),
+});
+
 const raceBaseSchema = z.object({
   title: z.string().trim().min(2, "赛事名称至少 2 个字符").max(120),
   summary: z.string().trim().min(8, "赛事简介至少 8 个字符").max(500),
@@ -100,12 +105,6 @@ export const createRaceSchema = raceBaseSchema.superRefine((data, ctx) => {
   }
 });
 
-export const registerTeamSchema = z.object({
-  raceId: z.string().min(1),
-  teamName: z.string().trim().min(2, "队伍名至少 2 个字符").max(80),
-  membersText: z.string().trim().min(1, "至少填写 1 名组员"),
-});
-
 const codeSubmissionBaseSchema = z.object({
   raceId: z.string().min(1),
   codeLabel: z
@@ -122,9 +121,32 @@ const codeSubmissionBaseSchema = z.object({
   agentType: agentEnum,
 });
 
-export const createSubmissionSchema = codeSubmissionBaseSchema;
+const optionalWorkUrlSchema = z
+  .string()
+  .trim()
+  .url("请输入合法链接")
+  .or(z.literal(""));
+
+const workMaterialShape = {
+  demoUrl: optionalWorkUrlSchema,
+  repoUrl: optionalWorkUrlSchema,
+  techNotes: z.string().trim().max(4000).default(""),
+  videoUrl: optionalWorkUrlSchema,
+  workSummary: z.string().trim().min(1, "作品简介不能为空").max(4000),
+  workTitle: z.string().trim().min(1, "作品名称不能为空").max(120),
+} satisfies Record<string, z.ZodTypeAny>;
+
+export const saveWorkDraftSchema = z.object({
+  raceId: z.string().min(1),
+  ...workMaterialShape,
+});
+
+export const createSubmissionSchema = codeSubmissionBaseSchema.extend(
+  workMaterialShape,
+);
 
 export const createFinalSubmissionSchema = codeSubmissionBaseSchema.extend({
+  ...workMaterialShape,
   recordLabel: z.string().trim().min(1, "Riding Record 文件名不能为空").max(120),
   ridingRecord: z.string().trim().min(1, "Riding Record 内容不能为空"),
 });

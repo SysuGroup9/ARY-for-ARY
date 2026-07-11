@@ -50,6 +50,17 @@ enum Visibility {
   INTERNAL
 }
 
+enum IntegrityStatus {
+  OK
+  REVIEW_NEEDED
+  INTEGRITY_GAP
+}
+
+enum ConfidenceLevel {
+  HIGH
+  MEDIUM
+}
+
 enum ProjectionType {
   RACE_PROGRESS
   REGISTRATION_STATUS
@@ -58,6 +69,21 @@ enum ProjectionType {
   CURRENT_LEADERBOARD
   EVENT_STREAM_READ_MODEL
   SCREEN_FEED
+}
+
+enum ScreenMode {
+  JUMBOTRON
+  BILLBOARD
+  LIVE
+  LEADERBOARD
+  WORKS
+  ANNOUNCEMENT
+}
+
+enum ScreenFallbackMode {
+  AUTO
+  STABLE_PROJECTION
+  STATIC_NOTICE
 }
 
 enum WorkStatus {
@@ -173,6 +199,10 @@ model Race {
   harnessWeightKeyword       Float    @default(0.4)
   organizerComment           String   @default("")
   status                     String?   // explicit 8-state; null=auto from time windows
+  challengeSourceRefJson     String   @default("{}")
+  challengeContentHash       String   @default("")
+  evaluationConfigVersion    Int      @default(1)
+  evaluationConfigHash       String   @default("")
   lastLeaderboardSyncAt      DateTime?
   lastShowcaseSyncAt         DateTime?
   createdAt                  DateTime @default(now())
@@ -182,6 +212,8 @@ model Race {
   registrations  Registration[]
   projections    Projection[]
   awards         Award[]
+  announcements  Announcement[]
+  screenDisplay  ScreenDisplay?
   reports        Report[]
   teams          Team[]
   submissions    Submission[]
@@ -250,6 +282,12 @@ model CAConnection {
   connectorSecret      String          @default(cuid())
   connectorBaseUrl     String          @default("")
   connectorVersion     String          @default("")
+  credentialFingerprint String         @default("")
+  publicKeyPem         String          @default("")
+  signatureVersion     String          @default("")
+  secretVersion        Int             @default(1)
+  secretRotatedAt      DateTime?
+  disabledReason       String          @default("")
   caProjectId          String
   ingestionStatus      IngestionStatus @default(CONNECTED)
   registeredAt         DateTime        @default(now())
@@ -267,19 +305,25 @@ model CAConnection {
 }
 
 model CAIngestionEvent {
-  id             String       @id @default(cuid())
-  caConnectionId String
-  messageId      String
-  idempotencyKey String       @unique
-  observedAt     DateTime
-  signalType     String
-  signalKind     String
-  payloadJson    String
-  createdAt      DateTime     @default(now())
+  id              String          @id @default(cuid())
+  caConnectionId  String
+  caSessionId     String          @default("")
+  messageId       String
+  idempotencyKey  String          @unique
+  observedAt      DateTime
+  receivedAt      DateTime        @default(now())
+  sequence        Int?
+  payloadDigest   String          @default("")
+  integrityStatus IntegrityStatus @default(OK)
+  signalType      String
+  signalKind      String
+  payloadJson     String
+  createdAt       DateTime        @default(now())
 
-  caConnection   CAConnection @relation(fields: [caConnectionId], references: [id], onDelete: Cascade)
+  caConnection    CAConnection    @relation(fields: [caConnectionId], references: [id], onDelete: Cascade)
 
   @@index([caConnectionId, observedAt])
+  @@unique([caConnectionId, caSessionId, sequence])
 }
 
 model Session {
@@ -310,17 +354,22 @@ model Session {
 }
 
 model Evidence {
-  id            String       @id @default(cuid())
-  registrationId String
-  type          EvidenceType
-  title         String
-  summary       String
-  sourceRefJson String
-  visibility    Visibility   @default(INTERNAL)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id                       String          @id @default(cuid())
+  registrationId           String
+  type                     EvidenceType
+  title                    String
+  summary                  String
+  sourceRefJson            String
+  sourceDigest             String          @default("")
+  generatedFromEventIdsJson String         @default("[]")
+  reviewFlagJson           String          @default("[]")
+  integrityStatus          IntegrityStatus @default(OK)
+  confidenceLevel          ConfidenceLevel @default(HIGH)
+  visibility               Visibility      @default(INTERNAL)
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
 
-  registration  Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  registration             Registration    @relation(fields: [registrationId], references: [id], onDelete: Cascade)
 
   @@index([registrationId, type])
 }
@@ -339,6 +388,31 @@ model Projection {
   @@unique([raceId, type])
 }
 
+model SecurityAudit {
+  id             String   @id @default(cuid())
+  raceId         String?
+  raceProjectId  String?
+  registrationId String?
+  userId         String?
+  caConnectionId String?
+  actorKind      String
+  action         String
+  targetType     String
+  targetId       String
+  result         String
+  reason         String   @default("")
+  payloadDigest  String   @default("")
+  detailsJson    String   @default("{}")
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  @@index([raceId, createdAt])
+  @@index([registrationId, createdAt])
+  @@index([caConnectionId, createdAt])
+  @@index([action, createdAt])
+}
+
 model Work {
   id             String       @id @default(cuid())
   registrationId String       @unique
@@ -348,6 +422,8 @@ model Work {
   repoUrl        String       @default("")
   videoUrl       String       @default("")
   techNotes      String       @default("")
+  sourceRefJson  String       @default("{}")
+  contentHash    String       @default("")
   status         WorkStatus   @default(SUBMITTED)
   visibility     Visibility   @default(PUBLIC)
   createdAt      DateTime     @default(now())
@@ -381,6 +457,8 @@ model JudgingRecord {
   scoreResultJson    String
   scoreRidingJson    String
   comments           String          @default("")
+  sourceRefJson      String          @default("{}")
+  sourceDigest       String          @default("")
   submittedAt        DateTime?
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
@@ -396,6 +474,8 @@ model Award {
   awardName        String
   rank             Int
   decisionReason   String      @default("")
+  sourceRefJson    String      @default("{}")
+  sourceDigest     String      @default("")
   publishedAt      DateTime?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
@@ -416,12 +496,44 @@ model Report {
   title                String
   summary              String
   body                 String
+  sourceRefJson        String       @default("{}")
+  sourceDigest         String       @default("")
   publishedAt          DateTime?
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
 
   race                 Race         @relation(fields: [raceId], references: [id], onDelete: Cascade)
   subjectRegistration  Registration? @relation("SubjectReports", fields: [subjectRegistrationId], references: [id], onDelete: SetNull)
+}
+
+model Announcement {
+  id          String     @id @default(cuid())
+  raceId      String
+  title       String
+  body        String
+  visibility  Visibility @default(PRIVATE)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  race        Race       @relation(fields: [raceId], references: [id], onDelete: Cascade)
+
+  @@index([raceId, publishedAt])
+  @@index([raceId, visibility, updatedAt])
+}
+
+model ScreenDisplay {
+  id            String             @id @default(cuid())
+  raceId        String             @unique
+  mode          ScreenMode         @default(JUMBOTRON)
+  theme         String             @default("default")
+  fallbackMode  ScreenFallbackMode @default(AUTO)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  race          Race               @relation(fields: [raceId], references: [id], onDelete: Cascade)
+
+  @@index([raceId, mode, fallbackMode])
 }
 
 model Team {
@@ -466,8 +578,11 @@ model Submission {
   status           SubmissionStatus @default(QUEUED)
   codeLabel        String
   codeContent      String?
+  codeContentHash  String     @default("")
   recordLabel      String?
   ridingRecord     String?
+  ridingRecordHash String     @default("")
+  submitterBindingJson String @default("{}")
   tokenUsed        Int
   agentType        AgentType
   passRate         Float?
@@ -503,8 +618,11 @@ model SubmissionArtifact {
   submissionId String    @unique
   codeLabel    String
   codeContent  String
+  codeContentHash String @default("")
   recordLabel  String?
   ridingRecord String?
+  ridingRecordHash String @default("")
+  submitterBindingJson String @default("{}")
   tokenUsed    Int
   agentType    AgentType
   createdAt    DateTime  @default(now())
@@ -554,8 +672,11 @@ model TeamArchive {
   submissionId     String
   codeLabel        String
   codeContent      String
+  codeContentHash  String   @default("")
   recordLabel      String?
   ridingRecord     String?
+  ridingRecordHash String   @default("")
+  submitterBindingJson String @default("{}")
   tokenUsed        Int
   agentType        AgentType
   taskScore        Float?
@@ -730,8 +851,10 @@ model CooperationRequest {
   // 文件
   taskPackageFileName String @default("")
   taskPackageFilePath String @default("")
+  taskPackageFileHash String @default("")
   proposalFileName    String @default("")
   proposalFilePath    String @default("")
+  proposalFileHash    String @default("")
   // 补充
   notes             String   @default("")
   status            String   @default("PENDING")

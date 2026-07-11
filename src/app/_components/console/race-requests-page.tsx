@@ -64,7 +64,7 @@ export function RaceRequestsPageView({
       </Panel>
 
       {requests.length === 0 && (
-        <Panel title="暂无申请">
+        <Panel title="暂无申请" eyebrow="空状态">
           <p className="muted">当前没有办赛申请记录。</p>
         </Panel>
       )}
@@ -211,6 +211,11 @@ function RequestCard({
         >
           <form action={approveCooperationRequestAction}>
             <input name="requestId" type="hidden" value={request.id} />
+            <input
+              name="returnTo"
+              type="hidden"
+              value="/console/admin/race-requests"
+            />
             <button
               type="submit"
               style={{
@@ -228,6 +233,11 @@ function RequestCard({
           </form>
           <form action={rejectCooperationRequestAction}>
             <input name="requestId" type="hidden" value={request.id} />
+            <input
+              name="returnTo"
+              type="hidden"
+              value="/console/admin/race-requests"
+            />
             <button
               type="submit"
               style={{

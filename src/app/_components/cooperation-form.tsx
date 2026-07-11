@@ -4,22 +4,13 @@ import { useState } from "react";
 import { cooperationRequestAction } from "@/app/actions";
 
 export function CooperationForm() {
-  const [submitted, setSubmitted] = useState(false);
   const [taskPkg, setTaskPkg] = useState("");
   const [propFile, setPropFile] = useState("");
 
-  if (submitted) {
-    return (
-      <div className="card" style={{ textAlign: "center", padding: 40 }}>
-        <h3 style={{ marginBottom: 12 }}>提交成功</h3>
-        <p className="muted">你的办赛申请已提交，将由管理员审核。审核通过后赛事将自动创建，我们也会在 1-2 个工作日内通过邮件联系你，沟通赛事详情。</p>
-      </div>
-    );
-  }
-
   return (
-    <form action={async (fd) => { await cooperationRequestAction(fd); setSubmitted(true); }}>
+    <form action={cooperationRequestAction}>
       <div className="form-grid" style={{ gap: 20 }}>
+        <input name="returnTo" type="hidden" value="/cooperation" />
 
         {/* ═══ 企业身份 ═══ */}
         <div className="card" style={{ gridColumn: "1 / -1", padding: 20, background: "var(--muted)", boxShadow: "var(--shadow-ring)" }}>
@@ -71,8 +62,22 @@ export function CooperationForm() {
         </label>
 
         {/* ═══ 文件上传 ═══ */}
-        <FileUpload label="题目包（选填，.zip）" id="task-pkg" accept=".zip" fileName={taskPkg} setter={setTaskPkg} />
-        <FileUpload label="方案文档（选填）" id="proposal-file" accept=".pdf,.doc,.docx,.md,.txt" fileName={propFile} setter={setPropFile} />
+        <FileUpload
+          accept=".zip"
+          fileName={taskPkg}
+          id="task-pkg"
+          label="题目包（选填，.zip）"
+          name="taskPackageFile"
+          setter={setTaskPkg}
+        />
+        <FileUpload
+          accept=".pdf,.doc,.docx,.md,.txt"
+          fileName={propFile}
+          id="proposal-file"
+          label="方案文档（选填）"
+          name="proposalFile"
+          setter={setPropFile}
+        />
 
         {/* ═══ 赛程 ═══ */}
         <label>
@@ -144,7 +149,21 @@ function Check({ label, name }: { label: string; name: string }) {
   );
 }
 
-function FileUpload({ label, id, accept, fileName, setter }: { label: string; id: string; accept: string; fileName: string; setter: (v: string) => void }) {
+function FileUpload({
+  label,
+  id,
+  name,
+  accept,
+  fileName,
+  setter,
+}: {
+  label: string;
+  id: string;
+  name: string;
+  accept: string;
+  fileName: string;
+  setter: (v: string) => void;
+}) {
   return (
     <label style={{ cursor: "pointer" }}>
       {label}
@@ -153,7 +172,7 @@ function FileUpload({ label, id, accept, fileName, setter }: { label: string; id
         padding: "20px 16px", textAlign: "center", background: "var(--muted)",
         transition: "border-color 0.2s", marginTop: 4,
       }}>
-        <input id={id} name={id} type="file" accept={accept} style={{ display: "none" }}
+        <input id={id} name={name} type="file" accept={accept} style={{ display: "none" }}
           onChange={(e) => setter(e.target.files?.[0]?.name ?? "")} />
         {fileName
           ? <span style={{ color: "var(--accent)", fontWeight: 500 }}>📄 {fileName}</span>

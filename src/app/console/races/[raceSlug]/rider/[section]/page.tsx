@@ -1,13 +1,13 @@
 import { ConsoleShell, buildConsoleSectionNavItems, riderConsoleSections } from "@/app/_components/console/console-shell";
 import { RiderConsolePageView } from "@/app/_components/console/rider-console-page";
-import { loadDatabaseUser } from "@/lib/auth";
+import { getActionFeedbackContent } from "@/lib/action-feedback";
+import { requireConsoleUser } from "@/lib/auth";
 import {
-  getConsoleRaceBySlug,
+  getConsoleRaceBySlugForAccess,
   getConsoleRiderTeamContext,
 } from "@/lib/services/console-routes";
 import { getRegistrationForUser } from "@/lib/services/registrations";
 import { buildRiderConsoleReportModel } from "@/lib/services/rider-console";
-import { getConsoleRaceViewAccess } from "@/lib/viewer-access";
 import { notFound, redirect } from "next/navigation";
 
 const riderSectionLabels: Record<string, string> = {
@@ -23,23 +23,33 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ raceSlug: string; section: string }>;
+  searchParams?: Promise<{
+    feedbackMessage?: string;
+    feedbackScope?: string;
+  }>;
 }
 
-export default async function RiderConsoleSectionPage({ params }: Props) {
-  const sessionUser = await loadDatabaseUser();
-
-  if (!sessionUser) {
-    redirect("/login");
-  }
-
+export default async function RiderConsoleSectionPage({
+  params,
+  searchParams,
+}: Props) {
   const { raceSlug, section } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const sessionUser = await requireConsoleUser(
+    `/console/races/${raceSlug}/rider/${section}`,
+  );
   if (!riderConsoleSections.includes(section as (typeof riderConsoleSections)[number])) {
     notFound();
   }
 
-  const context = await getConsoleRaceBySlug(raceSlug);
+  const context = await getConsoleRaceBySlugForAccess({
+    access: "rider",
+    raceSlug,
+    roles: sessionUser.roles,
+    userId: sessionUser.id,
+  });
   if (!context) {
-    notFound();
+    redirect("/console/races");
   }
 
   const riderTeam = await getConsoleRiderTeamContext({
@@ -51,17 +61,10 @@ export default async function RiderConsoleSectionPage({ params }: Props) {
     raceId: context.race.id,
     userId: sessionUser.id,
   });
-
-  const access = getConsoleRaceViewAccess({
-    roles: sessionUser.roles,
-    view: "rider",
-    isRaceOrganizer: false,
-    isRaceRider: !!registration || !!riderTeam,
+  const feedback = getActionFeedbackContent({
+    message: resolvedSearchParams?.feedbackMessage,
+    scope: resolvedSearchParams?.feedbackScope,
   });
-
-  if (!access.allowed) {
-    redirect(access.redirectTo ?? "/console/races");
-  }
 
   return (
     <ConsoleShell
@@ -81,6 +84,7 @@ export default async function RiderConsoleSectionPage({ params }: Props) {
       user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
       <RiderConsolePageView
+        feedback={feedback}
         race={context.race}
         registration={registration}
         raceSlug={raceSlug}

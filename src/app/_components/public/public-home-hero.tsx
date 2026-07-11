@@ -1,6 +1,7 @@
 import { formatDateTime } from "@/lib/format";
 import { getRacePrimaryCta } from "@/lib/public-site";
 import type { ReturnTypeOfBuildPublicSiteModel } from "@/lib/public-site-types";
+import { getRacePhaseLabel } from "@/lib/race-phase";
 
 export function PublicHomeHero({ model }: { model: ReturnTypeOfBuildPublicSiteModel }) {
   const featured = model.featuredRaces[0] ?? null;
@@ -24,10 +25,10 @@ export function PublicHomeHero({ model }: { model: ReturnTypeOfBuildPublicSiteMo
         padding: "24px 32px",
       }}>
         <div className="detail-grid">
-          <div><dt>当前状态</dt><dd>{featured.phase}</dd></div>
+          <div><dt>当前状态</dt><dd>{getRacePhaseLabel(featured.phase)}</dd></div>
           <div><dt>赛事时间</dt><dd style={{fontSize:"0.8125rem"}}>{formatDateTime(featured.raceStart)} - {formatDateTime(featured.raceEnd)}</dd></div>
-          <div><dt>活跃骑手</dt><dd>{featured.activeRiderCount} 人</dd></div>
-          <div><dt>已提交作品</dt><dd>{featured.workCount} 件</dd></div>
+          <div><dt>活跃骑手数</dt><dd>{featured.activeRiderCount} 人</dd></div>
+          <div><dt>已提交作品数</dt><dd>{featured.workCount} 件</dd></div>
           <div><dt>当前进度</dt><dd>{featured.currentProgressPercent}%</dd></div>
         </div>
       </div>

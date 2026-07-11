@@ -9,6 +9,7 @@ import type { RaceListItem } from "@/lib/services/races";
 
 function buildRace(overrides?: Partial<RaceListItem>): RaceListItem {
   return {
+    announcements: [],
     id: "race_active",
     phase: "active",
     raceEnd: new Date("2026-06-20T12:00:00Z"),
@@ -25,16 +26,45 @@ test("screen console uses Chinese titles, buttons, and notes", () => {
       mode="jumbotron"
       race={buildRace()}
       raceSlug="race_active--sorting-challenge"
-      jumbotronPreview={{ snapshot: null, trackProfile: null }}
+      jumbotronPreview={{ snapshot: null, source: "static", trackProfile: null }}
     />,
   );
 
   assert.match(html, /大屏控制台/);
   assert.match(html, /当前模式/);
   assert.match(html, /输出目标/);
+  assert.match(html, /全屏展示当前输出/);
+  assert.match(html, /当前输出预览/);
   assert.match(html, /打开大屏/);
-  assert.match(html, /打开校准器/);
+  assert.match(html, /打开独立校准器/);
   assert.match(html, /打开公开赛事页/);
+  assert.match(html, /切到公告模式/);
+  assert.match(html, /切到榜单模式/);
+});
+
+test("screen console announcement mode points to a dedicated announcement display instead of placeholder copy", () => {
+  const html = renderToStaticMarkup(
+    <ScreenConsolePageView
+      mode="announcement"
+      race={buildRace({
+        announcements: [
+          {
+            body: "Warm up at Gate B.",
+            id: "announcement_latest",
+            publishedAt: new Date("2026-07-11T12:00:00Z"),
+            title: "Latest Notice",
+            visibility: "PUBLIC",
+          },
+        ] as never,
+      })}
+      raceSlug="race_active--sorting-challenge"
+    />,
+  );
+
+  assert.match(html, /打开公告大屏/);
+  assert.match(html, /\/screen\/race_active--sorting-challenge\/announcement/);
+  assert.match(html, /Latest Notice/);
+  assert.doesNotMatch(html, /后续再收口到独立公告输出/);
 });
 
 test("judge console uses Chinese labels and actions", () => {

@@ -32,8 +32,12 @@ function serializeCheckpoints(
 
 export default function CreateRaceFormClient({
   action,
+  organizerOptions,
+  returnTo,
 }: {
   action: FormAction;
+  organizerOptions: Array<{ id: string; label: string }>;
+  returnTo?: string;
 }) {
   const [trackId, setTrackId] = useState("oval-track");
   const [taskPackageLabel, setTaskPackageLabel] = useState("sort-task-v1.zip");
@@ -84,6 +88,19 @@ export default function CreateRaceFormClient({
 
   return (
     <form action={action} className="form-grid">
+      {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
+      {organizerOptions.length > 0 ? (
+        <label className="full">
+          赛事主办方
+          <select defaultValue={organizerOptions[0]?.id ?? ""} name="organizerId" required>
+            {organizerOptions.map((organizer) => (
+              <option key={organizer.id} value={organizer.id}>
+                {organizer.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       <label>
         赛事名称
         <input defaultValue="排序算法挑战赛" name="title" required />
