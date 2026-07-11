@@ -1,10 +1,17 @@
 import { createRaceAction } from "@/app/actions";
-import { CreateRaceForm, Panel } from "@/app/_components/ary-shared";
+import {
+  CreateRaceForm,
+  ErrorNotice,
+  Panel,
+} from "@/app/_components/ary-shared";
 import {
   ConsoleShell,
   buildConsoleRootNavItems,
 } from "@/app/_components/console/console-shell";
-import { loadDatabaseUser } from "@/lib/auth";
+import { getActionFeedbackContent } from "@/lib/action-feedback";
+import { requireConsoleUser } from "@/lib/auth";
+import { listUsersByRole } from "@/lib/services/users";
+import { hasRole } from "@/lib/user-roles";
 import {
   getConsoleHomeSections,
   getCreateRacePageAccess,
@@ -13,15 +20,33 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default async function ConsoleNewRacePage() {
-  const sessionUser = await loadDatabaseUser();
-  const access = getCreateRacePageAccess(sessionUser?.roles ?? null);
+export default async function ConsoleNewRacePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    feedbackMessage?: string;
+    feedbackScope?: string;
+  }>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const sessionUser = await requireConsoleUser("/console/races/new");
+  const access = getCreateRacePageAccess(sessionUser.roles);
 
   if (!access.allowed) {
     redirect(access.redirectTo ?? "/console");
   }
 
-  const sections = getConsoleHomeSections(sessionUser?.roles ?? null);
+  const sections = getConsoleHomeSections(sessionUser.roles);
+  const organizerOptions = hasRole(sessionUser.roles, "ADMIN")
+    ? (await listUsersByRole("ORGANIZER")).map((user) => ({
+        id: user.id,
+        label: user.profileName || user.username,
+      }))
+    : [];
+  const feedback = getActionFeedbackContent({
+    message: resolvedSearchParams?.feedbackMessage,
+    scope: resolvedSearchParams?.feedbackScope,
+  });
 
   return (
     <ConsoleShell
@@ -35,6 +60,9 @@ export default async function ConsoleNewRacePage() {
       title="创建赛事"
       user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
+      {feedback ? (
+        <ErrorNotice message={feedback.message} title={feedback.title} />
+      ) : null}
       <Panel title="创建赛事" eyebrow="主办方视图">
         <div className="stack">
           <a className="button-secondary" href="/console/races">
@@ -45,7 +73,11 @@ export default async function ConsoleNewRacePage() {
       </Panel>
 
       <Panel title="赛事表单" eyebrow="主办方视图">
-        <CreateRaceForm action={createRaceAction} />
+        <CreateRaceForm
+          action={createRaceAction}
+          organizerOptions={organizerOptions}
+          returnTo="/console/races/new"
+        />
       </Panel>
     </ConsoleShell>
   );

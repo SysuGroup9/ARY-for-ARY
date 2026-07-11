@@ -3,14 +3,24 @@ export function buildSessionSummaryEvidenceRecord(input: {
   caProjectId: string;
   caSessionId: string;
   caType: "CLAUDE_CODE" | "CODEX" | "OTHER";
+  confidenceLevel: "high" | "medium";
+  generatedFromEventIdsJson: string;
+  integrityStatus: "ok" | "review_needed";
   messageCount: number;
   registrationId: string;
+  reviewFlagJson: string;
+  sourceDigest: string;
   startedAt: Date;
   tokenCost: number;
   toolCallCount: number;
 }) {
   return {
+    confidenceLevel: input.confidenceLevel,
+    generatedFromEventIdsJson: input.generatedFromEventIdsJson,
+    integrityStatus: input.integrityStatus,
     registrationId: input.registrationId,
+    reviewFlagJson: input.reviewFlagJson,
+    sourceDigest: input.sourceDigest,
     sourceRefJson: JSON.stringify({
       caConnectionId: input.caConnectionId,
       caProjectId: input.caProjectId,
@@ -65,6 +75,8 @@ export function buildScreenFeedProjectionPayload(input: {
     type:
       | "announcement"
       | "current_leaderboard_projection"
+      | "leaderboard_read_model"
+      | "works"
       | "session_summary";
   }>;
   raceId: string;

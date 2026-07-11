@@ -3,8 +3,8 @@ import { HomeGallery } from "@/app/_components/public/home-gallery";
 import { PublicHomeHero } from "@/app/_components/public/public-home-hero";
 import { PublicHeader } from "@/app/_components/public/public-header";
 import { loadDatabaseUser } from "@/lib/auth";
-import { listRaces } from "@/lib/services/races";
 import { buildPublicSiteModel } from "@/lib/public-site";
+import { listPublicRaces } from "@/lib/services/public-routes";
 import { getRoleCapabilities } from "@/lib/viewer-access";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const sessionUser = await loadDatabaseUser();
 
-  const races = await listRaces();
+  const races = await listPublicRaces();
   const { canManage, canRide } = getRoleCapabilities(sessionUser?.roles ?? null);
 
   const publicModel = buildPublicSiteModel(races);

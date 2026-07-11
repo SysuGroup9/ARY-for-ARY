@@ -1,14 +1,20 @@
 import JumbotronInline from "@/app/JumbotronInline";
+import { StaticDisplayFallback } from "@/app/_components/public/static-display-fallback";
 import type { TrackProfile, RaceSnapshot } from "@/lib/jumbotron/track-runtime/types";
-import type { RaceListItem } from "@/lib/services/races";
+import { getRacePhaseLabel } from "@/lib/race-phase";
+import type { PublicRaceListItem } from "@/lib/services/public-routes";
 
 export function LiveHallView({
   race,
+  raceSlug,
   jumbotronPreview,
 }: {
-  race: RaceListItem;
+  race: PublicRaceListItem;
+  raceSlug?: string;
   jumbotronPreview?: {
+    fallbackReason?: null | string;
     snapshot: RaceSnapshot | null;
+    source: "live" | "stable" | "static";
     trackProfile: TrackProfile | null;
   };
 }) {
@@ -105,34 +111,13 @@ export function LiveHallView({
     );
   const activeSessions =
     raceProgress?.activeSessions ??
-    race.registrations.reduce(
-      (sum, registration) =>
-        sum +
-        (registration.raceProject?.caConnections.reduce(
-          (inner, connection) =>
-            inner +
-            connection.sessions.filter((session) => session.endedAt === null).length,
-          0,
-        ) ?? 0),
+    (registrationStatus?.reduce(
+      (sum, registration) => sum + registration.sessionCount,
       0,
-    );
+    ) ?? 0);
   const processLeaderboardCount = currentLeaderboard?.length ?? 0;
   const totalTokenCost =
-    costProjection?.reduce((sum, item) => sum + item.tokenCost, 0) ??
-    race.registrations.reduce(
-      (sum, registration) =>
-        sum +
-        (registration.raceProject?.caConnections.reduce(
-          (inner, connection) =>
-            inner +
-            connection.sessions.reduce(
-              (sessionSum, session) => sessionSum + session.tokenCost,
-              0,
-            ),
-          0,
-        ) ?? 0),
-      0,
-    );
+    costProjection?.reduce((sum, item) => sum + item.tokenCost, 0) ?? 0;
   const averageProgressPercent =
     processLeaderboardCount > 0
       ? Math.round(
@@ -159,14 +144,16 @@ export function LiveHallView({
       raceProjectId: registration.raceProject?.id ?? null,
       registrationId: registration.id,
       registrationStatus: registration.status,
-      sessionCount:
-        registration.raceProject?.caConnections.reduce(
-          (sum, connection) => sum + connection.sessions.length,
-          0,
-        ) ?? 0,
+      sessionCount: 0,
       username: registration.user.username,
     }));
   const eventStreamItems = eventStream?.items ?? [];
+  const latestAnnouncement = [...(race.announcements ?? [])]
+    .filter((announcement) => announcement.visibility === "PUBLIC" && announcement.publishedAt)
+    .sort(
+      (left, right) =>
+        right.publishedAt!.getTime() - left.publishedAt!.getTime(),
+    )[0];
 
   return (
     <div className="stack">
@@ -182,7 +169,20 @@ export function LiveHallView({
             打开大屏
           </a>
         </div>
-        {jumbotronPreview ? (
+        {jumbotronPreview?.source === "stable" ? (
+          <p className="muted text-sm" style={{ marginTop: 12 }}>
+            Jumbotron 预览当前回退到最近一次稳定快照，现场展示仍可继续。
+          </p>
+        ) : null}
+        {jumbotronPreview?.source === "static" ? (
+          <StaticDisplayFallback
+            compact
+            race={race}
+            raceSlug={raceSlug}
+            reason={jumbotronPreview.fallbackReason}
+          />
+        ) : null}
+        {jumbotronPreview && jumbotronPreview.source !== "static" ? (
           <JumbotronInline
             raceId={race.id}
             snapshot={jumbotronPreview.snapshot}
@@ -198,7 +198,7 @@ export function LiveHallView({
           <div className="detail-grid">
             <div>
               <dt>阶段</dt>
-              <dd>{race.phase}</dd>
+              <dd>{getRacePhaseLabel(race.phase)}</dd>
             </div>
             <div>
               <dt>总报名数</dt>
@@ -291,6 +291,21 @@ export function LiveHallView({
         </div>
 
         <div className="card">
+          <p className="eyebrow">最近公告</p>
+          <h2>阶段公告</h2>
+          {latestAnnouncement ? (
+            <div className="stack">
+              <div className="public-link-card">
+                <strong>{latestAnnouncement.title}</strong>
+                <span className="muted text-sm">{latestAnnouncement.body}</span>
+              </div>
+            </div>
+          ) : (
+            <p className="muted">当前还没有已发布公告。</p>
+          )}
+        </div>
+
+        <div className="card">
           <p className="eyebrow">事件流</p>
           <h2>最近事件</h2>
           <div className="stack">
@@ -324,12 +339,4 @@ function parseProjection<T>(payloadJson: string | undefined): null | T {
   } catch {
     return null;
   }
-}
-
-function slugifyTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .replace(/-+/g, "-");
 }

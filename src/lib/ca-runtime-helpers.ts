@@ -1,5 +1,22 @@
 import type { IngestionStatus } from "@/generated/prisma/enums";
 
+export type RidingSignalType =
+  | "artifact_linked"
+  | "cost_updated"
+  | "milestone_reached"
+  | "riding_finished"
+  | "riding_paused"
+  | "riding_resumed"
+  | "riding_started"
+  | "risk_detected"
+  | "session_completed"
+  | "session_started"
+  | "task_blocked"
+  | "task_completed"
+  | "task_progress"
+  | "task_started"
+  | "validation_run";
+
 export type RidingSignalInput = {
   counters: {
     messageCount?: number;
@@ -18,12 +35,26 @@ export type RidingSignalInput = {
   riskReason?: string | null;
   taskStatus?: string | null;
   timestamp: Date;
-  type:
-    | "risk_detected"
-    | "session_completed"
-    | "session_started"
-    | "task_progress";
+  type: RidingSignalType;
 };
+
+const ACTIVE_SIGNAL_TYPES = new Set<RidingSignalType>([
+  "artifact_linked",
+  "cost_updated",
+  "milestone_reached",
+  "riding_finished",
+  "riding_paused",
+  "riding_resumed",
+  "riding_started",
+  "risk_detected",
+  "session_completed",
+  "session_started",
+  "task_blocked",
+  "task_completed",
+  "task_progress",
+  "task_started",
+  "validation_run",
+]);
 
 export function isFailureSignalPayload(signal: RidingSignalInput): boolean {
   return signal.ingestion?.status === "FAILED";
@@ -37,11 +68,7 @@ export function getNextConnectionStatusFromSignal(input: {
     return "FAILED";
   }
 
-  if (
-    input.signal.type === "session_started" ||
-    input.signal.type === "task_progress" ||
-    input.signal.type === "session_completed"
-  ) {
+  if (ACTIVE_SIGNAL_TYPES.has(input.signal.type)) {
     return "ACTIVE";
   }
 
@@ -110,6 +137,7 @@ export function buildSessionPatchFromSnapshot(input: {
       riskReason: string;
     };
     task: {
+      taskId: string;
       progressPercent: number;
       taskStatus: string;
     };
@@ -119,7 +147,7 @@ export function buildSessionPatchFromSnapshot(input: {
       lastActiveAt: Date | null;
       messageCount: number;
       startedAt: Date;
-      tokenCost: number;
+      tokens: number;
       toolCallCount: number;
     };
   };
@@ -137,7 +165,7 @@ export function buildSessionPatchFromSnapshot(input: {
     snapshotFetchedAt: input.snapshot.fetchedAt,
     startedAt: input.snapshot.session.startedAt,
     taskStatus: input.snapshot.task.taskStatus,
-    tokenCost: input.snapshot.session.tokenCost,
+    tokenCost: input.snapshot.session.tokens,
     toolCallCount: input.snapshot.session.toolCallCount,
   };
 }

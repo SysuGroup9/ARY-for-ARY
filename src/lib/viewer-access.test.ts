@@ -5,6 +5,7 @@ import {
   getConsoleDefaultHref,
   getConsoleEntryTarget,
   getConsoleHomeSections,
+  getConsoleRacesRootAccess,
   getConsoleRaceViewAccess,
   getConsoleScreenAccess,
   getCreateRaceBackTarget,
@@ -25,13 +26,13 @@ test("redirects authenticated login visitors to /", () => {
   assert.equal(getLoginRedirectTarget(false), null);
 });
 
-test("maps organizer and rider capabilities without audience session", () => {
+test("maps role capabilities according to the current console permission matrix", () => {
   assert.deepEqual(getRoleCapabilities(["ORGANIZER"]), {
     canAdmin: false,
     canJudge: false,
     canManage: true,
     canRide: false,
-    canUseScreen: false,
+    canUseScreen: true,
   });
 
   assert.deepEqual(getRoleCapabilities(["RIDER"]), {
@@ -59,8 +60,13 @@ test("maps organizer and rider capabilities without audience session", () => {
   });
 });
 
-test("allows only organizers to access the dedicated create-race page", () => {
+test("allows organizers and admins to access the dedicated create-race page", () => {
   assert.deepEqual(getCreateRacePageAccess(["ORGANIZER"]), {
+    allowed: true,
+    redirectTo: null,
+  });
+
+  assert.deepEqual(getCreateRacePageAccess(["ADMIN"]), {
     allowed: true,
     redirectTo: null,
   });
@@ -93,15 +99,17 @@ test("keeps the public auth action understandable", () => {
 
 test("shows console entry only for users with actual console sections", () => {
   assert.equal(getConsoleEntryTarget(null), null);
+  assert.equal(getConsoleEntryTarget(["ADMIN"]), "/console");
+  assert.equal(getConsoleEntryTarget(["JUDGE"]), "/console");
   assert.equal(getConsoleEntryTarget(["RIDER"]), "/console");
   assert.equal(getConsoleEntryTarget(["ORGANIZER"]), "/console");
 });
 
 test("maps console home sections from the current role", () => {
-  assert.deepEqual(getConsoleHomeSections(["ORGANIZER"]), ["races"]);
+  assert.deepEqual(getConsoleHomeSections(["ORGANIZER"]), ["races", "screen"]);
   assert.deepEqual(getConsoleHomeSections(["RIDER"]), ["races"]);
   assert.deepEqual(getConsoleHomeSections(["JUDGE"]), ["races"]);
-  assert.deepEqual(getConsoleHomeSections(["ADMIN"]), ["admin", "screen"]);
+  assert.deepEqual(getConsoleHomeSections(["ADMIN"]), ["admin", "races", "screen"]);
   assert.deepEqual(getConsoleHomeSections(["ADMIN", "ORGANIZER"]), [
     "admin",
     "races",
@@ -140,6 +148,17 @@ test("guards organizer and rider race workspace views by race scope", () => {
       isRaceRider: false,
     }),
     { allowed: false, redirectTo: "/console/races" },
+  );
+
+  assert.deepEqual(
+    getConsoleRaceViewAccess({
+      roles: ["ADMIN"],
+      view: "organizer",
+      isRaceOrganizer: false,
+      isRaceJudge: false,
+      isRaceRider: false,
+    }),
+    { allowed: true, redirectTo: null },
   );
 
   assert.deepEqual(
@@ -208,15 +227,50 @@ test("keeps admin and screen console access explicit", () => {
     redirectTo: "/console",
   });
   assert.deepEqual(getConsoleScreenAccess(["ORGANIZER"]), {
-    allowed: false,
-    redirectTo: "/console",
+    allowed: true,
+    redirectTo: null,
   });
   assert.deepEqual(getConsoleScreenAccess(["ADMIN"]), {
     allowed: true,
     redirectTo: null,
   });
+  assert.deepEqual(getConsoleScreenAccess(["JUDGE"]), {
+    allowed: false,
+    redirectTo: "/console",
+  });
   assert.deepEqual(getConsoleScreenAccess(["RIDER"]), {
     allowed: false,
     redirectTo: "/console",
+  });
+  assert.deepEqual(getConsoleScreenAccess(null), {
+    allowed: false,
+    redirectTo: "/login",
+  });
+});
+
+test("race console root only allows users with an actual races section", () => {
+  assert.deepEqual(getConsoleRacesRootAccess(["ORGANIZER"]), {
+    allowed: true,
+    redirectTo: null,
+  });
+  assert.deepEqual(getConsoleRacesRootAccess(["RIDER"]), {
+    allowed: true,
+    redirectTo: null,
+  });
+  assert.deepEqual(getConsoleRacesRootAccess(["JUDGE"]), {
+    allowed: true,
+    redirectTo: null,
+  });
+  assert.deepEqual(getConsoleRacesRootAccess(["ADMIN"]), {
+    allowed: true,
+    redirectTo: null,
+  });
+  assert.deepEqual(getConsoleRacesRootAccess([]), {
+    allowed: true,
+    redirectTo: null,
+  });
+  assert.deepEqual(getConsoleRacesRootAccess(null), {
+    allowed: false,
+    redirectTo: "/login",
   });
 });

@@ -5,6 +5,11 @@ import {
 import { prisma } from "@/lib/prisma";
 import { getRacePhase } from "@/lib/race-phase";
 import {
+  verifyRaceEvaluationConfigIntegrity,
+  verifyRaceChallengeIntegrity,
+  verifySubmissionArtifactIntegrity,
+} from "@/lib/material-integrity-helpers";
+import {
   ACTIVE_RUNNER_TASK_STATUSES,
   buildRunnerTaskPayload,
   type RunnerTaskTypeValue,
@@ -14,6 +19,7 @@ import {
   computeHarnessScore,
   parseKeywords,
 } from "@/lib/services/scoring";
+import { recordSecurityAudit } from "@/lib/services/security-audit";
 import { runnerPullSchema, runnerResultSchema } from "@/lib/validation";
 
 type RunnerResultInput = ReturnType<typeof runnerResultSchema.parse>;
@@ -26,37 +32,32 @@ type LatestArtifactRecord = {
   submissionId: string;
   codeLabel: string;
   codeContent: string;
+  codeContentHash: string;
   recordLabel: null | string;
   ridingRecord: null | string;
+  ridingRecordHash: string;
+  submitterBindingJson: string;
   tokenUsed: number;
   agentType: AgentType;
   createdAt: Date;
 };
 
-export async function enqueueSubmissionTestTask(input: {
-  artifactId: string;
-  raceId: string;
-  registrationId: string;
-  submissionId: string;
-  teamId: string;
-  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
-}) {
-  await staleActiveRunnerTasks(input.tx, {
-    registrationId: input.registrationId,
-    teamId: input.teamId,
-  }, ["SUBMISSION_TEST", "PROGRESS_EVAL"]);
+type RunnerArtifactVerificationStage = "runner_complete" | "runner_pull";
 
-  return input.tx.runnerTask.create({
-    data: {
-      artifactId: input.artifactId,
-      raceId: input.raceId,
-      registrationId: input.registrationId,
-      submissionId: input.submissionId,
-      taskType: "SUBMISSION_TEST",
-      teamId: input.teamId,
-    },
-  });
-}
+type RunnerTaskArtifactContext = {
+  artifact: LatestArtifactRecord;
+  raceId: string;
+  registration: null | { userId: string };
+  registrationId: null | string;
+  submissionId: string;
+  taskId: string;
+  taskType: RunnerTaskTypeValue;
+  teamId: string;
+};
+
+type RunnerAuditWriter =
+  | typeof prisma
+  | Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
 export async function enqueueProgressEvalTasks(raceId: string) {
   const race = await prisma.race.findUnique({
@@ -163,79 +164,159 @@ export async function enqueueHarnessEvalTaskForArtifact(
 export async function pullRunnerTask(raceId: string) {
   const parsed = runnerPullSchema.parse({ raceId });
 
-  const task = await prisma.runnerTask.findFirst({
-    where: {
-      raceId: parsed.raceId,
-      status: "QUEUED",
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-    include: {
-      artifact: true,
-      race: true,
-      team: true,
-    },
-  });
-
-  if (!task) {
-    return null;
-  }
-
-  const claimed = await prisma.runnerTask.update({
-    where: {
-      id: task.id,
-    },
-    data: {
-      claimedAt: new Date(),
-      status: "CLAIMED",
-    },
-    include: {
-      artifact: true,
-      race: true,
-      team: true,
-    },
-  });
-
-  if (claimed.taskType === "SUBMISSION_TEST") {
-    await prisma.submission.update({
-      where: { id: claimed.submissionId },
-      data: {
-        pulledAt: new Date(),
-        status: SubmissionStatus.PULLED,
+  while (true) {
+    const task = await prisma.runnerTask.findFirst({
+      where: {
+        raceId: parsed.raceId,
+        status: "QUEUED",
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      include: {
+        artifact: true,
+        race: true,
+        registration: true,
+        team: true,
       },
     });
+
+    if (!task) {
+      return null;
+    }
+
+    const claimed = await prisma.runnerTask.update({
+      where: {
+        id: task.id,
+      },
+      data: {
+        claimedAt: new Date(),
+        status: "CLAIMED",
+      },
+      include: {
+        artifact: true,
+        race: true,
+        registration: true,
+        team: true,
+      },
+    });
+
+    const runnerTaskArtifactContext = {
+      artifact: claimed.artifact,
+      raceId: claimed.raceId,
+      registration: claimed.registration,
+      registrationId: claimed.registrationId,
+      submissionId: claimed.submissionId,
+      taskId: claimed.id,
+      taskType: claimed.taskType,
+      teamId: claimed.teamId,
+    } satisfies RunnerTaskArtifactContext;
+
+    const challengeVerification = await verifyRaceChallengeIntegrity({
+      race: claimed.race,
+    });
+
+    if (!challengeVerification.ok) {
+      await prisma.$transaction(async (tx) => {
+        await failRunnerTaskRaceChallengeVerification(
+          tx,
+          runnerTaskArtifactContext,
+          challengeVerification,
+        );
+      });
+
+      continue;
+    }
+
+    await recordRunnerTaskRaceChallengeVerification(prisma, {
+      task: runnerTaskArtifactContext,
+      verification: { ok: true },
+    });
+
+    const evaluationConfigVerification = verifyRaceEvaluationConfigIntegrity({
+      race: claimed.race,
+    });
+
+    if (!evaluationConfigVerification.ok) {
+      await prisma.$transaction(async (tx) => {
+        await failRunnerTaskRaceEvaluationConfigVerification(
+          tx,
+          runnerTaskArtifactContext,
+          evaluationConfigVerification,
+        );
+      });
+
+      continue;
+    }
+
+    await recordRunnerTaskRaceEvaluationConfigVerification(prisma, {
+      task: runnerTaskArtifactContext,
+      verification: { ok: true },
+    });
+
+    const verification = verifyRunnerTaskArtifact(runnerTaskArtifactContext);
+
+    if (!verification.ok) {
+      await prisma.$transaction(async (tx) => {
+        await failRunnerTaskArtifactVerification(
+          tx,
+          runnerTaskArtifactContext,
+          verification,
+          "runner_pull",
+        );
+      });
+
+      continue;
+    }
+
+    await recordRunnerTaskArtifactVerification(prisma, {
+      stage: "runner_pull",
+      task: runnerTaskArtifactContext,
+      verification: { ok: true },
+    });
+
+    if (claimed.taskType === "SUBMISSION_TEST") {
+      await prisma.submission.update({
+        where: { id: claimed.submissionId },
+        data: {
+          pulledAt: new Date(),
+          status: SubmissionStatus.PULLED,
+        },
+      });
+    }
+
+    const payload = buildRunnerTaskPayload(claimed.taskType, {
+      agentType: claimed.artifact.agentType,
+      codeContent: claimed.artifact.codeContent,
+      codeLabel: claimed.artifact.codeLabel,
+      recordLabel: claimed.artifact.recordLabel,
+      ridingRecord: claimed.artifact.ridingRecord,
+      tokenUsed: claimed.artifact.tokenUsed,
+    });
+
+    return {
+      taskId: claimed.id,
+      taskType: toRunnerWireTaskType(claimed.taskType),
+      raceId: claimed.raceId,
+      teamId: claimed.teamId,
+      teamName: claimed.team.name,
+      submissionId: claimed.submissionId,
+      createdAt: claimed.createdAt.toISOString(),
+      metadata: {
+        attemptNo: 1,
+        fileName: claimed.artifact.codeLabel,
+        fileSize: Buffer.byteLength(claimed.artifact.codeContent, "utf8"),
+        status: "queued",
+        uploadedAt: claimed.artifact.createdAt.toISOString(),
+      },
+      evaluationConfigHash: claimed.race.evaluationConfigHash,
+      evaluationConfigVersion: claimed.race.evaluationConfigVersion,
+      taskPackageLabel: claimed.race.taskPackageLabel,
+      taskDescription: claimed.race.taskDescription,
+      keywords: parseKeywords(claimed.race.keywordsJson),
+      ...payload,
+    };
   }
-
-  const payload = buildRunnerTaskPayload(claimed.taskType, {
-    agentType: claimed.artifact.agentType,
-    codeContent: claimed.artifact.codeContent,
-    codeLabel: claimed.artifact.codeLabel,
-    recordLabel: claimed.artifact.recordLabel,
-    ridingRecord: claimed.artifact.ridingRecord,
-    tokenUsed: claimed.artifact.tokenUsed,
-  });
-
-  return {
-    taskId: claimed.id,
-    taskType: toRunnerWireTaskType(claimed.taskType),
-    raceId: claimed.raceId,
-    teamId: claimed.teamId,
-    teamName: claimed.team.name,
-    submissionId: claimed.submissionId,
-    createdAt: claimed.createdAt.toISOString(),
-    metadata: {
-      attemptNo: 1,
-      fileName: claimed.artifact.codeLabel,
-      fileSize: Buffer.byteLength(claimed.artifact.codeContent, "utf8"),
-      status: "queued",
-      uploadedAt: claimed.artifact.createdAt.toISOString(),
-    },
-    taskPackageLabel: claimed.race.taskPackageLabel,
-    taskDescription: claimed.race.taskDescription,
-    keywords: parseKeywords(claimed.race.keywordsJson),
-    ...payload,
-  };
 }
 
 export async function completeRunnerTask(input: RunnerResultInput) {
@@ -244,6 +325,7 @@ export async function completeRunnerTask(input: RunnerResultInput) {
     include: {
       artifact: true,
       race: true,
+      registration: true,
       submission: true,
       team: true,
     },
@@ -266,6 +348,31 @@ export async function completeRunnerTask(input: RunnerResultInput) {
   }
 
   await prisma.$transaction(async (tx) => {
+    const runnerTaskArtifactContext = {
+      artifact: task.artifact,
+      raceId: task.raceId,
+      registration: task.registration,
+      registrationId: task.registrationId,
+      submissionId: task.submissionId,
+      taskId: task.id,
+      taskType: task.taskType,
+      teamId: task.teamId,
+    } satisfies RunnerTaskArtifactContext;
+
+    if (input.status === "succeeded") {
+      const verification = verifyRunnerTaskArtifact(runnerTaskArtifactContext);
+
+      if (!verification.ok) {
+        await failRunnerTaskArtifactVerification(
+          tx,
+          runnerTaskArtifactContext,
+          verification,
+          "runner_complete",
+        );
+        return;
+      }
+    }
+
     await tx.runnerTask.update({
       where: { id: task.id },
       data: {
@@ -291,6 +398,12 @@ export async function completeRunnerTask(input: RunnerResultInput) {
       }
       return;
     }
+
+    await recordRunnerTaskArtifactVerification(tx, {
+      stage: "runner_complete",
+      task: runnerTaskArtifactContext,
+      verification: { ok: true },
+    });
 
     switch (task.taskType) {
       case "SUBMISSION_TEST":
@@ -431,23 +544,19 @@ async function projectProgressEvalSuccess(
     },
   });
 
-  const teamArchiveWhere = task.registrationId
-    ? {
-        raceId: task.raceId,
-        registrationId: task.registrationId,
-      }
-    : {
-        raceId: task.raceId,
-        teamId: task.teamId,
-      };
   const existingTeamArchive = await tx.teamArchive.findFirst({
-    where: teamArchiveWhere,
+    where: buildRaceContainerWhere({
+      raceId: task.raceId,
+      registrationId: task.registrationId,
+      teamId: task.teamId,
+    }),
   });
 
   const teamArchivePayload = {
     agentType: task.artifact.agentType,
     antiCheatPenalty: scoreResult.antiCheatPenalty,
     codeContent: task.artifact.codeContent,
+    codeContentHash: task.artifact.codeContentHash,
     codeLabel: task.artifact.codeLabel,
     dialogueScore: scoreResult.dialogueScore,
     keywordScore: scoreResult.keywordScore,
@@ -456,7 +565,9 @@ async function projectProgressEvalSuccess(
     recordLabel: task.artifact.recordLabel,
     registrationId: task.registrationId,
     ridingRecord: task.artifact.ridingRecord,
+    ridingRecordHash: task.artifact.ridingRecordHash,
     submissionId: task.submissionId,
+    submitterBindingJson: task.artifact.submitterBindingJson,
     taskScore: scoreResult.taskScore,
     teamId: task.teamId,
     tokenScore: scoreResult.tokenScore,
@@ -476,17 +587,12 @@ async function projectProgressEvalSuccess(
     });
   }
 
-  const leaderboardWhere = task.registrationId
-    ? {
-        raceId: task.raceId,
-        registrationId: task.registrationId,
-      }
-    : {
-        raceId: task.raceId,
-        teamId: task.teamId,
-      };
   const existingLeaderboardEntry = await tx.leaderboardEntry.findFirst({
-    where: leaderboardWhere,
+    where: buildRaceContainerWhere({
+      raceId: task.raceId,
+      registrationId: task.registrationId,
+      teamId: task.teamId,
+    }),
   });
 
   const leaderboardPayload = {
@@ -547,17 +653,12 @@ async function projectHarnessEvalSuccess(
     },
   });
 
-  const harnessWhere = task.registrationId
-    ? {
-        raceId: task.raceId,
-        registrationId: task.registrationId,
-      }
-    : {
-        raceId: task.raceId,
-        teamId: task.teamId,
-      };
   const existingHarnessEntry = await tx.harnessEntry.findFirst({
-    where: harnessWhere,
+    where: buildRaceContainerWhere({
+      raceId: task.raceId,
+      registrationId: task.registrationId,
+      teamId: task.teamId,
+    }),
   });
 
   const harnessPayload = {
@@ -642,14 +743,44 @@ async function staleActiveRunnerTasks(
       taskType: {
         in: taskTypes,
       },
-      ...(subject.registrationId
-        ? { registrationId: subject.registrationId }
-        : { teamId: subject.teamId }),
+      ...buildContainerIdentityWhere(subject),
     },
     data: {
       status: "STALE",
     },
   });
+}
+
+function buildRaceContainerWhere(input: {
+  raceId: string;
+  registrationId: null | string;
+  teamId: string;
+}) {
+  return {
+    raceId: input.raceId,
+    ...buildContainerIdentityWhere({
+      registrationId: input.registrationId,
+      teamId: input.teamId,
+    }),
+  };
+}
+
+function buildContainerIdentityWhere(input: {
+  registrationId: null | string;
+  teamId: string;
+}) {
+  if (input.registrationId) {
+    return {
+      OR: [
+        { registrationId: input.registrationId },
+        { registrationId: null, teamId: input.teamId },
+      ],
+    };
+  }
+
+  return {
+    teamId: input.teamId,
+  };
 }
 
 async function getLatestArtifactsForRace(
@@ -662,7 +793,7 @@ async function getLatestArtifactsForRace(
 
   const latestByContainer = new Map<string, LatestArtifactRecord>();
   for (const artifact of artifacts) {
-    const containerKey = artifact.registrationId ?? `team:${artifact.teamId}`;
+    const containerKey = artifact.teamId;
     if (!latestByContainer.has(containerKey)) {
       latestByContainer.set(containerKey, artifact);
     }
@@ -700,5 +831,251 @@ function extractCodeSnippetSafe(code: string): string {
     .split(/\r?\n/)
     .slice(0, 8)
     .join("\n");
+}
+
+function verifyRunnerTaskArtifact(task: RunnerTaskArtifactContext) {
+  if (task.registrationId && !task.registration) {
+    return {
+      actualValue: "",
+      expectedValue: "",
+      ok: false as const,
+      reason: "registration_missing" as const,
+    };
+  }
+
+  return verifySubmissionArtifactIntegrity({
+    artifact: task.artifact,
+    expectedRaceId: task.raceId,
+    expectedRegistrationId: task.registrationId,
+    expectedUserId: task.registration?.userId ?? null,
+  });
+}
+
+async function failRunnerTaskRaceChallengeVerification(
+  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  task: RunnerTaskArtifactContext,
+  verification: Awaited<ReturnType<typeof verifyRaceChallengeIntegrity>>,
+) {
+  if (verification.ok) {
+    return;
+  }
+
+  await tx.runnerTask.update({
+    where: { id: task.taskId },
+    data: {
+      finishedAt: new Date(),
+      runnerComment: `race challenge material integrity check failed: ${verification.reason}`,
+      score: 0,
+      status: "FAILED",
+    },
+  });
+
+  await recordRunnerTaskRaceChallengeVerification(tx, {
+    task,
+    verification,
+  });
+}
+
+async function failRunnerTaskRaceEvaluationConfigVerification(
+  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  task: RunnerTaskArtifactContext,
+  verification: ReturnType<typeof verifyRaceEvaluationConfigIntegrity>,
+) {
+  if (verification.ok) {
+    return;
+  }
+
+  await tx.runnerTask.update({
+    where: { id: task.taskId },
+    data: {
+      finishedAt: new Date(),
+      runnerComment: `race evaluation config integrity check failed: ${verification.reason}`,
+      score: 0,
+      status: "FAILED",
+    },
+  });
+
+  await recordRunnerTaskRaceEvaluationConfigVerification(tx, {
+    task,
+    verification,
+  });
+}
+
+async function failRunnerTaskArtifactVerification(
+  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  task: RunnerTaskArtifactContext,
+  verification: ReturnType<typeof verifyRunnerTaskArtifact>,
+  stage: RunnerArtifactVerificationStage,
+) {
+  if (verification.ok) {
+    return;
+  }
+
+  const integrityFailureComment = `submission artifact integrity check failed: ${verification.reason}`;
+
+  await tx.runnerTask.update({
+    where: { id: task.taskId },
+    data: {
+      finishedAt: new Date(),
+      runnerComment: integrityFailureComment,
+      score: 0,
+      status: "FAILED",
+    },
+  });
+
+  if (task.taskType === "SUBMISSION_TEST") {
+    await tx.submission.update({
+      where: { id: task.submissionId },
+      data: {
+        runnerComment: integrityFailureComment,
+        runnerStatus: "failed",
+        scoredAt: new Date(),
+        status: SubmissionStatus.FAILED,
+      },
+    });
+  }
+
+  await recordRunnerTaskArtifactVerification(tx, {
+    stage,
+    task,
+    verification,
+  });
+}
+
+async function recordRunnerTaskArtifactVerification(
+  db: RunnerAuditWriter,
+  input: {
+    stage: RunnerArtifactVerificationStage;
+    task: RunnerTaskArtifactContext;
+    verification: { ok: true } | ReturnType<typeof verifyRunnerTaskArtifact>;
+  },
+) {
+  const details = {
+    registrationId: input.task.registrationId,
+    submissionId: input.task.submissionId,
+    taskId: input.task.taskId,
+    taskType: input.task.taskType,
+    teamId: input.task.teamId,
+    verificationStage: input.stage,
+    ...("actualValue" in input.verification
+      ? {
+          actualValue: input.verification.actualValue,
+          expectedValue: input.verification.expectedValue,
+        }
+      : {}),
+  };
+
+  await recordSecurityAudit(db, {
+    action: "submission_artifact.verify",
+    actorKind: "SYSTEM",
+    details,
+    raceId: input.task.raceId,
+    reason:
+      "reason" in input.verification
+        ? input.verification.reason
+        : "",
+    registrationId: input.task.registrationId,
+    result:
+      "reason" in input.verification
+        ? "rejected"
+        : "accepted",
+    targetId: input.task.artifact.id,
+    targetType: "SubmissionArtifact",
+    userId: input.task.registration?.userId ?? null,
+  });
+}
+
+async function recordRunnerTaskRaceChallengeVerification(
+  db: RunnerAuditWriter,
+  input: {
+    task: RunnerTaskArtifactContext;
+    verification:
+      | { ok: true }
+      | Awaited<ReturnType<typeof verifyRaceChallengeIntegrity>>;
+  },
+) {
+  const details = {
+    registrationId: input.task.registrationId,
+    submissionId: input.task.submissionId,
+    taskId: input.task.taskId,
+    taskType: input.task.taskType,
+    teamId: input.task.teamId,
+    verificationStage: "runner_pull",
+    ...("actualValue" in input.verification
+      ? {
+          actualValue: input.verification.actualValue,
+          expectedValue: input.verification.expectedValue,
+        }
+      : {}),
+    ...("fileName" in input.verification
+      ? {
+          fileName: input.verification.fileName,
+          filePath: input.verification.filePath,
+        }
+      : {}),
+  };
+
+  await recordSecurityAudit(db, {
+    action: "race.challenge_verify",
+    actorKind: "SYSTEM",
+    details,
+    raceId: input.task.raceId,
+    reason:
+      "reason" in input.verification
+        ? input.verification.reason
+        : "",
+    registrationId: input.task.registrationId,
+    result:
+      "reason" in input.verification
+        ? "rejected"
+        : "accepted",
+    targetId: input.task.raceId,
+    targetType: "Race",
+    userId: input.task.registration?.userId ?? null,
+  });
+}
+
+async function recordRunnerTaskRaceEvaluationConfigVerification(
+  db: RunnerAuditWriter,
+  input: {
+    task: RunnerTaskArtifactContext;
+    verification:
+      | { ok: true }
+      | ReturnType<typeof verifyRaceEvaluationConfigIntegrity>;
+  },
+) {
+  const details = {
+    registrationId: input.task.registrationId,
+    submissionId: input.task.submissionId,
+    taskId: input.task.taskId,
+    taskType: input.task.taskType,
+    teamId: input.task.teamId,
+    verificationStage: "runner_pull",
+    ...("actualValue" in input.verification
+      ? {
+          actualValue: input.verification.actualValue,
+          expectedValue: input.verification.expectedValue,
+        }
+      : {}),
+  };
+
+  await recordSecurityAudit(db, {
+    action: "race.evaluation_config_verify",
+    actorKind: "SYSTEM",
+    details,
+    raceId: input.task.raceId,
+    reason:
+      "reason" in input.verification
+        ? input.verification.reason
+        : "",
+    registrationId: input.task.registrationId,
+    result:
+      "reason" in input.verification
+        ? "rejected"
+        : "accepted",
+    targetId: input.task.raceId,
+    targetType: "Race",
+    userId: input.task.registration?.userId ?? null,
+  });
 }
 

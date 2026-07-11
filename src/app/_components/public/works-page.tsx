@@ -1,7 +1,7 @@
 import { buildWorkSlug } from "@/lib/public-site";
-import type { RaceListItem } from "@/lib/services/races";
+import type { PublicRaceListItem } from "@/lib/services/public-routes";
 
-export function WorksPageView({ race }: { race: RaceListItem }) {
+export function WorksPageView({ race }: { race: PublicRaceListItem }) {
   const publicWorks = race.registrations
     .filter((registration) => registration.work)
     .map((registration) => {

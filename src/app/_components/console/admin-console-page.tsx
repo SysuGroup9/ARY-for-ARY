@@ -94,6 +94,11 @@ function renderAdminSection({
               eyebrow="角色维护"
             >
               <form action={updateUserRolesAction} className="form-grid">
+                <input
+                  name="returnTo"
+                  type="hidden"
+                  value="/console/admin/roles"
+                />
                 <input name="userId" type="hidden" value={user.id} />
                 <div className="check-grid">
                   {allRoleOptions.map((role) => (

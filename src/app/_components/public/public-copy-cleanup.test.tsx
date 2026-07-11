@@ -22,6 +22,41 @@ test("auth entry tabs use readable Chinese labels", () => {
   assert.doesNotMatch(html, /Password/);
 });
 
+test("auth entry can hide local account forms when only GitHub should remain", () => {
+  const html = renderToStaticMarkup(
+    <AuthTabsPanel
+      githubAction={async () => {}}
+      localFallbackDescription="当前环境不再开放本地账号登录 / 注册，请使用 GitHub 登录继续。"
+      localFallbackTitle="本地账号已关闭"
+      showLocalFallback={false}
+    />,
+  );
+
+  assert.match(html, /使用 GitHub 登录/);
+  assert.match(html, /本地账号已关闭/);
+  assert.doesNotMatch(html, /用户名/);
+  assert.doesNotMatch(html, /密码/);
+  assert.doesNotMatch(html, /创建骑手账号/);
+});
+
+test("auth entry can render a shared inline error notice", () => {
+  const html = renderToStaticMarkup(
+    <AuthTabsPanel
+      defaultTab="register"
+      feedback={{
+        message: "该用户名已被占用，请更换后重试。",
+        title: "注册未成功",
+      }}
+      loginAction={async () => {}}
+      registerAction={async () => {}}
+    />,
+  );
+
+  assert.match(html, /注册未成功/);
+  assert.match(html, /该用户名已被占用，请更换后重试。/);
+  assert.match(html, /role="alert"/);
+});
+
 test("login page source uses readable Chinese copy", () => {
   const source = readFileSync("src/app/login/page.tsx", "utf8");
 
@@ -32,10 +67,20 @@ test("login page source uses readable Chinese copy", () => {
   assert.doesNotMatch(source, /Public Entry/);
 });
 
-test("login page renders the shared demo accounts panel", () => {
+test("login page keeps demo accounts panel behind the local fallback gate", () => {
   const source = readFileSync("src/app/login/page.tsx", "utf8");
 
-  assert.match(source, /SeedAccountsPanel/);
+  assert.match(source, /localAuthFallbackEnabled \? <SeedAccountsPanel \/> : null/);
+});
+
+test("user service source gates local username/password auth behind the fallback flag", () => {
+  const source = readFileSync("src/lib/services/users.ts", "utf8");
+
+  assert.match(source, /isLocalAuthFallbackEnabled/);
+  assert.match(source, /EntryFeedbackError/);
+  assert.match(source, /local_auth_disabled/);
+  assert.match(source, /username_taken/);
+  assert.match(source, /invalid_credentials/);
 });
 
 test("shared auth source has no merge conflict markers", () => {

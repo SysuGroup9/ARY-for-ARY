@@ -1,0 +1,25 @@
+# GRS004 / Admin Race Console System Scope Access Implementation Plan
+
+## 实施步骤
+
+- [x] 补设计文档
+- [x] 更新 console access helpers
+- [x] 更新 race list query 让 Admin 获得 organizer route 入口
+- [x] 调整 race console 空状态文案
+- [x] 补 Admin race console scope tests
+- [x] 跑聚焦验证
+- [x] 跑 `npm run build`
+- [x] 更新 `docs/superpowers/status.md`
+
+## 验证命令
+
+```bash
+node --test-concurrency=1 --import tsx --test src/app/console/page.test.tsx src/app/console/races/page.test.tsx src/lib/viewer-access.test.ts src/lib/services/console-routes.test.ts
+npm run build
+```
+
+## 本轮结果
+
+- Admin 现在可以进入 `赛事控制台`
+- Admin 现在可以进入任意 race 的 organizer route，作为 system scope 入口
+- `/console` 默认落点仍保持 `Admin Console`

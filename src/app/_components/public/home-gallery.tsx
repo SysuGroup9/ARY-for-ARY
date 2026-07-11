@@ -1,5 +1,7 @@
 import { formatDateTime } from "@/lib/format";
+import { getRacePrimaryCta } from "@/lib/public-site";
 import type { ReturnTypeOfBuildPublicSiteModel } from "@/lib/public-site-types";
+import { getRacePhaseLabel } from "@/lib/race-phase";
 type M = ReturnTypeOfBuildPublicSiteModel;
 
 export function HomeGallery({ model, canManage, canRide }: { model: M; canManage: boolean; canRide: boolean }) {
@@ -11,22 +13,31 @@ export function HomeGallery({ model, canManage, canRide }: { model: M; canManage
         <div className="grid-3">
           {model.featuredRaces.map((race) => (
             <article className="card card-accent" key={race.id}>
+              {(() => {
+                const primaryCta = getRacePrimaryCta(race);
+                const raceHref = `/races/${race.slug}`;
+
+                return (
+                  <>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                 <strong style={{ fontSize: "1rem", lineHeight: 1.3 }}>{race.title}</strong>
-                <span className="badge badge-accent" style={{ flexShrink: 0 }}>{race.phase}</span>
+                <span className="badge badge-accent" style={{ flexShrink: 0 }}>{getRacePhaseLabel(race.phase)}</span>
               </div>
               <p className="muted text-sm" style={{ marginBottom: 12, lineHeight: 1.6 }}>{race.summary}</p>
               <small className="muted" style={{ fontSize: "0.8rem" }}>{formatDateTime(race.raceStart)} - {formatDateTime(race.raceEnd)}</small>
               <div className="flex-row" style={{ marginTop: 16 }}>
-                <a className="button-secondary" href={`/races/${race.slug}`} style={{ fontSize: 13, minHeight: 36 }}>
+                <a className="button-secondary" href={raceHref} style={{ fontSize: 13, minHeight: 36 }}>
                   进入赛事页
                 </a>
-                {race.phase === "active" || race.phase === "frozen" ? (
-                  <a className="button-secondary" href={`/races/${race.slug}/live`} style={{ fontSize: 13, minHeight: 36 }}>实况大厅</a>
-                ) : race.phase === "finished" ? (
-                  <a className="button-secondary" href={`/races/${race.slug}/results`} style={{ fontSize: 13, minHeight: 36 }}>查看赛果</a>
+                {primaryCta.href !== raceHref ? (
+                  <a className="button-secondary" href={primaryCta.href} style={{ fontSize: 13, minHeight: 36 }}>
+                    {primaryCta.label}
+                  </a>
                 ) : null}
               </div>
+                  </>
+                );
+              })()}
             </article>
           ))}
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useRef, useEffect, useCallback, useState } from "react";
+import { useReducer, useRef, useEffect, useCallback } from "react";
 import {
   calibratorReducer,
   createInitialState,
@@ -8,11 +8,26 @@ import {
 } from "@/lib/jumbotron/calibrator/CalibratorState";
 import { samplePath, sampleAt, tangentAngle, normal } from "@/lib/jumbotron/track-runtime/path-sampler";
 import { validateTrackProfile } from "@/lib/jumbotron/track-runtime/validator";
-import type { Point } from "@/lib/jumbotron/track-runtime/types";
+import type { TrackProfile } from "@/lib/jumbotron/track-runtime/types";
 
-export default function CalibratorClient() {
-  const [state, dispatch] = useReducer(calibratorReducer, null, createInitialState);
-  const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
+export default function CalibratorClient({
+  embedded = false,
+  initialProfile,
+  raceId,
+  raceSlug,
+  saveAction,
+}: {
+  embedded?: boolean;
+  initialProfile?: TrackProfile | null;
+  raceId?: string;
+  raceSlug?: string;
+  saveAction?: (formData: FormData) => void | Promise<void>;
+}) {
+  const [state, dispatch] = useReducer(
+    calibratorReducer,
+    initialProfile ?? undefined,
+    createInitialState,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const profileInputRef = useRef<HTMLInputElement>(null);
   const dragRef = useRef<{ index: number; ox: number; oy: number; px: number; py: number } | null>(null);
@@ -73,7 +88,7 @@ export default function CalibratorClient() {
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
-      img.onload = () => { setBgImage(img); dispatch({ type: "SET_BACKGROUND", payload: { src: reader.result as string, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight } }); };
+      img.onload = () => { dispatch({ type: "SET_BACKGROUND", payload: { src: reader.result as string, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight } }); };
       img.src = reader.result as string;
     };
     reader.readAsDataURL(file);
@@ -99,6 +114,11 @@ export default function CalibratorClient() {
     const blob = new Blob([json], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${state.trackId}.profile.json`; a.click();
   }, [state]);
+  const currentTrackProfile = toTrackProfile(state);
+  const currentTrackConfigJson = JSON.stringify({
+    checkpoints: currentTrackProfile.checkpoints,
+    startFinish: currentTrackProfile.startFinish,
+  });
 
   // ---- 路径计算 ----
   const path = state.centerline.points.length >= 2
@@ -120,15 +140,23 @@ export default function CalibratorClient() {
   const selectedIdx = state.selectedPointIndex;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 40px)", gap: 8 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        height: embedded ? "auto" : "calc(100vh - 40px)",
+        minHeight: embedded ? 760 : undefined,
+      }}
+    >
       {/* Toolbar */}
       <div className="cal-bar">
         <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleBgFile} />
         <input ref={profileInputRef} type="file" accept=".json" style={{ display: "none" }} onChange={handleProfileFile} />
-        <button onClick={handleImportBg}>📷 导入底图</button>
-        <button onClick={handleImportProfile}>📂 导入 Profile</button>
+        <button onClick={handleImportBg}>导入底图</button>
+        <button onClick={handleImportProfile}>导入 Profile</button>
         <button onClick={handleValidate}>✓ 校验</button>
-        <button onClick={handleExport} className="cal-btn1">⬇ 导出</button>
+        <button onClick={handleExport} className="cal-btn1">导出当前 Profile</button>
         <span className="cal-inf">点数: {state.centerline.points.length}{path ? ` | 路径: ${Math.round(path.totalLength)}px` : ""}</span>
       </div>
 
@@ -157,7 +185,9 @@ export default function CalibratorClient() {
             onDoubleClick={onSvgDoubleClick}
           >
             {/* 背景 */}
-            {bgImage && <image href={state.background?.src ?? ""} width={vb.w} height={vb.h} />}
+            {state.background?.src ? (
+              <image href={state.background.src} width={vb.w} height={vb.h} />
+            ) : null}
 
             {/* 采样路径 */}
             {path && path.points.length > 1 && (
@@ -281,6 +311,17 @@ export default function CalibratorClient() {
           <option value={0.5}>0.5x</option><option value={1}>1x</option><option value={2}>2x</option>
         </select>
       </div>
+      {saveAction && raceId && raceSlug ? (
+        <form action={saveAction} className="cal-save-form">
+          <input name="raceId" type="hidden" value={raceId} />
+          <input name="raceSlug" type="hidden" value={raceSlug} />
+          <input name="trackConfigJson" type="hidden" value={currentTrackConfigJson} />
+          <p className="cal-save-note">
+            当前集成只会把起终点和检查点保存到这场赛事，不会覆盖基础赛道资源文件。
+          </p>
+          <button className="cal-btn1" type="submit">保存到当前赛事</button>
+        </form>
+      ) : null}
 
       <style>{styles}</style>
     </div>
@@ -306,4 +347,6 @@ const styles = `
 .cal-preview-bar { display: flex; gap: 8px; padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; align-items: center; font-size: 13px; flex-shrink: 0; }
 .cal-preview-bar button { padding: 4px 10px; cursor: pointer; }
 .cal-preview-bar input[type="range"] { width: auto; }
+.cal-save-form { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; }
+.cal-save-note { margin: 0; font-size: 12px; color: #555; line-height: 1.5; }
 `;

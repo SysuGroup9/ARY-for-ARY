@@ -15,8 +15,13 @@ test("builds session summary evidence from a session and connection", () => {
     caProjectId: "codex_project_demo",
     caSessionId: "session_01",
     caType: "CODEX",
+    confidenceLevel: "high",
+    generatedFromEventIdsJson: JSON.stringify(["evt_01"]),
+    integrityStatus: "ok",
     messageCount: 42,
     registrationId: "reg_01",
+    reviewFlagJson: JSON.stringify([]),
+    sourceDigest: "digest_01",
     startedAt: new Date("2026-06-19T09:00:00Z"),
     tokenCost: 1200,
     toolCallCount: 8,
@@ -25,6 +30,11 @@ test("builds session summary evidence from a session and connection", () => {
   assert.equal(evidence.registrationId, "reg_01");
   assert.equal(evidence.type, "SESSION_SUMMARY");
   assert.equal(evidence.visibility, "INTERNAL");
+  assert.equal(evidence.integrityStatus, "ok");
+  assert.equal(evidence.confidenceLevel, "high");
+  assert.equal(evidence.sourceDigest, "digest_01");
+  assert.equal(evidence.generatedFromEventIdsJson, JSON.stringify(["evt_01"]));
+  assert.equal(evidence.reviewFlagJson, JSON.stringify([]));
   assert.match(evidence.summary, /42/);
   assert.match(evidence.sourceRefJson, /session_01/);
 });

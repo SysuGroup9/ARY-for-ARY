@@ -23,10 +23,12 @@ export async function listConsoleRacesForUser(input: {
   const races = await listRaces();
   const items: ConsoleRaceListItem[] = [];
 
-  if (hasRole(roles, "ORGANIZER")) {
+  if (hasRole(roles, "ORGANIZER") || hasRole(roles, "ADMIN")) {
     items.push(
       ...races
-        .filter((race: RaceListItem) => race.organizerId === input.userId)
+        .filter((race: RaceListItem) =>
+          hasRole(roles, "ADMIN") ? true : race.organizerId === input.userId,
+        )
         .map((race: RaceListItem) => {
           const slug = buildRaceSlug(race.id, race.title);
           return {
@@ -134,25 +136,88 @@ export async function listScreenConsoleRacesForUser(input: {
   });
 }
 
-export async function getConsoleRaceBySlug(raceSlug: string): Promise<{
+export async function getConsoleRaceEntriesBySlugForUser(input: {
+  raceSlug: string;
+  roles: readonly AppRole[];
+  userId: string;
+}): Promise<{
+  items: ConsoleRaceListItem[];
   race: RaceListItem;
   slug: string;
 } | null> {
-  const races = await listRaces();
-  const exactMatch = races.find(
-    (item: RaceListItem) => buildRaceSlug(item.id, item.title) === raceSlug,
+  const visibleRaces = await listConsoleRacesForUser({
+    roles: input.roles,
+    userId: input.userId,
+  });
+  const matchingItems = visibleRaces.filter(
+    (item) =>
+      item.slug === input.raceSlug ||
+      item.race.id === getRaceIdFromSlug(input.raceSlug),
   );
-  const race =
-    exactMatch ??
-    races.find((item: RaceListItem) => item.id === getRaceIdFromSlug(raceSlug));
 
-  if (!race) {
+  if (!matchingItems.length) {
     return null;
   }
 
   return {
-    race,
-    slug: buildRaceSlug(race.id, race.title),
+    items: matchingItems,
+    race: matchingItems[0]!.race,
+    slug: matchingItems[0]!.slug,
+  };
+}
+
+export async function getConsoleRaceBySlugForAccess(input: {
+  access: ConsoleRaceAccess;
+  raceSlug: string;
+  roles: readonly AppRole[];
+  userId: string;
+}): Promise<{
+  race: RaceListItem;
+  slug: string;
+} | null> {
+  const entry = await getConsoleRaceEntriesBySlugForUser({
+    raceSlug: input.raceSlug,
+    roles: input.roles,
+    userId: input.userId,
+  });
+  const scopedItem = entry?.items.find((item) => item.access === input.access);
+
+  if (!entry || !scopedItem) {
+    return null;
+  }
+
+  return {
+    race: scopedItem.race,
+    slug: scopedItem.slug,
+  };
+}
+
+export async function getScreenConsoleRaceBySlugForUser(input: {
+  raceSlug: string;
+  roles: readonly AppRole[];
+  userId: string;
+}): Promise<{
+  race: RaceListItem;
+  slug: string;
+} | null> {
+  const visibleRaces = await listScreenConsoleRacesForUser({
+    roles: input.roles,
+    userId: input.userId,
+  });
+  const exactMatch = visibleRaces.find((item) => item.slug === input.raceSlug);
+  const scopedRace =
+    exactMatch ??
+    visibleRaces.find(
+      (item) => item.race.id === getRaceIdFromSlug(input.raceSlug),
+    );
+
+  if (!scopedRace) {
+    return null;
+  }
+
+  return {
+    race: scopedRace.race,
+    slug: scopedRace.slug,
   };
 }
 

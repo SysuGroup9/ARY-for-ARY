@@ -169,12 +169,10 @@ export function buildPublicSiteModel<T extends RaceSummaryLike>(
       currentProgressPercent: getCurrentProgressPercent(race),
     }));
 
-  const liveRaces = featuredRaces.filter(
-    (race) => race.phase === "active" || race.phase === "frozen",
-  );
+  const liveRaces = featuredRaces.filter((race) => isLiveHallRacePhase(race.phase));
 
   const latestResults = [...races]
-    .filter((race) => race.phase === "finished")
+    .filter((race) => isPastRacePhase(race.phase))
     .sort((a, b) => b.raceEnd.getTime() - a.raceEnd.getTime())
     .map((race) => ({
       id: race.id,
@@ -183,7 +181,7 @@ export function buildPublicSiteModel<T extends RaceSummaryLike>(
       summary: race.summary,
     }));
 
-  const finishedRaces = races.filter((race) => race.phase === "finished");
+  const finishedRaces = races.filter((race) => isPastRacePhase(race.phase));
   const pastRaces = finishedRaces.map((race) => ({
     id: race.id,
     slug: buildRaceSlug(race.id, race.title),
@@ -334,14 +332,22 @@ export function getRacePrimaryCta(
   },
 ): { href: string; label: string } {
   switch (race.phase) {
+    case "published":
+      return { href: `/races/${race.slug}`, label: "查看赛题" };
     case "registration":
       return { href: `/races/${race.slug}/register`, label: "立即报名" };
     case "preparation":
       return { href: `/races/${race.slug}`, label: "查看赛题" };
+    case "running":
     case "active":
     case "frozen":
       return { href: `/races/${race.slug}/live`, label: "进入实况大厅" };
+    case "submitting":
+    case "judging":
+      return { href: `/races/${race.slug}/works`, label: "查看作品" };
     case "finished":
+    case "completed":
+    case "archived":
       return { href: `/races/${race.slug}/results`, label: "查看赛果" };
     default:
       return { href: `/races/${race.slug}`, label: "进入赛事页" };
@@ -352,11 +358,20 @@ export function groupPublicRacesByPhase<T extends { phase: string }>(
   races: readonly T[],
 ) {
   return {
-    active: races.filter((race) => race.phase === "active"),
-    frozen: races.filter((race) => race.phase === "frozen"),
+    active: races.filter(
+      (race) => race.phase === "active" || race.phase === "running",
+    ),
+    frozen: races.filter(
+      (race) =>
+        race.phase === "frozen" ||
+        race.phase === "submitting" ||
+        race.phase === "judging",
+    ),
     registration: races.filter((race) => race.phase === "registration"),
-    preparation: races.filter((race) => race.phase === "preparation"),
-    finished: races.filter((race) => race.phase === "finished"),
+    preparation: races.filter(
+      (race) => race.phase === "preparation" || race.phase === "published",
+    ),
+    finished: races.filter((race) => isPastRacePhase(race.phase)),
   };
 }
 
@@ -376,17 +391,31 @@ export function sortFeaturedWorks<T extends { score: number; title: string }>(
 
 function phasePriority(phase: string): number {
   switch (phase) {
+    case "running":
     case "active":
       return 0;
+    case "submitting":
+    case "judging":
     case "frozen":
       return 1;
     case "registration":
       return 2;
+    case "published":
     case "preparation":
       return 3;
     case "finished":
+    case "completed":
+    case "archived":
       return 4;
     default:
       return 5;
   }
+}
+
+function isPastRacePhase(phase: string) {
+  return phase === "finished" || phase === "completed" || phase === "archived";
+}
+
+function isLiveHallRacePhase(phase: string) {
+  return phase === "active" || phase === "frozen" || phase === "running";
 }

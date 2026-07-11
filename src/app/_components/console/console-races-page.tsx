@@ -30,7 +30,7 @@ export function ConsoleRacesPageView({
         {races.length === 0 ? (
           <Panel title="暂无工作台" eyebrow="空状态">
             <p className="muted">
-              当前账号下暂时没有可进入的主办方赛事、评委赛事或已加入赛事。
+              当前账号下暂时没有可进入的赛事工作台。
             </p>
           </Panel>
         ) : (

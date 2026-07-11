@@ -1,4 +1,7 @@
-import { getPublishedReviewSummaryForRace, listPublishedRiderReportsForUser } from "@/lib/services/reports";
+import {
+  getPublishedReviewSummaryForRace,
+  listPrivateRiderReportsForUserInRace,
+} from "@/lib/services/reports";
 
 export async function buildRiderConsoleReportModel(input: {
   raceId: string;
@@ -6,7 +9,10 @@ export async function buildRiderConsoleReportModel(input: {
 }) {
   const [reviewSummary, riderReports] = await Promise.all([
     getPublishedReviewSummaryForRace(input.raceId),
-    listPublishedRiderReportsForUser(input.userId),
+    listPrivateRiderReportsForUserInRace({
+      raceId: input.raceId,
+      userId: input.userId,
+    }),
   ]);
 
   return {

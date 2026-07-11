@@ -5,8 +5,18 @@ import { useRef, useState, type ChangeEvent } from "react";
 interface Props {
   action: (formData: FormData) => void | Promise<void>;
   raceId: string;
+  raceSlug?: string;
   returnTo?: string;
+  saveDraftAction?: (formData: FormData) => void | Promise<void>;
   submitLabel?: string;
+  workDefaults?: {
+    demoUrl?: string;
+    repoUrl?: string;
+    techNotes?: string;
+    workSummary?: string;
+    workTitle?: string;
+    videoUrl?: string;
+  };
 }
 
 const defaultCode =
@@ -15,8 +25,11 @@ const defaultCode =
 export default function SubmissionFormClient({
   action,
   raceId,
+  raceSlug,
   returnTo,
+  saveDraftAction,
   submitLabel = "提交代码并进入待评测队列",
+  workDefaults,
 }: Props) {
   const [codeLabel, setCodeLabel] = useState("solution.ts");
   const [codeContent, setCodeContent] = useState(defaultCode);
@@ -37,7 +50,45 @@ export default function SubmissionFormClient({
   return (
     <form action={action} className="form-grid">
       <input name="raceId" type="hidden" value={raceId} />
+      {raceSlug ? <input name="raceSlug" type="hidden" value={raceSlug} /> : null}
       {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
+      <label>
+        作品名称
+        <input
+          defaultValue={workDefaults?.workTitle ?? ""}
+          name="workTitle"
+          required
+        />
+      </label>
+      <label className="full">
+        作品简介
+        <textarea
+          defaultValue={workDefaults?.workSummary ?? ""}
+          name="workSummary"
+          required
+          rows={3}
+        />
+      </label>
+      <label>
+        Demo URL
+        <input defaultValue={workDefaults?.demoUrl ?? ""} name="demoUrl" />
+      </label>
+      <label>
+        代码仓库 URL
+        <input defaultValue={workDefaults?.repoUrl ?? ""} name="repoUrl" />
+      </label>
+      <label>
+        演示视频 URL
+        <input defaultValue={workDefaults?.videoUrl ?? ""} name="videoUrl" />
+      </label>
+      <label className="full">
+        技术说明
+        <textarea
+          defaultValue={workDefaults?.techNotes ?? ""}
+          name="techNotes"
+          rows={4}
+        />
+      </label>
       <div className="full local-picker-grid">
         <div className="picker-card">
           <strong>本地代码文件</strong>
@@ -81,7 +132,14 @@ export default function SubmissionFormClient({
         代码内容
         <textarea name="codeContent" required rows={8} value={codeContent} onChange={(event) => setCodeContent(event.target.value)} />
       </label>
-      <button type="submit">{submitLabel}</button>
+      <div className="button-row-inline">
+        {saveDraftAction ? (
+          <button formAction={saveDraftAction} formNoValidate type="submit">
+            保存作品草稿
+          </button>
+        ) : null}
+        <button type="submit">{submitLabel}</button>
+      </div>
     </form>
   );
 }

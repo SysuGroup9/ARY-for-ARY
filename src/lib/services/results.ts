@@ -1,11 +1,11 @@
 import { buildWorkSlug } from "@/lib/public-site";
-import { listAwardsForRace } from "@/lib/services/awards";
+import { listPublishedAwardsForRace } from "@/lib/services/awards";
 import { listJudgingRecordsForRace } from "@/lib/services/judging";
 
 export async function buildPublicResultsModel(raceId: string) {
   const [awards, judgingRecords] = await Promise.all([
-    listAwardsForRace(raceId),
-    listJudgingRecordsForRace(raceId),
+    listPublishedAwardsForRace(raceId),
+    listJudgingRecordsForRace(raceId, { submittedOnly: true }),
   ]);
 
   const awardsWithWorkLinks = awards.map((award) => ({

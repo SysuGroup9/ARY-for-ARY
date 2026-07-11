@@ -1,9 +1,10 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getGitHubOAuthCredentials, isGitHubOAuthConfigured } from "@/lib/auth-entry";
 import { prisma } from "@/lib/prisma";
 import { createSession, hashPassword } from "@/lib/auth";
+import { getPostAuthRedirectTarget } from "@/lib/profile-completion";
 import {
-  getDefaultActiveRole,
   parseRolesJson,
   serializeRoles,
   type AppRole,
@@ -34,6 +35,24 @@ const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
 const GITHUB_USER_URL = "https://api.github.com/user";
 const defaultRoles: AppRole[] = ["RIDER"];
 
+export type GitHubOAuthErrorCode =
+  | "github_callback_failed"
+  | "github_exchange_failed"
+  | "github_not_configured"
+  | "github_profile_failed"
+  | "github_start_failed"
+  | "github_state_mismatch";
+
+export class GitHubOAuthError extends Error {
+  code: GitHubOAuthErrorCode;
+
+  constructor(code: GitHubOAuthErrorCode, message?: string) {
+    super(message ?? code);
+    this.name = "GitHubOAuthError";
+    this.code = code;
+  }
+}
+
 type GitHubUserProfile = {
   id: number;
   login: string;
@@ -43,6 +62,17 @@ type GitHubUserProfile = {
 };
 
 type EnvMap = Record<string, string | undefined>;
+
+export function resolveGitHubOAuthErrorCode(
+  error: unknown,
+  phase: "callback" | "start",
+): GitHubOAuthErrorCode {
+  if (error instanceof GitHubOAuthError) {
+    return error.code;
+  }
+
+  return phase === "start" ? "github_start_failed" : "github_callback_failed";
+}
 
 function getEnv(): EnvMap {
   const scope = globalThis as typeof globalThis & {
@@ -101,7 +131,10 @@ function decodeState(raw: string): { nonce: string; returnTo: string } {
   };
 
   if (typeof parsed.nonce !== "string" || typeof parsed.returnTo !== "string") {
-    throw new Error("Invalid GitHub OAuth state payload");
+    throw new GitHubOAuthError(
+      "github_state_mismatch",
+      "Invalid GitHub OAuth state payload",
+    );
   }
 
   return {
@@ -126,6 +159,14 @@ function buildUsernameCandidates(login: string): string[] {
 }
 
 async function exchangeCodeForAccessToken(code: string): Promise<string> {
+  const credentials = getGitHubOAuthCredentials();
+  if (!credentials) {
+    throw new GitHubOAuthError(
+      "github_not_configured",
+      "GitHub OAuth is not configured",
+    );
+  }
+
   const response = await proxyFetch(GITHUB_TOKEN_URL, {
     method: "POST",
     headers: {
@@ -134,8 +175,8 @@ async function exchangeCodeForAccessToken(code: string): Promise<string> {
       "User-Agent": "ARY-for-ARY",
     },
     body: JSON.stringify({
-      client_id: getRequiredEnv("GITHUB_CLIENT_ID"),
-      client_secret: getRequiredEnv("GITHUB_CLIENT_SECRET"),
+      client_id: credentials.clientId,
+      client_secret: credentials.clientSecret,
       code,
       redirect_uri: getGitHubCallbackUrl(),
     }),
@@ -143,7 +184,10 @@ async function exchangeCodeForAccessToken(code: string): Promise<string> {
   });
 
   if (!response.ok) {
-    throw new Error(`GitHub token exchange failed: ${response.status}`);
+    throw new GitHubOAuthError(
+      "github_exchange_failed",
+      `GitHub token exchange failed: ${response.status}`,
+    );
   }
 
   const payload = (await response.json()) as {
@@ -153,7 +197,10 @@ async function exchangeCodeForAccessToken(code: string): Promise<string> {
   };
 
   if (!payload.access_token) {
-    throw new Error(payload.error_description ?? payload.error ?? "GitHub token missing");
+    throw new GitHubOAuthError(
+      "github_exchange_failed",
+      payload.error_description ?? payload.error ?? "GitHub token missing",
+    );
   }
 
   return payload.access_token;
@@ -171,7 +218,10 @@ async function fetchGitHubProfile(accessToken: string): Promise<GitHubUserProfil
   });
 
   if (!response.ok) {
-    throw new Error(`GitHub user request failed: ${response.status}`);
+    throw new GitHubOAuthError(
+      "github_profile_failed",
+      `GitHub user request failed: ${response.status}`,
+    );
   }
 
   return (await response.json()) as GitHubUserProfile;
@@ -234,14 +284,14 @@ export async function startGitHubOAuth(returnTo: string): Promise<void> {
     secure: getEnv().NODE_ENV === "production",
   });
 
-  const clientId = (getEnv().GITHUB_CLIENT_ID ?? "").trim();
-  if (!clientId || !(getEnv().GITHUB_CLIENT_SECRET ?? "").trim()) {
+  const credentials = getGitHubOAuthCredentials();
+  if (!isGitHubOAuthConfigured() || !credentials) {
     const query = new URLSearchParams({ oauthError: "github_not_configured" }).toString();
     redirect(`/login?${query}`);
   }
 
   const authorizeUrl = new URL(GITHUB_AUTHORIZE_URL);
-  authorizeUrl.searchParams.set("client_id", clientId);
+  authorizeUrl.searchParams.set("client_id", credentials.clientId);
   authorizeUrl.searchParams.set("redirect_uri", getGitHubCallbackUrl());
   authorizeUrl.searchParams.set("scope", "read:user user:email");
   authorizeUrl.searchParams.set("state", state);
@@ -258,7 +308,10 @@ export async function finishGitHubOAuth(input: {
   store.delete(GITHUB_STATE_COOKIE);
 
   if (!storedState || storedState !== input.state) {
-    throw new Error("GitHub OAuth state mismatch");
+    throw new GitHubOAuthError(
+      "github_state_mismatch",
+      "GitHub OAuth state mismatch",
+    );
   }
 
   const decodedState = decodeState(input.state);
@@ -269,10 +322,12 @@ export async function finishGitHubOAuth(input: {
 
   await createSession({
     id: user.id,
-    role: getDefaultActiveRole(roles),
     roles,
     username: user.username,
   });
 
-  return normalizeReturnTo(decodedState.returnTo);
+  return getPostAuthRedirectTarget({
+    profileCompleted: user.profileCompleted,
+    returnTo: normalizeReturnTo(decodedState.returnTo),
+  });
 }

@@ -3,9 +3,9 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { buildProfileCompletionHref } from "@/lib/profile-completion";
 import type { AppRole } from "@/lib/user-roles";
 import {
-  getDefaultActiveRole,
   hasRole,
   normalizeRoles,
   parseRolesJson,
@@ -17,9 +17,18 @@ const encoder = new TextEncoder();
 
 export interface SessionUser {
   id: string;
-  role: AppRole;
+  profileCompleted?: boolean;
+  profileName?: string;
+  profileOrgLabel?: string;
   roles: AppRole[];
   username: string;
+}
+
+export interface DatabaseSessionUser extends SessionUser {
+  githubAccount: null | string;
+  profileCompleted: boolean;
+  profileName: string;
+  profileOrgLabel: string;
 }
 
 interface SessionPayload {
@@ -79,7 +88,6 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     const roles = normalizeRoles(payload.roles);
     return {
       id: payload.sub,
-      role: getDefaultActiveRole(roles),
       roles,
       username: payload.username,
     };
@@ -96,15 +104,38 @@ export async function requireSession(): Promise<SessionUser> {
   return user;
 }
 
-export async function requireRole(role: AppRole): Promise<SessionUser> {
-  const user = await requireSession();
+export async function requireRole(role: AppRole): Promise<DatabaseSessionUser> {
+  const user = await loadDatabaseUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (!user.profileCompleted) {
+    redirect("/profile");
+  }
+
   if (!hasRole(user.roles, role)) {
     redirect("/");
   }
   return user;
 }
 
-export async function loadDatabaseUser(): Promise<SessionUser | null> {
+export async function requireConsoleUser(
+  returnTo: string,
+): Promise<DatabaseSessionUser> {
+  const user = await loadDatabaseUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (!user.profileCompleted) {
+    redirect(buildProfileCompletionHref(returnTo));
+  }
+
+  return user;
+}
+
+export async function loadDatabaseUser(): Promise<DatabaseSessionUser | null> {
   const session = await getSessionUser();
   if (!session) {
     return null;
@@ -123,8 +154,11 @@ export async function loadDatabaseUser(): Promise<SessionUser | null> {
   const roles = parseRolesJson(user.rolesJson);
 
   return {
+    githubAccount: user.githubAccount,
     id: user.id,
-    role: getDefaultActiveRole(roles),
+    profileCompleted: user.profileCompleted,
+    profileName: user.profileName,
+    profileOrgLabel: user.profileOrgLabel,
     roles,
     username: user.username,
   };

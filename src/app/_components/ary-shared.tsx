@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import CreateRaceFormClient from "@/app/_components/create-race-form-client";
 import { getDemoCredentials } from "@/lib/demo-credentials";
 
@@ -8,13 +8,15 @@ export function Panel({
   eyebrow,
   title,
   children,
+  style,
 }: {
   eyebrow: string;
   title: string;
   children: ReactNode;
+  style?: CSSProperties;
 }) {
   return (
-    <section className="panel">
+    <section className="panel" style={style}>
       <p className="eyebrow">{eyebrow}</p>
       <h2>{title}</h2>
       <div className="panel__body">{children}</div>
@@ -38,6 +40,21 @@ export function Card({
       {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
       {title ? <h2>{title}</h2> : null}
       <div style={{ marginTop: title ? 14 : 0 }}>{children}</div>
+    </div>
+  );
+}
+
+export function ErrorNotice({
+  message,
+  title,
+}: {
+  message: string;
+  title: string;
+}) {
+  return (
+    <div aria-live="polite" className="public-link-card error-notice" role="alert">
+      <strong>{title}</strong>
+      <span>{message}</span>
     </div>
   );
 }
@@ -103,18 +120,29 @@ export function HeroSection({
 }
 
 export function AuthTabsPanel({
+  defaultTab = "login",
+  feedback,
   githubAction,
   loginAction,
   registerAction,
+  localFallbackDescription,
+  localFallbackTitle,
   returnTo,
+  showLocalFallback = true,
 }: {
+  defaultTab?: "login" | "register";
+  feedback?: { message: string; title: string } | null;
   githubAction?: FormAction;
-  loginAction: FormAction;
-  registerAction: FormAction;
+  loginAction?: FormAction;
+  registerAction?: FormAction;
+  localFallbackDescription?: string;
+  localFallbackTitle?: string;
   returnTo?: string;
+  showLocalFallback?: boolean;
 }) {
   return (
     <div className="auth-tabs">
+      {feedback ? <ErrorNotice message={feedback.message} title={feedback.title} /> : null}
       {githubAction ? (
         <form action={githubAction} className="form-grid auth-oauth-form">
           {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
@@ -122,19 +150,30 @@ export function AuthTabsPanel({
             使用 GitHub 登录
           </button>
           <p className="muted">
-            这是符合 GRS003 要求的正式身份入口。下方本地账号表单保留为开发与演示兜底。
+            这是符合 GRS003 要求的正式身份入口。
           </p>
         </form>
       ) : null}
+      {!showLocalFallback ? (
+        <div className="public-link-card" style={{padding:"16px 18px"}}>
+          <strong>{localFallbackTitle ?? "本地账号已关闭"}</strong>
+          <span className="muted">
+            {localFallbackDescription ?? "当前环境不再开放本地账号登录 / 注册，请使用 GitHub 登录继续。"}
+          </span>
+        </div>
+      ) : null}
+      {showLocalFallback && loginAction && registerAction ? (
+        <>
       <input
         className="auth-tabs__toggle"
-        defaultChecked
+        defaultChecked={defaultTab !== "register"}
         id="auth-tab-login"
         name="auth-tab"
         type="radio"
       />
       <input
         className="auth-tabs__toggle"
+        defaultChecked={defaultTab === "register"}
         id="auth-tab-register"
         name="auth-tab"
         type="radio"
@@ -168,6 +207,8 @@ export function AuthTabsPanel({
           title="创建骑手账号"
         />
       </div>
+        </>
+      ) : null}
     </div>
   );
 }
@@ -193,8 +234,18 @@ export function SeedAccountsPanel() {
   );
 }
 
-export function CreateRaceForm({ action }: { action: FormAction }) {
-  return <CreateRaceFormClient action={action} />;
+export function CreateRaceForm(input: {
+  action: FormAction;
+  organizerOptions?: Array<{ id: string; label: string }>;
+  returnTo?: string;
+}) {
+  return (
+    <CreateRaceFormClient
+      action={input.action}
+      organizerOptions={input.organizerOptions ?? []}
+      returnTo={input.returnTo}
+    />
+  );
 }
 
 function AuthForm({
@@ -340,6 +391,13 @@ export const aryStyles = `
   }
   .public-card:hover { box-shadow: var(--shadow-card); transform: translateY(-2px); }
   .public-link-card:hover { box-shadow: var(--shadow-subtle); }
+  .error-notice {
+    background: rgba(220, 38, 38, 0.08);
+    border: 1px solid rgba(220, 38, 38, 0.22);
+    box-shadow: none;
+  }
+  .error-notice strong { color: #991b1b; }
+  .error-notice span { color: #7f1d1d; }
 
   .public-card__top,
   .race-card__top,

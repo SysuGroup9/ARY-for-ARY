@@ -6,6 +6,7 @@ import type { RaceListItem } from "@/lib/services/races";
 
 function buildRace(overrides?: Partial<RaceListItem>): RaceListItem {
   return {
+    announcements: [],
     id: "race_active",
     title: "Active Race",
     phase: "active",
@@ -111,7 +112,8 @@ test("uses Chinese live-hall headings and actions for public viewers", () => {
   const html = renderToStaticMarkup(
     <LiveHallView
       race={buildRace()}
-      jumbotronPreview={{ snapshot: null, trackProfile: null }}
+      raceSlug="race_active--active-race"
+      jumbotronPreview={{ snapshot: null, source: "static", trackProfile: null }}
     />,
   );
 
@@ -124,4 +126,66 @@ test("uses Chinese live-hall headings and actions for public viewers", () => {
   assert.doesNotMatch(html, /Process Summary/);
   assert.doesNotMatch(html, /Open Jumbotron/);
   assert.doesNotMatch(html, /Open Screen Console/);
+});
+
+test("live hall shows a static fallback notice and public links when no stable projection snapshot is available", () => {
+  const html = renderToStaticMarkup(
+    <LiveHallView
+      race={buildRace({
+        leaderboardEntries: [
+          {
+            id: "lb_1",
+            rank: 1,
+            totalScore: 92,
+            team: { id: "team_1", name: "Alpha Work" },
+          } as RaceListItem["leaderboardEntries"][number],
+        ],
+        summary: "当前先展示静态公告。",
+      })}
+      raceSlug="race_active--active-race"
+      jumbotronPreview={{
+        fallbackReason: "projection_rebuild_failed",
+        snapshot: null,
+        source: "static",
+        trackProfile: null,
+      }}
+    />,
+  );
+
+  assert.match(html, /静态展示 fallback/);
+  assert.match(html, /Projection 当前不可用/);
+  assert.match(html, /查看作品/);
+  assert.match(html, /查看赛果/);
+  assert.match(html, /projection_rebuild_failed/);
+});
+
+test("live hall surfaces the latest published announcement card", () => {
+  const html = renderToStaticMarkup(
+    <LiveHallView
+      race={buildRace({
+        announcements: [
+          {
+            body: "Older announcement body.",
+            id: "announcement_old",
+            publishedAt: new Date("2026-07-11T11:00:00Z"),
+            title: "Older Notice",
+            visibility: "PUBLIC",
+          },
+          {
+            body: "Latest announcement body.",
+            id: "announcement_latest",
+            publishedAt: new Date("2026-07-11T12:00:00Z"),
+            title: "Latest Notice",
+            visibility: "PUBLIC",
+          },
+        ] as never,
+      })}
+      raceSlug="race_active--active-race"
+    />,
+  );
+
+  assert.match(html, /最近公告/);
+  assert.match(html, /Latest Notice/);
+  assert.match(html, /Latest announcement body\./);
+  assert.doesNotMatch(html, /Older announcement body\./);
 });

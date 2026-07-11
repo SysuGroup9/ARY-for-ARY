@@ -16,6 +16,7 @@ export const organizerConsoleSections = [
   "works",
   "judges",
   "judging",
+  "announcements",
   "awards",
   "reports",
   "maintenance",

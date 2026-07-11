@@ -8,7 +8,7 @@ export function RiderProfilePageView({
   publicWorkLinks,
   raceCount,
   raceRecords,
-  reportSummaries,
+  reportSummaries: _reportSummaries,
   skillTags,
   workCount,
 }: {
@@ -45,6 +45,10 @@ export function RiderProfilePageView({
   skillTags: string[];
   workCount: number;
 }) {
+  const publishedReviewSummaries = raceRecords
+    .filter((record) => record.comment)
+    .map((record) => record.comment as string);
+
   return (
     <div className="stack">
       <div className="card">
@@ -55,12 +59,27 @@ export function RiderProfilePageView({
       <div className="card">
         <p className="eyebrow">公开资产</p>
         <h2>能力概览</h2>
-        <div className="detail-grid" style={{marginTop:12}}>
-          <div><dt>学校 / 组织</dt><dd>{orgLabel}</dd></div>
-          <div><dt>代表赛事</dt><dd>{featuredRaceTitle ?? "待补充"}</dd></div>
-          <div><dt>代表作品</dt><dd>{featuredWorkTitle ?? "待补充"}</dd></div>
-          <div><dt>赛事数量</dt><dd>{raceCount}</dd></div>
-          <div><dt>公开作品数</dt><dd>{workCount}</dd></div>
+        <div className="detail-grid" style={{ marginTop: 12 }}>
+          <div>
+            <dt>学校 / 组织</dt>
+            <dd>{orgLabel}</dd>
+          </div>
+          <div>
+            <dt>代表赛事</dt>
+            <dd>{featuredRaceTitle ?? "待补全"}</dd>
+          </div>
+          <div>
+            <dt>代表作品</dt>
+            <dd>{featuredWorkTitle ?? "待补全"}</dd>
+          </div>
+          <div>
+            <dt>赛事数量</dt>
+            <dd>{raceCount}</dd>
+          </div>
+          <div>
+            <dt>公开作品数</dt>
+            <dd>{workCount}</dd>
+          </div>
         </div>
       </div>
 
@@ -68,7 +87,7 @@ export function RiderProfilePageView({
         <div className="card">
           <p className="eyebrow">骑行能力</p>
           <h2>能力标签</h2>
-          <div className="flex-row" style={{marginTop:8}}>
+          <div className="flex-row" style={{ marginTop: 8 }}>
             {skillTags.length ? (
               skillTags.map((tag) => (
                 <span className="file-chip" key={tag}>
@@ -84,10 +103,19 @@ export function RiderProfilePageView({
         <div className="card">
           <p className="eyebrow">表现摘要</p>
           <h2>成本 / 进度 / 风险</h2>
-          <div className="detail-grid" style={{marginTop:12}}>
-            <div><dt>总 Tokens</dt><dd>{performanceSummary.totalTokens}</dd></div>
-            <div><dt>平均进度</dt><dd>{performanceSummary.averageProgressPercent}%</dd></div>
-            <div><dt>风险数量</dt><dd>{performanceSummary.riskCount}</dd></div>
+          <div className="detail-grid" style={{ marginTop: 12 }}>
+            <div>
+              <dt>总 Tokens</dt>
+              <dd>{performanceSummary.totalTokens}</dd>
+            </div>
+            <div>
+              <dt>平均进度</dt>
+              <dd>{performanceSummary.averageProgressPercent}%</dd>
+            </div>
+            <div>
+              <dt>风险数量</dt>
+              <dd>{performanceSummary.riskCount}</dd>
+            </div>
           </div>
         </div>
       </div>
@@ -105,11 +133,11 @@ export function RiderProfilePageView({
               >
                 <strong>{record.raceTitle}</strong>
                 <span className="muted text-sm">阶段：{record.phase}</span>
-                <span className="text-sm">获奖名次：{record.awardScore ?? "待补充"}</span>
+                <span className="text-sm">获奖名次：{record.awardScore ?? "待补全"}</span>
                 <span className="muted text-sm">
                   奖项：{record.awardNames.length ? record.awardNames.join(", ") : "无"}
                 </span>
-                <span className="text-sm">作品：{record.workTitle ?? "待补充"}</span>
+                <span className="text-sm">作品：{record.workTitle ?? "待补全"}</span>
                 <span className="muted text-sm">证据数：{record.evidenceCount}</span>
               </a>
             ))}
@@ -117,25 +145,18 @@ export function RiderProfilePageView({
         </div>
 
         <div className="card">
-          <p className="eyebrow">报告与摘要</p>
-          <h2>已发布摘要</h2>
+          <p className="eyebrow">评审与摘要</p>
+          <h2>已发布评审摘要</h2>
           <div className="stack">
-            {reportSummaries.length ? (
-              reportSummaries.map((summary, index) => (
+            {publishedReviewSummaries.length ? (
+              publishedReviewSummaries.map((summary, index) => (
                 <blockquote className="comment-card" key={`${index}-${summary}`}>
                   {summary}
                 </blockquote>
               ))
             ) : (
-              <p className="muted text-sm">暂无已发布的骑手报告。</p>
+              <p className="muted text-sm">暂无已发布的评审摘要。</p>
             )}
-            {raceRecords
-              .filter((record) => record.comment)
-              .map((record) => (
-                <blockquote className="comment-card" key={`${record.raceId}-comment`}>
-                  {record.comment}
-                </blockquote>
-              ))}
           </div>
         </div>
       </div>

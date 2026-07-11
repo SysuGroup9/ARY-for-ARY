@@ -1,5 +1,5 @@
 import { buildRaceSlug } from "@/lib/public-site";
-import type { RaceListItem } from "@/lib/services/races";
+import type { PublicRaceListItem } from "@/lib/services/public-routes";
 
 export function ResultsPageView({
   race,
@@ -7,7 +7,7 @@ export function ResultsPageView({
   raceReport,
   ridingSkillHighlights,
 }: {
-  race: RaceListItem;
+  race: PublicRaceListItem;
   awards: Array<{
     awardName: string;
     decisionReason: string;

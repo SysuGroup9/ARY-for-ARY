@@ -5,9 +5,11 @@ import JumbotronClient from "@/app/jumbotron/[raceId]/JumbotronClient";
 import type { RaceSnapshot, TrackProfile } from "@/lib/jumbotron/track-runtime/types";
 
 interface JumbotronData {
+  fallbackReason?: null | string;
   raceId: string;
   raceTitle: string;
   snapshot: RaceSnapshot;
+  source: "live" | "stable";
   trackProfile: TrackProfile;
 }
 
@@ -62,6 +64,9 @@ export default function JumbotronBanner({ initialIndex = 0, items }: Props) {
           ))}
         </div>
         <div className="jt-banner-controls">
+          {item.source === "stable" ? (
+            <span className="jt-banner-fallback">稳定快照 fallback</span>
+          ) : null}
           <button onClick={prev} title="上一个">◀</button>
           <button onClick={() => setIsPaused((value) => !value)} title={isPaused ? "恢复自动轮播" : "暂停并锁定当前比赛"}>
             {isPaused ? "▶ 自动" : "⏸ 暂停"}
@@ -138,6 +143,15 @@ const bannerStyles = `
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.jt-banner-fallback {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(195,78,54,0.12);
+  color: #c34e36;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .jt-banner-controls button {

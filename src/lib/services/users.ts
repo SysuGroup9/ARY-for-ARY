@@ -1,15 +1,24 @@
 import { prisma } from "@/lib/prisma";
 import { createSession, hashPassword, verifyPassword } from "@/lib/auth";
+import { isLocalAuthFallbackEnabled } from "@/lib/auth-entry";
+import { EntryFeedbackError } from "@/lib/entry-feedback";
 import type { AppRole } from "@/lib/user-roles";
 import {
-  getDefaultActiveRole,
   hasRole,
   parseRolesJson,
   serializeRoles,
 } from "@/lib/user-roles";
-import { loginSchema, registerSchema } from "@/lib/validation";
+import {
+  loginSchema,
+  profileCompletionSchema,
+  registerSchema,
+} from "@/lib/validation";
 
 export async function registerUser(formData: FormData) {
+  if (!isLocalAuthFallbackEnabled()) {
+    throw new EntryFeedbackError("local_auth_disabled");
+  }
+
   const parsed = registerSchema.parse({
     username: formData.get("username"),
     password: formData.get("password"),
@@ -22,7 +31,7 @@ export async function registerUser(formData: FormData) {
   });
 
   if (existing) {
-    throw new Error("鐢ㄦ埛鍚嶅凡瀛樺湪");
+    throw new EntryFeedbackError("username_taken");
   }
 
   const roles: AppRole[] = ["RIDER"];
@@ -37,7 +46,6 @@ export async function registerUser(formData: FormData) {
 
   await createSession({
     id: user.id,
-    role: getDefaultActiveRole(roles),
     roles,
     username: user.username,
   });
@@ -46,6 +54,10 @@ export async function registerUser(formData: FormData) {
 }
 
 export async function loginUser(formData: FormData) {
+  if (!isLocalAuthFallbackEnabled()) {
+    throw new EntryFeedbackError("local_auth_disabled");
+  }
+
   const parsed = loginSchema.parse({
     username: formData.get("username"),
     password: formData.get("password"),
@@ -58,19 +70,18 @@ export async function loginUser(formData: FormData) {
   });
 
   if (!user) {
-    throw new Error("鐢ㄦ埛鍚嶆垨瀵嗙爜閿欒");
+    throw new EntryFeedbackError("invalid_credentials");
   }
 
   const valid = await verifyPassword(parsed.password, user.passwordHash);
   if (!valid) {
-    throw new Error("鐢ㄦ埛鍚嶆垨瀵嗙爜閿欒");
+    throw new EntryFeedbackError("invalid_credentials");
   }
 
   const roles = parseRolesJson(user.rolesJson);
 
   await createSession({
     id: user.id,
-    role: getDefaultActiveRole(roles),
     roles,
     username: user.username,
   });
@@ -108,6 +119,28 @@ export async function updateUserRoles(input: {
     },
     data: {
       rolesJson: serializeRoles(roles),
+    },
+  });
+}
+
+export async function completeUserProfile(input: {
+  profileName: string;
+  profileOrgLabel: string;
+  userId: string;
+}) {
+  const parsed = profileCompletionSchema.parse({
+    profileName: input.profileName,
+    profileOrgLabel: input.profileOrgLabel,
+  });
+
+  return prisma.user.update({
+    where: {
+      id: input.userId,
+    },
+    data: {
+      profileCompleted: true,
+      profileName: parsed.profileName,
+      profileOrgLabel: parsed.profileOrgLabel || "独立骑手",
     },
   });
 }
