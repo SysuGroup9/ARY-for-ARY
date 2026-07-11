@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { finishGitHubOAuth } from "@/lib/github-oauth";
+import {
+  finishGitHubOAuth,
+  resolveGitHubOAuthErrorCode,
+} from "@/lib/github-oauth";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -20,7 +23,11 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL(returnTo, request.url));
   } catch (err) {
     console.error("GitHub OAuth callback failed:", err);
-    const msg = err instanceof Error ? err.message : "unknown";
-    return NextResponse.redirect(new URL(`/login?oauthError=github_callback_failed&detail=${encodeURIComponent(msg)}`, request.url));
+    return NextResponse.redirect(
+      new URL(
+        `/login?oauthError=${resolveGitHubOAuthErrorCode(err, "callback")}`,
+        request.url,
+      ),
+    );
   }
 }
