@@ -2,14 +2,14 @@
 
 ## 实施步骤
 
-- [x] 补设计文档
-- [x] 更新 console access helpers
-- [x] 更新 race list query 让 Admin 获得 organizer route 入口
-- [x] 调整 race console 空状态文案
-- [x] 补 Admin race console scope tests
-- [x] 跑聚焦验证
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
+✅ 补设计文档
+✅ 更新 console access helpers
+✅ 更新 race list query 让 Admin 获得 organizer route 入口
+✅ 调整 race console 空状态文案
+✅ 补 Admin race console scope tests
+✅ 跑聚焦验证
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
 
 ## 验证命令
 

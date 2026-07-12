@@ -2,17 +2,17 @@
 
 ## 实施步骤
 
-- [x] 盘点 organizer 剩余仍直接暴露异常的核心 action
-- [x] 扩展 `src/lib/action-feedback.ts`，加入 `organizer_settings / organizer_announcements / organizer_awards / organizer_reports`
-- [x] 给 settings 相关 action 补 `returnTo + buildActionFeedbackHref(...)`
-- [x] 给 announcements 相关 action 补 `returnTo + buildActionFeedbackHref(...)`
-- [x] 给 awards 相关 action 补 `returnTo + buildActionFeedbackHref(...)`
-- [x] 给 reports 相关 action 补 `returnTo + buildActionFeedbackHref(...)`
-- [x] 给 organizer console 相关表单补 `raceSlug + returnTo`
-- [x] 更新 `src/app/actions.return-to.test.ts`
-- [x] 跑 organizer/public/rider 聚焦回归
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
+✅ 盘点 organizer 剩余仍直接暴露异常的核心 action
+✅ 扩展 `src/lib/action-feedback.ts`，加入 `organizer_settings / organizer_announcements / organizer_awards / organizer_reports`
+✅ 给 settings 相关 action 补 `returnTo + buildActionFeedbackHref(...)`
+✅ 给 announcements 相关 action 补 `returnTo + buildActionFeedbackHref(...)`
+✅ 给 awards 相关 action 补 `returnTo + buildActionFeedbackHref(...)`
+✅ 给 reports 相关 action 补 `returnTo + buildActionFeedbackHref(...)`
+✅ 给 organizer console 相关表单补 `raceSlug + returnTo`
+✅ 更新 `src/app/actions.return-to.test.ts`
+✅ 跑 organizer/public/rider 聚焦回归
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
 
 ## 验证命令
 

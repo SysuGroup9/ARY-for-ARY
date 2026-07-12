@@ -1,6 +1,6 @@
 # GRS004 / P2-E 生产 Connector 强制签名策略 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`✅`) syntax for tracking.
 
 **Goal:** 在不修改签名协议的前提下，把远程 / 非本地 connector 默认收口到“必须登记 credential 并走签名链路”，同时保留 localhost demo 的 bearer-only 兼容。  
 **Architecture:** 新增最小 signature policy helper；在 handshake / signal / snapshot 运行时做统一 enforcement；调整测试把非签名目标的用例迁移到 localhost/manual 连接。  
@@ -40,7 +40,7 @@
 - Modify: `src/lib/services/ca-fetch-audit.test.ts`
 - Modify: `src/lib/services/ca-signature-verification.test.ts`
 
-- [ ] **Step 1: Add a failing helper test**
+✅ **Step 1: Add a failing helper test**
 
 Cover:
 
@@ -48,7 +48,7 @@ Cover:
 - localhost / 127.0.0.1 does not
 - `ingestionSource === CONNECTOR` requires production signature policy
 
-- [ ] **Step 2: Add failing service tests**
+✅ **Step 2: Add failing service tests**
 
 Cover:
 
@@ -57,7 +57,7 @@ Cover:
 - production signal without registered credential rejected
 - production snapshot without registered credential rejected
 
-- [ ] **Step 3: Run focused tests and confirm failure**
+✅ **Step 3: Run focused tests and confirm failure**
 
 Run:
 
@@ -72,26 +72,26 @@ Expected: FAIL before implementation.
 - Modify: `src/lib/services/ca-fetch.ts`
 - Modify: `src/lib/services/ca-ingestion.ts`
 
-- [ ] **Step 1: Add production signature policy helper**
+✅ **Step 1: Add production signature policy helper**
 
 Implement:
 
 - localhost detection
 - production connector detection based on existing fields
 
-- [ ] **Step 2: Enforce handshake policy**
+✅ **Step 2: Enforce handshake policy**
 
 When production policy applies and no credential is registered or provided:
 
 - reject with `credential_required`
 
-- [ ] **Step 3: Enforce signal policy**
+✅ **Step 3: Enforce signal policy**
 
 When production policy applies and no credential is registered:
 
 - reject with `credential_required`
 
-- [ ] **Step 4: Enforce snapshot policy**
+✅ **Step 4: Enforce snapshot policy**
 
 When production policy applies and no credential is registered:
 
@@ -104,7 +104,7 @@ When production policy applies and no credential is registered:
 - Modify: `src/lib/services/ca-fetch-integrity.test.ts`
 - Modify: `src/lib/services/ca-fetch-audit.test.ts`
 
-- [ ] **Step 1: Move integrity-focused tests onto localhost/manual connections**
+✅ **Step 1: Move integrity-focused tests onto localhost/manual connections**
 
 Keep those tests focused on:
 
@@ -124,7 +124,7 @@ without accidentally depending on production signature policy.
 - Test: `src/lib/services/ca-ingestion-integrity.test.ts`
 - Test: `src/lib/services/ca-fetch-integrity.test.ts`
 
-- [ ] **Step 1: Run focused verification**
+✅ **Step 1: Run focused verification**
 
 Run:
 
@@ -132,7 +132,7 @@ Run:
 
 Expected: PASS
 
-- [ ] **Step 2: Run production build**
+✅ **Step 2: Run production build**
 
 Run:
 
@@ -147,7 +147,7 @@ Expected: PASS
 - Modify: `docs/superpowers/specs/2026-07-10-grs004-p2e-production-signature-enforcement-design.md`
 - Modify: `grs004readme.md`
 
-- [ ] **Step 1: Update `status.md`**
+✅ **Step 1: Update `status.md`**
 
 Record:
 
@@ -155,14 +155,14 @@ Record:
 - production connector signature enforcement landed
 - localhost demo compatibility retained
 
-- [ ] **Step 2: Update the P2-E design doc**
+✅ **Step 2: Update the P2-E design doc**
 
 Append:
 
 - exact landed helper and service behavior
 - fresh verification commands
 
-- [ ] **Step 3: Update README and add a recovery snapshot**
+✅ **Step 3: Update README and add a recovery snapshot**
 
 Include:
 

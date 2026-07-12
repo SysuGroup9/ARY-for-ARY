@@ -10,43 +10,43 @@
 
 ## Task 1: TDD - Href 分发与 Billboard 组件
 
-- [ ] 先更新 `src/lib/services/screen-display.test.ts`
+✅ 先更新 `src/lib/services/screen-display.test.ts`
   - 补 `billboard / live / leaderboard / works` 的 href 断言
-- [ ] 新增失败测试 `src/app/_components/public/billboard-display.test.tsx`
-- [ ] 跑测试确认因功能缺失而失败
+✅ 新增失败测试 `src/app/_components/public/billboard-display.test.tsx`
+✅ 跑测试确认因功能缺失而失败
 
 ## Task 2: Billboard 视图与 Shell
 
-- [ ] 新增 `src/app/_components/public/screen-display-shell.tsx`
-- [ ] 新增 `src/app/_components/public/billboard-display.tsx`
-- [ ] 用现有 public-safe race / results 数据拼出最小信息板
-- [ ] 让 `billboard-display.test.tsx` 转绿
+✅ 新增 `src/app/_components/public/screen-display-shell.tsx`
+✅ 新增 `src/app/_components/public/billboard-display.tsx`
+✅ 用现有 public-safe race / results 数据拼出最小信息板
+✅ 让 `billboard-display.test.tsx` 转绿
 
 ## Task 3: Dedicated Screen Routes
 
-- [ ] 新增：
+✅ 新增：
   - `src/app/screen/[raceSlug]/billboard/page.tsx`
   - `src/app/screen/[raceSlug]/live/page.tsx`
   - `src/app/screen/[raceSlug]/leaderboard/page.tsx`
   - `src/app/screen/[raceSlug]/works/page.tsx`
-- [ ] `live / leaderboard / works` 复用现有视图组件，但外层套 `ScreenDisplayShell`
+✅ `live / leaderboard / works` 复用现有视图组件，但外层套 `ScreenDisplayShell`
 
 ## Task 4: Update ScreenDisplay Routing
 
-- [ ] 更新 `src/lib/services/screen-display.ts`
+✅ 更新 `src/lib/services/screen-display.ts`
   - `resolveScreenDisplayHref()` 指向新的 `screen/*` 模式页
-- [ ] 如有必要，最小更新 `src/app/_components/console/screen-console-page.tsx`
+✅ 如有必要，最小更新 `src/app/_components/console/screen-console-page.tsx`
   - 让当前公开播放入口显示新的模式页 URL
 
 ## Task 5: Verification + Docs
 
-- [ ] 跑聚焦测试：
+✅ 跑聚焦测试：
   - `node --import tsx --test src/lib/services/screen-display.test.ts src/app/_components/public/billboard-display.test.tsx src/app/_components/console/screen-console-controls.test.tsx`
-- [ ] 跑相关回归：
+✅ 跑相关回归：
   - `node --import tsx --test src/app/_components/public/announcement-display.test.tsx src/app/_components/public/live-hall.test.tsx src/app/_components/console/console-copy.test.tsx`
-- [ ] 跑构建：
+✅ 跑构建：
   - `npm run build`
-- [ ] 更新：
+✅ 更新：
   - `docs/superpowers/status.md`
   - `grs004readme.md`
 

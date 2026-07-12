@@ -8,33 +8,33 @@
 
 ### Task 1: 先跑现有 viewer-access 测试确认失败点
 
-- [ ] 运行：
+✅ 运行：
   - `node --import tsx --test src/lib/viewer-access.test.ts`
-- [ ] 记录当前与权限矩阵冲突的断言：
+✅ 记录当前与权限矩阵冲突的断言：
   - Organizer `canUseScreen`
   - Organizer `screen` section
   - Organizer `getConsoleScreenAccess()`
 
 ### Task 2: 更新测试到权限矩阵口径
 
-- [ ] 修改 `src/lib/viewer-access.test.ts`
-- [ ] 对齐：
+✅ 修改 `src/lib/viewer-access.test.ts`
+✅ 对齐：
   - Organizer 可使用 `Screen Console`
   - Organizer console home 包含 `screen`
   - Rider / Judge 不包含 `screen`
   - Admin 仍保留 `admin + screen`
-- [ ] 视情况补足组合角色断言
+✅ 视情况补足组合角色断言
 
 ### Task 3: 仅在测试暴露真实偏差时修改 helper
 
-- [ ] 如有必要，再修改 `src/lib/viewer-access.ts`
-- [ ] 若现有 helper 已符合文档，则不做实现改动
+✅ 如有必要，再修改 `src/lib/viewer-access.ts`
+✅ 若现有 helper 已符合文档，则不做实现改动
 
 ### Task 4: 验证与文档同步
 
-- [ ] 运行：
+✅ 运行：
   - `node --import tsx --test src/lib/viewer-access.test.ts`
-- [ ] 更新：
+✅ 更新：
   - `docs/superpowers/status.md`
 
 ## 验证命令

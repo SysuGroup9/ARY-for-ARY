@@ -2,19 +2,19 @@
 
 ## 实施步骤
 
-- [x] 核对 `docs/grs004` 中身份入口与正式用户体验面的要求
-- [x] 确认 `login / register / profile` 目前仍会直接暴露原始异常
-- [x] 补设计文档
-- [x] 新增统一错误码与跳转 helper `entry-feedback.ts`
-- [x] 将 `users.ts` 登录 / 注册错误改成结构化 `EntryFeedbackError`
-- [x] 为 `registerAction` / `loginAction` / `completeProfileAction` 补友好错误跳转
-- [x] 为 `/login` 补共享错误提示界面
-- [x] 为 `/profile` 补共享错误提示界面
-- [x] 新增 `app/error.tsx` 与 `app/global-error.tsx` 全局兜底
-- [x] 新增 / 更新回归测试
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
-- [x] 更新 `grs004readme.md`
+✅ 核对 `docs/grs004` 中身份入口与正式用户体验面的要求
+✅ 确认 `login / register / profile` 目前仍会直接暴露原始异常
+✅ 补设计文档
+✅ 新增统一错误码与跳转 helper `entry-feedback.ts`
+✅ 将 `users.ts` 登录 / 注册错误改成结构化 `EntryFeedbackError`
+✅ 为 `registerAction` / `loginAction` / `completeProfileAction` 补友好错误跳转
+✅ 为 `/login` 补共享错误提示界面
+✅ 为 `/profile` 补共享错误提示界面
+✅ 新增 `app/error.tsx` 与 `app/global-error.tsx` 全局兜底
+✅ 新增 / 更新回归测试
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
+✅ 更新 `grs004readme.md`
 
 ## 验证命令
 

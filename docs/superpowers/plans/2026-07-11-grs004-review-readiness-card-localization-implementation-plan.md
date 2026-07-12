@@ -2,15 +2,15 @@
 
 ## 实施步骤
 
-- [x] 确认 `ReviewReadinessCard` 是当前 Organizer / Rider / Judge 共用的风险提示组件
-- [x] 补设计文档
-- [x] 新增组件级 regression test
-- [x] 收口卡片标签、状态、CA 接入状态和严重度到中文显示
-- [x] 更新 Judge / Organizer focused tests
-- [x] 回归 Rider focused tests
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
-- [x] 更新 `grs004readme.md`
+✅ 确认 `ReviewReadinessCard` 是当前 Organizer / Rider / Judge 共用的风险提示组件
+✅ 补设计文档
+✅ 新增组件级 regression test
+✅ 收口卡片标签、状态、CA 接入状态和严重度到中文显示
+✅ 更新 Judge / Organizer focused tests
+✅ 回归 Rider focused tests
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
+✅ 更新 `grs004readme.md`
 
 ## 验证命令
 

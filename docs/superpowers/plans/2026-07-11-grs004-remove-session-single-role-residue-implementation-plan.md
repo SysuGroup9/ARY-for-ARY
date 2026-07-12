@@ -2,16 +2,16 @@
 
 ## 实施步骤
 
-- [x] 核对 `docs/grs004` 中的多角色集合语义与当前 session 残留
-- [x] 补设计文档
-- [x] 新增 session roles-only 守护测试
-- [x] 移除 `SessionUser` / `DatabaseSessionUser` 的单值 `role`
-- [x] 更新本地登录与 GitHub OAuth 的 session 创建调用
-- [x] 更新受影响测试夹具
-- [x] 跑聚焦验证
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
-- [x] 更新 `grs004readme.md`
+✅ 核对 `docs/grs004` 中的多角色集合语义与当前 session 残留
+✅ 补设计文档
+✅ 新增 session roles-only 守护测试
+✅ 移除 `SessionUser` / `DatabaseSessionUser` 的单值 `role`
+✅ 更新本地登录与 GitHub OAuth 的 session 创建调用
+✅ 更新受影响测试夹具
+✅ 跑聚焦验证
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
+✅ 更新 `grs004readme.md`
 
 ## 验证命令
 

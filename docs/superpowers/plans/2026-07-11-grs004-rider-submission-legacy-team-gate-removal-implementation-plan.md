@@ -2,15 +2,15 @@
 
 ## 实施步骤
 
-- [x] 补设计文档
-- [x] 为 approved registration 新增 compatibility container 自愈 helper
-- [x] 更新 draft/save 和 submission services
-- [x] 更新 Rider submission section 去掉 `!riderTeam` 阻断
-- [x] 补 service / UI 回归测试
-- [x] 跑聚焦验证
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
-- [x] 更新 `grs004readme.md`
+✅ 补设计文档
+✅ 为 approved registration 新增 compatibility container 自愈 helper
+✅ 更新 draft/save 和 submission services
+✅ 更新 Rider submission section 去掉 `!riderTeam` 阻断
+✅ 补 service / UI 回归测试
+✅ 跑聚焦验证
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
+✅ 更新 `grs004readme.md`
 
 ## 验证命令
 

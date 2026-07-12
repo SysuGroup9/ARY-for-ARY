@@ -1,6 +1,6 @@
 # GRS004 / DEV-5 / P0 可信链缺口 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`✅`) syntax for tracking.
 
 **Goal:** 为现有 `CAConnection -> Session -> Evidence -> Projection` 主链路补上最小完整性判断、payload 冲突检测和 review 风险语义，并保持 `grs004` 文档要求的“不自动 DQ”边界。
 
@@ -46,7 +46,7 @@
 - Test: `src/lib/ca-integrity-helpers.test.ts`
 - Test: `src/lib/evidence-projection-helpers.test.ts`
 
-- [ ] **Step 1: Write the failing integrity helper tests**
+✅ **Step 1: Write the failing integrity helper tests**
 
 ```ts
 import assert from "node:assert/strict";
@@ -114,7 +114,7 @@ test("summarizeEvidenceIntegrity downgrades evidence confidence when source even
 });
 ```
 
-- [ ] **Step 2: Extend the session-summary evidence test so it fails on the new metadata fields**
+✅ **Step 2: Extend the session-summary evidence test so it fails on the new metadata fields**
 
 ```ts
 test("builds session summary evidence with integrity metadata", () => {
@@ -143,13 +143,13 @@ test("builds session summary evidence with integrity metadata", () => {
 });
 ```
 
-- [ ] **Step 3: Run the focused helper tests and confirm failure**
+✅ **Step 3: Run the focused helper tests and confirm failure**
 
 Run: `node --import tsx --test src/lib/ca-integrity-helpers.test.ts src/lib/evidence-projection-helpers.test.ts`
 
 Expected: FAIL with import errors or missing `integrityStatus` / `confidenceLevel` fields.
 
-- [ ] **Step 4: Implement the minimal pure helper module**
+✅ **Step 4: Implement the minimal pure helper module**
 
 ```ts
 import { createHash } from "node:crypto";
@@ -226,13 +226,13 @@ export function summarizeEvidenceIntegrity(
 }
 ```
 
-- [ ] **Step 5: Re-run the focused helper tests**
+✅ **Step 5: Re-run the focused helper tests**
 
 Run: `node --import tsx --test src/lib/ca-integrity-helpers.test.ts src/lib/evidence-projection-helpers.test.ts`
 
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+✅ **Step 6: Commit**
 
 ```bash
 git add src/lib/ca-integrity-helpers.ts src/lib/ca-integrity-helpers.test.ts src/lib/evidence-projection-helpers.test.ts
@@ -248,7 +248,7 @@ git commit -m "test: add grs004 p0 integrity helper coverage"
 - Generated: `src/generated/prisma/*`
 - Test: Prisma generate / migrate
 
-- [ ] **Step 1: Add failing schema-aware assertions in the helper tests for enum-backed values**
+✅ **Step 1: Add failing schema-aware assertions in the helper tests for enum-backed values**
 
 ```ts
 assert.equal(evidence.integrityStatus, "ok");
@@ -257,7 +257,7 @@ assert.equal(evidence.confidenceLevel, "high");
 
 Expected failure before schema change: service compile still lacks these fields on `Evidence`.
 
-- [ ] **Step 2: Add schema enums and fields**
+✅ **Step 2: Add schema enums and fields**
 
 ```prisma
 enum IntegrityStatus {
@@ -305,19 +305,19 @@ model Evidence {
 }
 ```
 
-- [ ] **Step 3: Generate Prisma client**
+✅ **Step 3: Generate Prisma client**
 
 Run: `npm run db:generate`
 
 Expected: PASS and `src/generated/prisma/enums.ts` contains `IntegrityStatus` and `ConfidenceLevel`.
 
-- [ ] **Step 4: Create and apply the migration**
+✅ **Step 4: Create and apply the migration**
 
 Run: `npx prisma migrate dev --name grs004_p0_trusted_ingestion`
 
 Expected: PASS and local SQLite schema updated with new columns/defaults.
 
-- [ ] **Step 5: Commit**
+✅ **Step 5: Commit**
 
 ```bash
 git add prisma/schema.prisma prisma/migrations src/generated/prisma
@@ -337,7 +337,7 @@ git commit -m "feat: extend ingestion and evidence integrity schema"
 - Test: `src/lib/services/ca-ingestion-integrity.test.ts`
 - Test: `src/lib/services/ca-fetch-integrity.test.ts`
 
-- [ ] **Step 1: Write the failing signal-ingestion service tests against seeded data**
+✅ **Step 1: Write the failing signal-ingestion service tests against seeded data**
 
 ```ts
 import assert from "node:assert/strict";
@@ -432,7 +432,7 @@ test("duplicate idempotencyKey with a different payload becomes integrity_gap", 
 });
 ```
 
-- [ ] **Step 2: Write the failing snapshot-ingestion service test**
+✅ **Step 2: Write the failing snapshot-ingestion service test**
 
 ```ts
 import assert from "node:assert/strict";
@@ -493,13 +493,13 @@ test("snapshot fetch writes payloadDigest and integrity metadata to CAIngestionE
 });
 ```
 
-- [ ] **Step 3: Run the focused service tests and confirm failure**
+✅ **Step 3: Run the focused service tests and confirm failure**
 
 Run: `node --import tsx --test src/lib/services/ca-ingestion-integrity.test.ts src/lib/services/ca-fetch-integrity.test.ts`
 
 Expected: FAIL because `schemaVersion / sequence / payloadDigest / integrityStatus` are not yet wired.
 
-- [ ] **Step 4: Wire digest, sequence, receivedAt, and conflict detection into `ca-ingestion.ts`**
+✅ **Step 4: Wire digest, sequence, receivedAt, and conflict detection into `ca-ingestion.ts`**
 
 ```ts
 const ridingSignalSchema = z.object({
@@ -609,7 +609,7 @@ if (existingEvent) {
 }
 ```
 
-- [ ] **Step 5: Wire digest and metadata into `ca-fetch.ts`**
+✅ **Step 5: Wire digest and metadata into `ca-fetch.ts`**
 
 ```ts
 const receivedAt = new Date();
@@ -632,13 +632,13 @@ await tx.cAIngestionEvent.create({
 });
 ```
 
-- [ ] **Step 6: Re-run the focused service tests**
+✅ **Step 6: Re-run the focused service tests**
 
 Run: `node --import tsx --test src/lib/services/ca-ingestion-integrity.test.ts src/lib/services/ca-fetch-integrity.test.ts`
 
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+✅ **Step 7: Commit**
 
 ```bash
 git add src/lib/services/ca-ingestion.ts src/lib/services/ca-fetch.ts src/lib/services/ca-ingestion-integrity.test.ts src/lib/services/ca-fetch-integrity.test.ts src/lib/ca-runtime-helpers.ts
@@ -656,7 +656,7 @@ git commit -m "feat: add grs004 p0 ingestion integrity handling"
 - Create: `src/lib/services/evidence-integrity.test.ts`
 - Test: `src/lib/services/evidence-integrity.test.ts`
 
-- [ ] **Step 1: Write the failing evidence rebuild test**
+✅ **Step 1: Write the failing evidence rebuild test**
 
 ```ts
 import assert from "node:assert/strict";
@@ -681,13 +681,13 @@ test("rebuildSessionSummaryEvidenceForRace writes confidence and review flags fr
 });
 ```
 
-- [ ] **Step 2: Run the focused evidence tests and confirm failure**
+✅ **Step 2: Run the focused evidence tests and confirm failure**
 
 Run: `node --import tsx --test src/lib/evidence-projection-helpers.test.ts src/lib/services/evidence-integrity.test.ts`
 
 Expected: FAIL because the builder and rebuild service do not yet populate the new fields.
 
-- [ ] **Step 3: Extend the session-summary builder to accept integrity metadata**
+✅ **Step 3: Extend the session-summary builder to accept integrity metadata**
 
 ```ts
 export function buildSessionSummaryEvidenceRecord(input: {
@@ -726,7 +726,7 @@ export function buildSessionSummaryEvidenceRecord(input: {
 }
 ```
 
-- [ ] **Step 4: Rebuild evidence from matching ingestion events, not just session rows**
+✅ **Step 4: Rebuild evidence from matching ingestion events, not just session rows**
 
 ```ts
 const relatedEvents = connection.ingestionEvents.filter((event) => {
@@ -771,13 +771,13 @@ const evidence = buildSessionSummaryEvidenceRecord({
 });
 ```
 
-- [ ] **Step 5: Re-run the evidence tests**
+✅ **Step 5: Re-run the evidence tests**
 
 Run: `node --import tsx --test src/lib/evidence-projection-helpers.test.ts src/lib/services/evidence-integrity.test.ts`
 
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+✅ **Step 6: Commit**
 
 ```bash
 git add src/lib/evidence-projection-helpers.ts src/lib/evidence-projection-helpers.test.ts src/lib/services/evidence.ts src/lib/services/evidence-integrity.test.ts
@@ -792,7 +792,7 @@ git commit -m "feat: add grs004 p0 evidence integrity metadata"
 - Modify: `docs/superpowers/status.md`
 - Modify: `docs/superpowers/specs/2026-07-10-grs004-dev5-p0-trusted-ingestion-design.md`
 
-- [ ] **Step 1: Update the status document to reflect the closed P0 gaps**
+✅ **Step 1: Update the status document to reflect the closed P0 gaps**
 
 ```md
 - `CAIngestionEvent` 已补 `payloadDigest / sequence / receivedAt / integrityStatus`。
@@ -801,7 +801,7 @@ git commit -m "feat: add grs004 p0 evidence integrity metadata"
 - 风险默认进入 review 语义，不自动 DQ。
 ```
 
-- [ ] **Step 2: Update the design spec with any implementation-level clarifications discovered during execution**
+✅ **Step 2: Update the design spec with any implementation-level clarifications discovered during execution**
 
 ```md
 ## Implementation Notes
@@ -810,7 +810,7 @@ git commit -m "feat: add grs004 p0 evidence integrity metadata"
 - Projection 仍保持 race 级全量 rebuild；本轮没有引入 `sourceVersion / inputDigest`。
 ```
 
-- [ ] **Step 3: Commit**
+✅ **Step 3: Commit**
 
 ```bash
 git add docs/superpowers/status.md docs/superpowers/specs/2026-07-10-grs004-dev5-p0-trusted-ingestion-design.md
@@ -824,31 +824,31 @@ git commit -m "docs: record grs004 p0 integrity status"
 **Files:**
 - Test only
 
-- [ ] **Step 1: Run the focused integrity and evidence tests**
+✅ **Step 1: Run the focused integrity and evidence tests**
 
 Run: `node --import tsx --test src/lib/ca-integrity-helpers.test.ts src/lib/evidence-projection-helpers.test.ts src/lib/services/ca-ingestion-integrity.test.ts src/lib/services/ca-fetch-integrity.test.ts src/lib/services/evidence-integrity.test.ts src/lib/ca-runtime-helpers.test.ts`
 
 Expected: PASS
 
-- [ ] **Step 2: Regenerate Prisma client to ensure generated types match the plan**
+✅ **Step 2: Regenerate Prisma client to ensure generated types match the plan**
 
 Run: `npm run db:generate`
 
 Expected: PASS
 
-- [ ] **Step 3: Run the project build**
+✅ **Step 3: Run the project build**
 
 Run: `npm run build`
 
 Expected: PASS
 
-- [ ] **Step 4: Re-seed if the migration reset local SQLite state**
+✅ **Step 4: Re-seed if the migration reset local SQLite state**
 
 Run: `npm run db:seed`
 
 Expected: PASS and `race_active / race_signup / race_finished` are re-created.
 
-- [ ] **Step 5: Commit the verified end state**
+✅ **Step 5: Commit the verified end state**
 
 ```bash
 git add .

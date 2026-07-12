@@ -2,17 +2,17 @@
 
 ## 实施步骤
 
-- [x] 补设计文档
-- [x] 为 Work draft / submit 增加 validation schema
-- [x] 在 `src/lib/services/works.ts` 新增 Rider draft 保存与 Work asset upsert helper
-- [x] 在 `src/lib/services/submissions.ts` 接入 `Submission -> Work` 物化
-- [x] 在 `src/app/actions.ts` 新增 `saveWorkDraftAction()`，并补 rider submit revalidate
-- [x] 更新 Rider submission forms
-- [x] 更新 Rider submission page 的当前作品资产视图
-- [x] 补 action / service / UI / submission integrity tests
-- [x] 跑聚焦验证
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
+✅ 补设计文档
+✅ 为 Work draft / submit 增加 validation schema
+✅ 在 `src/lib/services/works.ts` 新增 Rider draft 保存与 Work asset upsert helper
+✅ 在 `src/lib/services/submissions.ts` 接入 `Submission -> Work` 物化
+✅ 在 `src/app/actions.ts` 新增 `saveWorkDraftAction()`，并补 rider submit revalidate
+✅ 更新 Rider submission forms
+✅ 更新 Rider submission page 的当前作品资产视图
+✅ 补 action / service / UI / submission integrity tests
+✅ 跑聚焦验证
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
 
 ## 验证命令
 

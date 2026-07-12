@@ -16,14 +16,14 @@
 - Modify: `src/app/console/page.test.tsx`
 - Modify: `src/app/console/races/page.test.tsx`
 
-- [x] Add source assertions for `feedbackMessage`, `feedbackScope`, `getActionFeedbackContent`, and `ErrorNotice`.
-- [x] Run:
+✅ Add source assertions for `feedbackMessage`, `feedbackScope`, `getActionFeedbackContent`, and `ErrorNotice`.
+✅ Run:
 
 ```bash
 node --import tsx --test src/app/console/page.test.tsx src/app/console/races/page.test.tsx
 ```
 
-- [x] Confirm both new assertions fail before implementation.
+✅ Confirm both new assertions fail before implementation.
 
 ### Task 2: Add route-level feedback handling to console root pages
 
@@ -31,12 +31,12 @@ node --import tsx --test src/app/console/page.test.tsx src/app/console/races/pag
 - Modify: `src/app/console/page.tsx`
 - Modify: `src/app/console/races/page.tsx`
 
-- [x] Import `ErrorNotice` and `getActionFeedbackContent`.
-- [x] Add `searchParams` support for:
+✅ Import `ErrorNotice` and `getActionFeedbackContent`.
+✅ Add `searchParams` support for:
   - `feedbackMessage?: string`
   - `feedbackScope?: string`
-- [x] Resolve the feedback object via `getActionFeedbackContent(...)`.
-- [x] Render `ErrorNotice` above the existing page view while preserving current access and redirect logic.
+✅ Resolve the feedback object via `getActionFeedbackContent(...)`.
+✅ Render `ErrorNotice` above the existing page view while preserving current access and redirect logic.
 
 ### Task 3: Re-run focused verification
 
@@ -44,13 +44,13 @@ node --import tsx --test src/app/console/page.test.tsx src/app/console/races/pag
 - Test: `src/app/console/page.test.tsx`
 - Test: `src/app/console/races/page.test.tsx`
 
-- [x] Run:
+✅ Run:
 
 ```bash
 node --import tsx --test src/app/console/page.test.tsx src/app/console/races/page.test.tsx
 ```
 
-- [x] Confirm the focused tests pass.
+✅ Confirm the focused tests pass.
 
 ### Task 4: Update documentation and run build verification
 
@@ -59,11 +59,11 @@ node --import tsx --test src/app/console/page.test.tsx src/app/console/races/pag
 - Create: `docs/superpowers/plans/2026-07-11-grs004-console-root-friendly-error-fallback-surface-implementation-plan.md`
 - Modify: `docs/superpowers/status.md`
 
-- [x] Record the slice in `docs/superpowers`.
-- [x] Run:
+✅ Record the slice in `docs/superpowers`.
+✅ Run:
 
 ```bash
 npm run build
 ```
 
-- [x] Confirm the app still builds with the new route-level feedback handling.
+✅ Confirm the app still builds with the new route-level feedback handling.

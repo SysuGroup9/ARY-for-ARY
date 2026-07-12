@@ -2,19 +2,19 @@
 
 ## 实施步骤
 
-- [x] 审计 judge / organizer judges / screen console 当前错误暴露路径
-- [x] 扩展 `src/lib/action-feedback.ts`，加入 `judge_review / organizer_judges / screen_console`
-- [x] 给 judge section page 接入 route-level feedback
-- [x] 给 screen mode page 接入 route-level feedback
-- [x] 给 `JudgeConsolePageView` 接入 `ErrorNotice + returnTo`
-- [x] 给 `OrganizerConsolePageView` judge assignment 表单补 `returnTo`
-- [x] 给 `ScreenConsolePageView` 接入 `ErrorNotice + returnTo`
-- [x] 给 judge / organizer judges / screen 相关 action 补 `try/catch + buildActionFeedbackHref(...)`
-- [x] 新增 page source tests
-- [x] 更新 `src/app/actions.return-to.test.ts`
-- [x] 跑聚焦测试
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
+✅ 审计 judge / organizer judges / screen console 当前错误暴露路径
+✅ 扩展 `src/lib/action-feedback.ts`，加入 `judge_review / organizer_judges / screen_console`
+✅ 给 judge section page 接入 route-level feedback
+✅ 给 screen mode page 接入 route-level feedback
+✅ 给 `JudgeConsolePageView` 接入 `ErrorNotice + returnTo`
+✅ 给 `OrganizerConsolePageView` judge assignment 表单补 `returnTo`
+✅ 给 `ScreenConsolePageView` 接入 `ErrorNotice + returnTo`
+✅ 给 judge / organizer judges / screen 相关 action 补 `try/catch + buildActionFeedbackHref(...)`
+✅ 新增 page source tests
+✅ 更新 `src/app/actions.return-to.test.ts`
+✅ 跑聚焦测试
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
 
 ## 验证命令
 

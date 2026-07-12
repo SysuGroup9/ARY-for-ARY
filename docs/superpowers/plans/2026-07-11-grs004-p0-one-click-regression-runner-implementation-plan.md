@@ -2,15 +2,15 @@
 
 ## 实施步骤
 
-- [x] 补设计文档
-- [x] 盘点现有可复用的 P0 聚焦测试
-- [x] 新增 `scripts/grs004-p0-regression.mjs`
-- [x] 在 `package.json` 增加 `test:p0 / qa:p0`
-- [x] 补 `Admin 分配 roles` action wiring 回归
-- [x] 修复 `race-archive-scope.test.ts` 的日期漂移问题
-- [x] 跑 `npm run qa:p0`
-- [x] 更新 `docs/superpowers/status.md`
-- [x] 更新 `grs004readme.md`
+✅ 补设计文档
+✅ 盘点现有可复用的 P0 聚焦测试
+✅ 新增 `scripts/grs004-p0-regression.mjs`
+✅ 在 `package.json` 增加 `test:p0 / qa:p0`
+✅ 补 `Admin 分配 roles` action wiring 回归
+✅ 修复 `race-archive-scope.test.ts` 的日期漂移问题
+✅ 跑 `npm run qa:p0`
+✅ 更新 `docs/superpowers/status.md`
+✅ 更新 `grs004readme.md`
 
 ## 验证命令
 

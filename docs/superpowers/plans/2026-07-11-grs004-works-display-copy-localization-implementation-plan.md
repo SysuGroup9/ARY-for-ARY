@@ -2,17 +2,17 @@
 
 ## 实施步骤
 
-- [x] 从 `docs/grs004` 核对 `Works Display` 的目标口径
-- [x] 识别 `works-display.tsx` 中的用户可见英文残留
-- [x] 补设计文档
-- [x] 收口页面标签 `Works / Showcase`
-- [x] 收口精选标签 `Featured Work`
-- [x] 收口 `aria-label` 文案 `Works filter and sort`
-- [x] 更新 `src/app/_components/public/works-display.test.tsx`
-- [x] 回归 `src/app/_components/public/public-phase-label-regression.test.tsx`
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
-- [x] 更新 `grs004readme.md`
+✅ 从 `docs/grs004` 核对 `Works Display` 的目标口径
+✅ 识别 `works-display.tsx` 中的用户可见英文残留
+✅ 补设计文档
+✅ 收口页面标签 `Works / Showcase`
+✅ 收口精选标签 `Featured Work`
+✅ 收口 `aria-label` 文案 `Works filter and sort`
+✅ 更新 `src/app/_components/public/works-display.test.tsx`
+✅ 回归 `src/app/_components/public/public-phase-label-regression.test.tsx`
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
+✅ 更新 `grs004readme.md`
 
 ## 验证命令
 

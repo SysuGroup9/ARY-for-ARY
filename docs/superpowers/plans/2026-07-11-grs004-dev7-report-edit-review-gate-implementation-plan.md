@@ -1,6 +1,6 @@
 # GRS004 / DEV-7 Report Edit and Reviewed Publication Gate Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`✅`) syntax for tracking.
 
 **Goal:** 补齐 `grs004` 已定义但当前代码还没用上的 `Report` 编辑与 `REVIEWED` 发布门禁，让 Organizer 能编辑未发布报告，并且只有 reviewed 的公开报告才能发布。
 
@@ -16,7 +16,7 @@
 - Modify: `src/lib/services/reports-generation.test.ts`
 - Modify: `src/app/_components/console/organizer-console-page.test.tsx`
 
-- [ ] **Step 1: Add a failing service test for draft edit, reviewed gate, and regenerate**
+✅ **Step 1: Add a failing service test for draft edit, reviewed gate, and regenerate**
 
 Cover:
 
@@ -27,7 +27,7 @@ Cover:
 - publish after reviewed succeeds
 - regenerate overwrites unpublished draft content and resets status to `GENERATED`
 
-- [ ] **Step 2: Add a failing organizer UI test**
+✅ **Step 2: Add a failing organizer UI test**
 
 Cover:
 
@@ -37,7 +37,7 @@ Cover:
 - reviewed reports do expose publish buttons
 - regenerate warning text is visible
 
-- [ ] **Step 3: Run focused tests and confirm failure**
+✅ **Step 3: Run focused tests and confirm failure**
 
 Run:
 
@@ -54,7 +54,7 @@ Expected:
 **Files:**
 - Modify: `src/lib/services/reports.ts`
 
-- [ ] **Step 1: Add minimal Organizer draft update service**
+✅ **Step 1: Add minimal Organizer draft update service**
 
 Add:
 
@@ -68,7 +68,7 @@ Rules:
 - set `status = DRAFT`
 - keep `publishedAt = null`
 
-- [ ] **Step 2: Add reviewed transition service**
+✅ **Step 2: Add reviewed transition service**
 
 Add:
 
@@ -80,7 +80,7 @@ Rules:
 - published reports cannot be reviewed again
 - set `status = REVIEWED`
 
-- [ ] **Step 3: Tighten publish gate**
+✅ **Step 3: Tighten publish gate**
 
 Update:
 
@@ -91,7 +91,7 @@ Rules:
 - `rider_report` still cannot be publicly published
 - only `REVIEWED` non-rider reports can be published
 
-- [ ] **Step 4: Preserve regenerate semantics**
+✅ **Step 4: Preserve regenerate semantics**
 
 Keep:
 
@@ -104,7 +104,7 @@ Keep:
 - Modify: `src/app/actions.ts`
 - Modify: `src/app/_components/console/organizer-console-page.tsx`
 
-- [ ] **Step 1: Add new server actions**
+✅ **Step 1: Add new server actions**
 
 Add:
 
@@ -117,7 +117,7 @@ Both should:
 - call the new report services
 - revalidate `/` and `/console/races`
 
-- [ ] **Step 2: Extend Organizer Console report controls**
+✅ **Step 2: Extend Organizer Console report controls**
 
 For each non-published report:
 
@@ -131,7 +131,7 @@ For non-published non-rider reports:
 
 - only show publish button when `status === "REVIEWED"`
 
-- [ ] **Step 3: Add regenerate warning copy**
+✅ **Step 3: Add regenerate warning copy**
 
 Show a short note that:
 
@@ -143,7 +143,7 @@ Show a short note that:
 - Test: `src/lib/services/reports-generation.test.ts`
 - Test: `src/app/_components/console/organizer-console-page.test.tsx`
 
-- [ ] **Step 1: Re-run focused tests**
+✅ **Step 1: Re-run focused tests**
 
 Run:
 
@@ -155,7 +155,7 @@ Expected:
 
 - PASS
 
-- [ ] **Step 2: Run broader report regression checks**
+✅ **Step 2: Run broader report regression checks**
 
 Run:
 
@@ -167,7 +167,7 @@ Expected:
 
 - PASS
 
-- [ ] **Step 3: Run production build**
+✅ **Step 3: Run production build**
 
 Run:
 
@@ -186,7 +186,7 @@ Expected:
 - Modify: `docs/superpowers/specs/2026-07-11-grs004-dev7-report-edit-review-gate-design.md`
 - Modify: `grs004readme.md`
 
-- [ ] **Step 1: Update `status.md`**
+✅ **Step 1: Update `status.md`**
 
 Record:
 
@@ -194,14 +194,14 @@ Record:
 - reviewed publication gate landed
 - regenerate remains destructive for unpublished drafts
 
-- [ ] **Step 2: Update the design doc with implementation notes**
+✅ **Step 2: Update the design doc with implementation notes**
 
 Append:
 
 - exact services and actions added
 - exact verification commands used
 
-- [ ] **Step 3: Update `grs004readme.md`**
+✅ **Step 3: Update `grs004readme.md`**
 
 Add:
 

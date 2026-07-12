@@ -2,16 +2,16 @@
 
 ## 实施步骤
 
-- [x] 补设计文档
-- [x] 更新 `src/lib/registration-helpers.ts`
-- [x] 更新 `src/lib/services/registrations.ts`
-- [x] 新增 `approveRegistrationAction()` / `rejectRegistrationAction()`
-- [x] 更新 Organizer 报名列表 UI
-- [x] 更新 Public 报名页与 Rider Console 状态文案
-- [x] 补 / 改测试
-- [x] 跑聚焦验证
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
+✅ 补设计文档
+✅ 更新 `src/lib/registration-helpers.ts`
+✅ 更新 `src/lib/services/registrations.ts`
+✅ 新增 `approveRegistrationAction()` / `rejectRegistrationAction()`
+✅ 更新 Organizer 报名列表 UI
+✅ 更新 Public 报名页与 Rider Console 状态文案
+✅ 补 / 改测试
+✅ 跑聚焦验证
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
 
 ## 验证命令
 

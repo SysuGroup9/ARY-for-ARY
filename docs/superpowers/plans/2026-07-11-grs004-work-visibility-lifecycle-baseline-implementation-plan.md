@@ -2,15 +2,15 @@
 
 ## 实施步骤
 
-- [x] 补设计文档
-- [x] 更新 `src/lib/services/works.ts`
-- [x] 更新 `src/app/actions.ts`
-- [x] 更新 `src/lib/services/public-routes.ts`
-- [x] 更新 Organizer works UI
-- [x] 补 service / action / public route / UI tests
-- [x] 跑聚焦验证
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
+✅ 补设计文档
+✅ 更新 `src/lib/services/works.ts`
+✅ 更新 `src/app/actions.ts`
+✅ 更新 `src/lib/services/public-routes.ts`
+✅ 更新 Organizer works UI
+✅ 补 service / action / public route / UI tests
+✅ 跑聚焦验证
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
 
 ## 验证命令
 

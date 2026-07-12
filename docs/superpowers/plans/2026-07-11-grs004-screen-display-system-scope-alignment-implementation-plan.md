@@ -2,17 +2,17 @@
 
 ## 实施步骤
 
-- [x] 先补 `ScreenDisplay` system-scope 对齐设计文档
-- [x] 新增 `src/app/actions.screen-display-system-scope.test.ts`
-- [x] 扩展 `src/lib/services/screen-display.test.ts`
+✅ 先补 `ScreenDisplay` system-scope 对齐设计文档
+✅ 新增 `src/app/actions.screen-display-system-scope.test.ts`
+✅ 扩展 `src/lib/services/screen-display.test.ts`
   - foreign organizer + `allowSystem: true` 拒绝
   - admin/system 跨赛事成功
-- [x] 更新 `src/lib/services/screen-display.ts`
+✅ 更新 `src/lib/services/screen-display.ts`
   - 本地补真实 Admin role 校验
   - 不再把裸 `allowSystem` 视作 system scope
-- [x] 运行聚焦测试
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
+✅ 运行聚焦测试
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
 
 ## 验证命令
 

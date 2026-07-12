@@ -2,16 +2,16 @@
 
 ## 实施步骤
 
-- [x] 核对 `race-phase.ts` 与 `public-site.ts` 的 phase 语义偏差
-- [x] 补设计文档
-- [x] 更新 `src/lib/public-site.ts` 的 live race 判定、phase 分组和 CTA 规则
-- [x] 更新首页和赛事列表页，统一复用 `getRacePrimaryCta()`
-- [x] 更新 `src/lib/public-site.test.ts`
-- [x] 新增 `src/app/_components/public/public-phase-cta-regression.test.tsx`
-- [x] 跑聚焦验证
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
-- [x] 更新 `grs004readme.md`
+✅ 核对 `race-phase.ts` 与 `public-site.ts` 的 phase 语义偏差
+✅ 补设计文档
+✅ 更新 `src/lib/public-site.ts` 的 live race 判定、phase 分组和 CTA 规则
+✅ 更新首页和赛事列表页，统一复用 `getRacePrimaryCta()`
+✅ 更新 `src/lib/public-site.test.ts`
+✅ 新增 `src/app/_components/public/public-phase-cta-regression.test.tsx`
+✅ 跑聚焦验证
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
+✅ 更新 `grs004readme.md`
 
 ## 验证命令
 

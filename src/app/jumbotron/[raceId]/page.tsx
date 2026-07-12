@@ -21,7 +21,10 @@ export default async function JumbotronPage({ params, searchParams }: Props) {
 
   const races = await listRaces();
   const liveRaces = races.filter(
-    (race) => race.phase === "active" || race.phase === "frozen",
+    (race) =>
+      race.phase === "running" ||
+      race.phase === "active" ||
+      race.phase === "frozen",
   );
   const bannerRaces = liveRaces.length
     ? liveRaces

@@ -1,6 +1,6 @@
 # GRS004 / P2-C Organizer Console Trust / Risk 展示 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`✅`) syntax for tracking.
 
 **Goal:** 在 `Organizer Console / ca-status` 中新增最小只读 `Trust / Risk Summary`，让 organizer 能直接看到 registration 级别的接入可信度与风险摘要。
 
@@ -27,7 +27,7 @@
 - Modify: `src/app/_components/console/organizer-console-page.test.tsx`
 - Test: `src/app/_components/console/organizer-console-page.test.tsx`
 
-- [ ] **Step 1: Add a failing organizer ca-status summary test**
+✅ **Step 1: Add a failing organizer ca-status summary test**
 
 Cover:
 
@@ -43,7 +43,7 @@ Cover:
   - `Connector Readiness`
   - review flag / risk reason summary
 
-- [ ] **Step 2: Run the focused organizer console test and confirm failure**
+✅ **Step 2: Run the focused organizer console test and confirm failure**
 
 Run: `node --import tsx --test src/app/_components/console/organizer-console-page.test.tsx`
 
@@ -54,7 +54,7 @@ Expected: FAIL because `Trust / Risk Summary` does not exist yet.
 **Files:**
 - Modify: `src/app/_components/console/organizer-console-page.tsx`
 
-- [ ] **Step 1: Add small helper functions inside organizer console page**
+✅ **Step 1: Add small helper functions inside organizer console page**
 
 Add helpers for:
 
@@ -70,7 +70,7 @@ Add helpers for:
   - `Session.riskLevel / riskReason`
   - `disabledAt / handshakeCompletedAt`
 
-- [ ] **Step 2: Render `Trust / Risk Summary` inside each registration card in `ca-status`**
+✅ **Step 2: Render `Trust / Risk Summary` inside each registration card in `ca-status`**
 
 Add:
 
@@ -85,7 +85,7 @@ Add:
   - `Connector Readiness`
 - reason list when review flags or session risk reason exist
 
-- [ ] **Step 3: Keep scope strict**
+✅ **Step 3: Keep scope strict**
 
 Do not:
 
@@ -99,13 +99,13 @@ Do not:
 **Files:**
 - Test: `src/app/_components/console/organizer-console-page.test.tsx`
 
-- [ ] **Step 1: Re-run the focused organizer console test**
+✅ **Step 1: Re-run the focused organizer console test**
 
 Run: `node --import tsx --test src/app/_components/console/organizer-console-page.test.tsx`
 
 Expected: PASS
 
-- [ ] **Step 2: Run a production build**
+✅ **Step 2: Run a production build**
 
 Run: `npm run build`
 
@@ -117,7 +117,7 @@ Expected: PASS
 - Modify: `docs/superpowers/status.md`
 - Modify: `docs/superpowers/specs/2026-07-10-grs004-p2c-organizer-trust-risk-design.md`
 
-- [ ] **Step 1: Update `status.md`**
+✅ **Step 1: Update `status.md`**
 
 Record:
 
@@ -125,7 +125,7 @@ Record:
 - organizer `ca-status` now exposes registration-level trust / risk summary
 - implementation stays on current fields and does not expand `RISK` projection payload
 
-- [ ] **Step 2: Update the P2-C design doc**
+✅ **Step 2: Update the P2-C design doc**
 
 Append implementation notes:
 
@@ -133,7 +133,7 @@ Append implementation notes:
 - no projection schema change
 - fresh verification commands used
 
-- [ ] **Step 3: Add a new recovery snapshot section if this turn completes the slice**
+✅ **Step 3: Add a new recovery snapshot section if this turn completes the slice**
 
 Include:
 

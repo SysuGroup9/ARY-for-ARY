@@ -18,21 +18,21 @@
 - Modify: `src/app/_components/public/public-auth-entry-regression.test.tsx`
 - Modify: `src/app/actions.return-to.test.ts`
 
-- [x] Add a helper unit test for `resolveGitHubOAuthErrorCode(...)`.
-- [x] Add a callback-route source test that forbids `detail=` leakage and requires stable error-code mapping.
-- [x] Add login-page source assertions for the new OAuth error codes.
-- [x] Add an action source assertion for `loginWithGitHubAction()` redirecting back to `/login`.
-- [x] Run the focused test command and confirm red before implementation.
+✅ Add a helper unit test for `resolveGitHubOAuthErrorCode(...)`.
+✅ Add a callback-route source test that forbids `detail=` leakage and requires stable error-code mapping.
+✅ Add login-page source assertions for the new OAuth error codes.
+✅ Add an action source assertion for `loginWithGitHubAction()` redirecting back to `/login`.
+✅ Run the focused test command and confirm red before implementation.
 
 ### Task 2: Add typed OAuth error-code mapping
 
 **Files:**
 - Modify: `src/lib/github-oauth.ts`
 
-- [x] Add `GitHubOAuthErrorCode`.
-- [x] Add `GitHubOAuthError`.
-- [x] Add `resolveGitHubOAuthErrorCode(error, phase)`.
-- [x] Mark known failure sources with stable OAuth codes:
+✅ Add `GitHubOAuthErrorCode`.
+✅ Add `GitHubOAuthError`.
+✅ Add `resolveGitHubOAuthErrorCode(error, phase)`.
+✅ Mark known failure sources with stable OAuth codes:
   - state mismatch
   - invalid state payload
   - token exchange failure
@@ -46,11 +46,11 @@
 - Modify: `src/app/api/auth/github/callback/route.ts`
 - Modify: `src/app/login/page.tsx`
 
-- [x] Wrap `loginWithGitHubAction()` with a non-redirect friendly fallback back to `/login`.
-- [x] Keep redirect errors rethrown.
-- [x] Update the callback route to use stable `oauthError=` codes only.
-- [x] Remove raw `detail=` URL propagation.
-- [x] Add login-page messages for:
+✅ Wrap `loginWithGitHubAction()` with a non-redirect friendly fallback back to `/login`.
+✅ Keep redirect errors rethrown.
+✅ Update the callback route to use stable `oauthError=` codes only.
+✅ Remove raw `detail=` URL propagation.
+✅ Add login-page messages for:
   - `github_start_failed`
   - `github_state_mismatch`
   - `github_exchange_failed`
@@ -63,18 +63,18 @@
 - Create: `docs/superpowers/plans/2026-07-11-grs004-github-oauth-friendly-error-closure-implementation-plan.md`
 - Modify: `docs/superpowers/status.md`
 
-- [x] Re-run:
+✅ Re-run:
 
 ```bash
 node --import tsx --test src/lib/github-oauth-feedback.test.ts src/app/api/auth/github/callback/route.test.ts src/app/_components/public/public-auth-entry-regression.test.tsx src/app/actions.return-to.test.ts
 ```
 
-- [x] Confirm all focused tests pass.
-- [x] Record the slice in `docs/superpowers`.
-- [x] Run:
+✅ Confirm all focused tests pass.
+✅ Record the slice in `docs/superpowers`.
+✅ Run:
 
 ```bash
 npm run build
 ```
 
-- [x] Confirm the app still builds after the OAuth failure-handling changes.
+✅ Confirm the app still builds after the OAuth failure-handling changes.

@@ -1,6 +1,6 @@
 # GRS004 / P2-A Connector Credential Fingerprint 与消息签名 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`✅`) syntax for tracking.
 
 **Goal:** 为当前 connector 认证链路补上 credential fingerprint、公钥登记和 signal/snapshot 消息验签，让已登记 credential 的 CAConnection 不再只依赖 bearer secret。
 
@@ -36,7 +36,7 @@
 - Create: `src/lib/ca-signature-helpers.test.ts`
 - Test: `src/lib/ca-signature-helpers.test.ts`
 
-- [ ] **Step 1: Write the failing helper tests**
+✅ **Step 1: Write the failing helper tests**
 
 ```ts
 import assert from "node:assert/strict";
@@ -81,15 +81,15 @@ test("verifySignedPayload accepts ed25519:v1 signatures over the payload digest"
 });
 ```
 
-- [ ] **Step 2: Run the focused helper test and confirm failure**
+✅ **Step 2: Run the focused helper test and confirm failure**
 
 Run: `node --import tsx --test src/lib/ca-signature-helpers.test.ts`
 
 Expected: FAIL with missing module / function errors.
 
-- [ ] **Step 3: Implement the helper module**
+✅ **Step 3: Implement the helper module**
 
-- [ ] **Step 4: Re-run the helper test**
+✅ **Step 4: Re-run the helper test**
 
 Run: `node --import tsx --test src/lib/ca-signature-helpers.test.ts`
 
@@ -101,7 +101,7 @@ Expected: PASS
 - Modify: `prisma/schema.prisma`
 - Generated: `src/generated/prisma/*`
 
-- [ ] **Step 1: Add the CAConnection fields**
+✅ **Step 1: Add the CAConnection fields**
 
 ```prisma
 model CAConnection {
@@ -111,13 +111,13 @@ model CAConnection {
 }
 ```
 
-- [ ] **Step 2: Generate Prisma client**
+✅ **Step 2: Generate Prisma client**
 
 Run: `npm run db:generate`
 
 Expected: PASS
 
-- [ ] **Step 3: Create and apply migration**
+✅ **Step 3: Create and apply migration**
 
 Run: `npx prisma migrate dev --name grs004_p2a_connector_signature`
 
@@ -130,22 +130,22 @@ Expected: PASS
 - Modify: `src/lib/services/ca-fetch-audit.test.ts`
 - Test: `src/lib/services/ca-fetch-audit.test.ts`
 
-- [ ] **Step 1: Extend the handshake test with credential registration assertions**
+✅ **Step 1: Extend the handshake test with credential registration assertions**
 
 Cover:
 
 - handshake with `credentialFingerprint / publicKeyPem / signatureVersion` stores all three fields
 - fingerprint mismatch is rejected with `credential_fingerprint_mismatch`
 
-- [ ] **Step 2: Run the focused handshake test and confirm failure**
+✅ **Step 2: Run the focused handshake test and confirm failure**
 
 Run: `node --import tsx --test src/lib/services/ca-fetch-audit.test.ts`
 
 Expected: FAIL because credential fields are ignored today.
 
-- [ ] **Step 3: Update handshake schema and persistence**
+✅ **Step 3: Update handshake schema and persistence**
 
-- [ ] **Step 4: Re-run the focused handshake test**
+✅ **Step 4: Re-run the focused handshake test**
 
 Run: `node --import tsx --test src/lib/services/ca-fetch-audit.test.ts`
 
@@ -158,7 +158,7 @@ Expected: PASS
 - Create: `src/lib/services/ca-signature-verification.test.ts`
 - Test: `src/lib/services/ca-signature-verification.test.ts`
 
-- [ ] **Step 1: Write failing signal signature tests**
+✅ **Step 1: Write failing signal signature tests**
 
 Cover:
 
@@ -166,15 +166,15 @@ Cover:
 - missing signature rejected when credential is registered
 - invalid signature rejected when credential is registered
 
-- [ ] **Step 2: Run the focused signature test and confirm failure**
+✅ **Step 2: Run the focused signature test and confirm failure**
 
 Run: `node --import tsx --test src/lib/services/ca-signature-verification.test.ts`
 
 Expected: FAIL because signal payloads do not carry or verify signatures yet.
 
-- [ ] **Step 3: Add signal signature fields and verification**
+✅ **Step 3: Add signal signature fields and verification**
 
-- [ ] **Step 4: Re-run the focused signature test**
+✅ **Step 4: Re-run the focused signature test**
 
 Run: `node --import tsx --test src/lib/services/ca-signature-verification.test.ts`
 
@@ -187,7 +187,7 @@ Expected: PASS
 - Modify: `src/lib/services/ca-signature-verification.test.ts`
 - Test: `src/lib/services/ca-signature-verification.test.ts`
 
-- [ ] **Step 1: Add failing snapshot signature tests**
+✅ **Step 1: Add failing snapshot signature tests**
 
 Cover:
 
@@ -195,15 +195,15 @@ Cover:
 - invalid snapshot signature rejected when credential is registered
 - unsigned snapshot still accepted when no credential is registered
 
-- [ ] **Step 2: Run the focused signature test and confirm failure**
+✅ **Step 2: Run the focused signature test and confirm failure**
 
 Run: `node --import tsx --test src/lib/services/ca-signature-verification.test.ts`
 
 Expected: FAIL because snapshot responses are not verified yet.
 
-- [ ] **Step 3: Add snapshot signature fields and verification**
+✅ **Step 3: Add snapshot signature fields and verification**
 
-- [ ] **Step 4: Re-run the focused signature test**
+✅ **Step 4: Re-run the focused signature test**
 
 Run: `node --import tsx --test src/lib/services/ca-signature-verification.test.ts`
 
@@ -215,7 +215,7 @@ Expected: PASS
 - Modify: `docs/superpowers/status.md`
 - Modify: `docs/superpowers/specs/2026-07-10-grs004-p2a-connector-signature-design.md`
 
-- [ ] **Step 1: Update `status.md`**
+✅ **Step 1: Update `status.md`**
 
 Record:
 
@@ -223,25 +223,25 @@ Record:
 - registered-credential connections now require signed signal/snapshot
 - rotation and revoked/disabled UI remain out of scope
 
-- [ ] **Step 2: Run focused P2-A tests**
+✅ **Step 2: Run focused P2-A tests**
 
 Run: `node --import tsx --test src/lib/ca-signature-helpers.test.ts src/lib/services/ca-fetch-audit.test.ts src/lib/services/ca-signature-verification.test.ts`
 
 Expected: PASS
 
-- [ ] **Step 3: Regenerate Prisma client**
+✅ **Step 3: Regenerate Prisma client**
 
 Run: `npm run db:generate`
 
 Expected: PASS
 
-- [ ] **Step 4: Re-run seed**
+✅ **Step 4: Re-run seed**
 
 Run: `npm run db:seed`
 
 Expected: PASS
 
-- [ ] **Step 5: Run full build**
+✅ **Step 5: Run full build**
 
 Run: `npm run build`
 

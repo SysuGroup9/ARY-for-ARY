@@ -2,14 +2,14 @@
 
 ## 实施步骤
 
-- [x] 补设计文档
-- [x] 更新 `src/lib/services/ca-fetch.ts`
-- [x] 更新 `src/app/actions.ts`
-- [x] 新增 action wiring test
-- [x] 新增 service scope test
-- [x] 跑聚焦验证
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
+✅ 补设计文档
+✅ 更新 `src/lib/services/ca-fetch.ts`
+✅ 更新 `src/app/actions.ts`
+✅ 新增 action wiring test
+✅ 新增 service scope test
+✅ 跑聚焦验证
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
 
 ## 验证命令
 

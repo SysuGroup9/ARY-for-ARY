@@ -2,16 +2,16 @@
 
 ## 实施步骤
 
-- [x] 补 hardening 设计文档
-- [x] 更新 `src/lib/services/awards.ts`
-- [x] 更新 `src/lib/services/reports.ts`
-- [x] 更新 `src/lib/services/announcements.ts`
-- [x] 扩展 `awards-draft-withdraw.test.ts`
-- [x] 扩展 `reports-generation.test.ts`
-- [x] 扩展 `announcements.test.ts`
-- [x] 跑聚焦验证
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
+✅ 补 hardening 设计文档
+✅ 更新 `src/lib/services/awards.ts`
+✅ 更新 `src/lib/services/reports.ts`
+✅ 更新 `src/lib/services/announcements.ts`
+✅ 扩展 `awards-draft-withdraw.test.ts`
+✅ 扩展 `reports-generation.test.ts`
+✅ 扩展 `announcements.test.ts`
+✅ 跑聚焦验证
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
 
 ## 验证命令
 

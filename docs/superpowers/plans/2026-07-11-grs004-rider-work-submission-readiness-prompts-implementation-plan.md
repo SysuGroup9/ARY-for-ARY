@@ -2,12 +2,12 @@
 
 ## 实施步骤
 
-- [x] 补设计文档
-- [x] 在 Rider submission section 接入现有 readiness helper
-- [x] 补 Rider submission 风险提示回归测试
-- [x] 跑聚焦验证
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
+✅ 补设计文档
+✅ 在 Rider submission section 接入现有 readiness helper
+✅ 补 Rider submission 风险提示回归测试
+✅ 跑聚焦验证
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
 
 ## 验证命令
 

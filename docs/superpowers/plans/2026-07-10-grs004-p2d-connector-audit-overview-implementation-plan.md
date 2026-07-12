@@ -1,6 +1,6 @@
 # GRS004 / P2-D Connector Audit Overview 可视化 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`✅`) syntax for tracking.
 
 **Goal:** 在 `Organizer Console / ca-status` 中新增最小 `Connector Audit Overview`，让 organizer 能直接看到当前 registration 相关的 recent `SecurityAudit` 摘要与事件列表。  
 **Architecture:** 保持当前认证与 projection 结构不变；只在 race 读模型追加 `SecurityAudit` 读取，并在 organizer `ca-status` 页面内按 `registrationId / caConnectionId` 过滤和渲染。  
@@ -27,7 +27,7 @@
 - Modify: `src/app/_components/console/organizer-console-page.test.tsx`
 - Test: `src/app/_components/console/organizer-console-page.test.tsx`
 
-- [ ] **Step 1: Add a failing organizer audit overview test**
+✅ **Step 1: Add a failing organizer audit overview test**
 
 Cover:
 
@@ -37,7 +37,7 @@ Cover:
 - hides unrelated registration audit entries
 - shows empty-state text when registration has no audit entries
 
-- [ ] **Step 2: Run the focused organizer console test and confirm failure**
+✅ **Step 2: Run the focused organizer console test and confirm failure**
 
 Run: `node --import tsx --test src/app/_components/console/organizer-console-page.test.tsx`
 
@@ -48,7 +48,7 @@ Expected: FAIL because organizer `ca-status` does not yet consume `SecurityAudit
 **Files:**
 - Modify: `src/lib/services/races.ts`
 
-- [ ] **Step 1: Load `SecurityAudit` for listed races**
+✅ **Step 1: Load `SecurityAudit` for listed races**
 
 Add:
 
@@ -56,7 +56,7 @@ Add:
 - order by `createdAt desc`
 - group by `raceId`
 
-- [ ] **Step 2: Attach grouped audits to each race item**
+✅ **Step 2: Attach grouped audits to each race item**
 
 Keep scope strict:
 
@@ -69,7 +69,7 @@ Keep scope strict:
 **Files:**
 - Modify: `src/app/_components/console/organizer-console-page.tsx`
 
-- [ ] **Step 1: Add small helper logic inside organizer console page**
+✅ **Step 1: Add small helper logic inside organizer console page**
 
 Add helpers for:
 
@@ -80,7 +80,7 @@ Add helpers for:
   - `Rejected Events`
   - `Review Events`
 
-- [ ] **Step 2: Render `Connector Audit Overview` inside each registration card**
+✅ **Step 2: Render `Connector Audit Overview` inside each registration card**
 
 Add:
 
@@ -88,7 +88,7 @@ Add:
 - recent event list
 - empty-state text when no events exist
 
-- [ ] **Step 3: Keep scope strict**
+✅ **Step 3: Keep scope strict**
 
 Do not:
 
@@ -102,13 +102,13 @@ Do not:
 **Files:**
 - Test: `src/app/_components/console/organizer-console-page.test.tsx`
 
-- [ ] **Step 1: Re-run the focused organizer console test**
+✅ **Step 1: Re-run the focused organizer console test**
 
 Run: `node --import tsx --test src/app/_components/console/organizer-console-page.test.tsx`
 
 Expected: PASS
 
-- [ ] **Step 2: Run a production build**
+✅ **Step 2: Run a production build**
 
 Run: `npm run build`
 
@@ -120,7 +120,7 @@ Expected: PASS
 - Modify: `docs/superpowers/status.md`
 - Modify: `docs/superpowers/specs/2026-07-10-grs004-p2d-connector-audit-overview-design.md`
 
-- [ ] **Step 1: Update `status.md`**
+✅ **Step 1: Update `status.md`**
 
 Record:
 
@@ -128,7 +128,7 @@ Record:
 - organizer `ca-status` now exposes connector audit overview
 - scope stays on existing `SecurityAudit`
 
-- [ ] **Step 2: Update the P2-D design doc**
+✅ **Step 2: Update the P2-D design doc**
 
 Append implementation notes:
 
@@ -136,7 +136,7 @@ Append implementation notes:
 - where filtering/rendering happens
 - fresh verification commands
 
-- [ ] **Step 3: Add a new recovery snapshot section**
+✅ **Step 3: Add a new recovery snapshot section**
 
 Include:
 

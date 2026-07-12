@@ -1,6 +1,6 @@
 # GRS004 / P1-A 材料引用与 Hash 基础层 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`✅`) syntax for tracking.
 
 **Goal:** 为企业题目材料、Work 资产、选手代码材料补齐 `sourceRef + hash + 最小身份绑定`，让这些材料从“只有内容”推进到“内容可追溯、hash 可比较”的状态，并保持 `P1-B` 的结果冻结工作不提前混入。
 
@@ -45,7 +45,7 @@
 - Create: `src/lib/material-integrity-helpers.test.ts`
 - Test: `src/lib/material-integrity-helpers.test.ts`
 
-- [ ] **Step 1: Write the failing helper tests**
+✅ **Step 1: Write the failing helper tests**
 
 ```ts
 import assert from "node:assert/strict";
@@ -118,13 +118,13 @@ test("buildSubmissionBindingJson ties material to race, registration, and user",
 });
 ```
 
-- [ ] **Step 2: Run the focused helper test and confirm failure**
+✅ **Step 2: Run the focused helper test and confirm failure**
 
 Run: `node --import tsx --test src/lib/material-integrity-helpers.test.ts`
 
 Expected: FAIL with missing module / function errors.
 
-- [ ] **Step 3: Implement the helper module**
+✅ **Step 3: Implement the helper module**
 
 ```ts
 import { createHash } from "node:crypto";
@@ -180,13 +180,13 @@ export function buildSubmissionBindingJson(input: {
 }
 ```
 
-- [ ] **Step 4: Re-run the helper test**
+✅ **Step 4: Re-run the helper test**
 
 Run: `node --import tsx --test src/lib/material-integrity-helpers.test.ts`
 
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+✅ **Step 5: Commit**
 
 ```bash
 git add src/lib/material-integrity-helpers.ts src/lib/material-integrity-helpers.test.ts
@@ -202,7 +202,7 @@ git commit -m "test: add p1a material integrity helpers"
 - Generated: `src/generated/prisma/*`
 - Test: Prisma generate / migrate
 
-- [ ] **Step 1: Add failing expectations in later tests for the new fields**
+✅ **Step 1: Add failing expectations in later tests for the new fields**
 
 Target future assertions:
 
@@ -215,7 +215,7 @@ assert.match(artifact.ridingRecordHash, /^[a-f0-9]{64}$/);
 assert.match(archive.submitterBindingJson, /registrationId/);
 ```
 
-- [ ] **Step 2: Add schema fields**
+✅ **Step 2: Add schema fields**
 
 ```prisma
 model Race {
@@ -252,19 +252,19 @@ model CooperationRequest {
 }
 ```
 
-- [ ] **Step 3: Generate Prisma client**
+✅ **Step 3: Generate Prisma client**
 
 Run: `npm run db:generate`
 
 Expected: PASS
 
-- [ ] **Step 4: Create and apply migration**
+✅ **Step 4: Create and apply migration**
 
 Run: `npx prisma migrate dev --name grs004_p1a_material_integrity`
 
 Expected: PASS and local SQLite schema updated.
 
-- [ ] **Step 5: Commit**
+✅ **Step 5: Commit**
 
 ```bash
 git add prisma/schema.prisma prisma/migrations src/generated/prisma
@@ -280,7 +280,7 @@ git commit -m "feat: extend schema for p1a material integrity"
 - Create: `src/lib/services/material-integrity-cooperation.test.ts`
 - Test: `src/lib/services/material-integrity-cooperation.test.ts`
 
-- [ ] **Step 1: Write the failing cooperation material test**
+✅ **Step 1: Write the failing cooperation material test**
 
 ```ts
 import assert from "node:assert/strict";
@@ -370,13 +370,13 @@ test("approveCooperationRequest carries challenge sourceRef and digest into Race
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm failure**
+✅ **Step 2: Run the focused test and confirm failure**
 
 Run: `node --import tsx --test src/lib/services/material-integrity-cooperation.test.ts`
 
 Expected: FAIL because `taskPackageFileHash / proposalFileHash / challengeContentHash` do not exist yet.
 
-- [ ] **Step 3: Hash upload buffers when saving files**
+✅ **Step 3: Hash upload buffers when saving files**
 
 ```ts
 async function saveFile(file: File, subDir: string): Promise<{
@@ -392,7 +392,7 @@ async function saveFile(file: File, subDir: string): Promise<{
 }
 ```
 
-- [ ] **Step 4: Persist request hashes and carry challenge material refs into Race**
+✅ **Step 4: Persist request hashes and carry challenge material refs into Race**
 
 ```ts
 const challengeSourceRef = buildChallengeMaterialSourceRef({
@@ -422,13 +422,13 @@ const race = await tx.race.create({
 });
 ```
 
-- [ ] **Step 5: Re-run the focused test**
+✅ **Step 5: Re-run the focused test**
 
 Run: `node --import tsx --test src/lib/services/material-integrity-cooperation.test.ts`
 
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+✅ **Step 6: Commit**
 
 ```bash
 git add src/lib/services/cooperation.ts src/lib/services/material-integrity-cooperation.test.ts
@@ -444,7 +444,7 @@ git commit -m "feat: persist p1a cooperation material hashes"
 - Create: `src/lib/services/material-integrity-submissions.test.ts`
 - Test: `src/lib/services/material-integrity-submissions.test.ts`
 
-- [ ] **Step 1: Write the failing submission material test**
+✅ **Step 1: Write the failing submission material test**
 
 ```ts
 import assert from "node:assert/strict";
@@ -510,13 +510,13 @@ test("createFinalSubmission stores riding record hash for post-race materials", 
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm failure**
+✅ **Step 2: Run the focused test and confirm failure**
 
 Run: `node --import tsx --test src/lib/services/material-integrity-submissions.test.ts`
 
 Expected: FAIL because `codeContentHash / ridingRecordHash / submitterBindingJson` do not exist yet.
 
-- [ ] **Step 3: Add a helper-backed integrity payload for `Submission` and `SubmissionArtifact`**
+✅ **Step 3: Add a helper-backed integrity payload for `Submission` and `SubmissionArtifact`**
 
 ```ts
 const submittedAt = new Date();
@@ -530,7 +530,7 @@ const codeContentHash = buildPayloadDigest(parsed.codeContent);
 const ridingRecordHash = buildPayloadDigest(parsed.ridingRecord ?? "");
 ```
 
-- [ ] **Step 4: Persist the new fields in `createSubmission()` and `createFinalSubmission()`**
+✅ **Step 4: Persist the new fields in `createSubmission()` and `createFinalSubmission()`**
 
 ```ts
 const submission = await tx.submission.create({
@@ -550,13 +550,13 @@ const artifact = await tx.submissionArtifact.create({
 });
 ```
 
-- [ ] **Step 5: Re-run the focused submission material test**
+✅ **Step 5: Re-run the focused submission material test**
 
 Run: `node --import tsx --test src/lib/services/material-integrity-submissions.test.ts`
 
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+✅ **Step 6: Commit**
 
 ```bash
 git add src/lib/services/submissions.ts src/lib/services/material-integrity-submissions.test.ts
@@ -573,7 +573,7 @@ git commit -m "feat: persist p1a submission material hashes"
 - Modify: any helper used to build seeded `Work` rows if needed
 - Test: `src/lib/services/material-integrity-work.test.ts`
 
-- [ ] **Step 1: Write the failing work material test**
+✅ **Step 1: Write the failing work material test**
 
 ```ts
 import assert from "node:assert/strict";
@@ -595,13 +595,13 @@ test("seeded Work rows carry sourceRefJson and contentHash", async () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused work test and confirm failure**
+✅ **Step 2: Run the focused work test and confirm failure**
 
 Run: `node --import tsx --test src/lib/services/material-integrity-work.test.ts`
 
 Expected: FAIL because `Work` does not yet populate `sourceRefJson / contentHash`.
 
-- [ ] **Step 3: Compute `sourceRefJson` and `contentHash` when building seeded Work rows**
+✅ **Step 3: Compute `sourceRefJson` and `contentHash` when building seeded Work rows**
 
 ```ts
 const workSourceRef = buildWorkSourceRef({
@@ -625,19 +625,19 @@ return {
 };
 ```
 
-- [ ] **Step 4: Re-run the seed flow before re-testing**
+✅ **Step 4: Re-run the seed flow before re-testing**
 
 Run: `npm run db:seed`
 
 Expected: PASS and new Work rows include integrity fields.
 
-- [ ] **Step 5: Re-run the focused work test**
+✅ **Step 5: Re-run the focused work test**
 
 Run: `node --import tsx --test src/lib/services/material-integrity-work.test.ts`
 
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+✅ **Step 6: Commit**
 
 ```bash
 git add prisma/seed.ts src/lib/services/material-integrity-work.test.ts
@@ -654,7 +654,7 @@ git commit -m "feat: seed work source refs for p1a"
 - Modify: `docs/superpowers/status.md`
 - Modify: `docs/superpowers/specs/2026-07-10-grs004-p1a-material-integrity-foundation-design.md`
 
-- [ ] **Step 1: Ensure archive rows also carry integrity fields**
+✅ **Step 1: Ensure archive rows also carry integrity fields**
 
 ```ts
 await tx.teamArchive.create({
@@ -666,7 +666,7 @@ await tx.teamArchive.create({
 });
 ```
 
-- [ ] **Step 2: Update the spec with implementation notes discovered during execution**
+✅ **Step 2: Update the spec with implementation notes discovered during execution**
 
 ```md
 ## Implementation Notes
@@ -675,7 +675,7 @@ await tx.teamArchive.create({
 - `Award / JudgingRecord / Report` 的材料版本冻结仍留给 `P1-B`。
 ```
 
-- [ ] **Step 3: Update `status.md` with closed gaps and remaining gaps**
+✅ **Step 3: Update `status.md` with closed gaps and remaining gaps**
 
 ```md
 - `CooperationRequest` 已补 `taskPackageFileHash / proposalFileHash`。
@@ -685,7 +685,7 @@ await tx.teamArchive.create({
 - `Award / JudgingRecord / Report` 的结果冻结仍未开始，继续留在 `P1-B`。
 ```
 
-- [ ] **Step 4: Commit**
+✅ **Step 4: Commit**
 
 ```bash
 git add src/lib/services/submissions.ts prisma/seed.ts docs/superpowers/status.md docs/superpowers/specs/2026-07-10-grs004-p1a-material-integrity-foundation-design.md
@@ -699,31 +699,31 @@ git commit -m "docs: record p1a material integrity status"
 **Files:**
 - Test only
 
-- [ ] **Step 1: Run the focused material-integrity tests**
+✅ **Step 1: Run the focused material-integrity tests**
 
 Run: `node --import tsx --test src/lib/material-integrity-helpers.test.ts src/lib/services/material-integrity-cooperation.test.ts src/lib/services/material-integrity-submissions.test.ts src/lib/services/material-integrity-work.test.ts`
 
 Expected: PASS
 
-- [ ] **Step 2: Regenerate Prisma client**
+✅ **Step 2: Regenerate Prisma client**
 
 Run: `npm run db:generate`
 
 Expected: PASS
 
-- [ ] **Step 3: Re-run seed**
+✅ **Step 3: Re-run seed**
 
 Run: `npm run db:seed`
 
 Expected: PASS
 
-- [ ] **Step 4: Run full build**
+✅ **Step 4: Run full build**
 
 Run: `npm run build`
 
 Expected: PASS
 
-- [ ] **Step 5: Commit the verified slice**
+✅ **Step 5: Commit the verified slice**
 
 ```bash
 git add .

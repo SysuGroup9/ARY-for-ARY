@@ -544,6 +544,224 @@ async function main() {
     },
   });
 
+  // ── 报名中赛事（动态日期，始终在当前报名窗口内）──────────────────────────
+  const raceRegistrationOpen = await prisma.race.create({
+    data: {
+      ...raceBase,
+      displayShowRiderCode: false,
+      displayShowTrainingData: false,
+      enableFreeze: false,
+      evaluationNotes: "Focus on natural language processing quality, context handling, and reasoning clarity.",
+      freezeMinutesBeforeEnd: 0,
+      hasTrainingData: true,
+      id: "race_registration_open",
+      keywordsJson: JSON.stringify(["nlp", "context", "reasoning", "summarization"]),
+      organizerComment: "",
+      raceEnd: addDays(now, 12),
+      raceStart: addDays(now, 5),
+      signupEnd: addDays(now, 4),
+      signupStart: addDays(now, -3),
+      status: "registration",
+      submissionIntervalHours: 6,
+      summary: "NLP 推理挑战赛 — 报名窗口已开启，欢迎报名参赛。",
+      taskDescription: "实现一个文本摘要与关键信息抽取模块，支持长文本上下文处理与多粒度输出。",
+      taskPackageLabel: "nlp-task-v1.zip",
+      title: "📝 NLP 推理挑战赛",
+      trainingDataSummary: "样例包含新闻、技术文档和对话记录，覆盖不同长度与领域。",
+    },
+  });
+  // ── 报名中赛事结束 ────────────────────────────────────────────────────────
+
+  // ── 操场椭圆赛道·个人进行中赛事 ──────────────────────────────────────────
+  const raceActiveOval = await prisma.race.create({
+    data: {
+      ...raceBase,
+      enableFreeze: false,
+      evaluationNotes: "Evaluate path optimisation quality, graph reasoning, and edge case robustness.",
+      freezeMinutesBeforeEnd: 0,
+      hasTrainingData: true,
+      id: "race_active_oval",
+      keywordsJson: JSON.stringify(["graph", "pathfinding", "optimization", "routing"]),
+      organizerComment: "",
+      raceEnd: addDays(now, 4),
+      raceStart: addDays(now, -2),
+      signupEnd: addDays(now, -3),
+      signupStart: addDays(now, -10),
+      status: "running",
+      submissionIntervalHours: 1,
+      summary: "路径优化个人赛 — 6 名骑手在椭圆操场赛道上实时竞速。",
+      taskDescription: "实现一个基于图结构的最短路径算法，支持边权变化与多约束条件。",
+      taskPackageLabel: "path-opt-v1.zip",
+      title: "🏇 路径优化挑战赛",
+      trackId: "oval-track",
+      trainingDataSummary: "示例图包含城市网格、稀疏树和稠密中心辐射网络。",
+    },
+  });
+
+  const ovalScores = [88.4, 82.1, 76.5, 71.0, 63.3, 55.7];
+  const ovalTokens = [1540, 2080, 1960, 3100, 2750, 4400];
+  // caType 用 CAType 枚举值；agentType 用 AgentType 枚举值（两者分开）
+  const ovalCaTypes = ["CLAUDE_CODE", "CODEX", "CLAUDE_CODE", "CODEX", "CLAUDE_CODE", "CODEX"] as const;
+  const ovalAgentTypes = ["CLAUDE", "OPENAI", "CLAUDE", "OPENAI", "CLAUDE", "OPENAI"] as const;
+  const ovalProgressPcts = [72, 65, 58, 50, 43, 35];
+  const ovalActivities = [
+    "正在优化 Dijkstra 路径计算",
+    "处理稠密图边界条件",
+    "调整启发函数权重",
+    "测试多约束路径方案",
+    "分析 token 消耗趋势",
+    "完善最优路径验证",
+  ];
+
+  for (let i = 0; i < 6; i++) {
+    const rider = riders[i]!;
+    const registration = await prisma.registration.create({
+      data: {
+        approvedAt: addDays(now, -2),
+        raceId: raceActiveOval.id,
+        status: "APPROVED",
+        userId: rider.id,
+      },
+    });
+
+    const ovalRaceProject = await prisma.raceProject.create({
+      data: {
+        aggregateIngestionStatus: i < 2 ? "ACTIVE" : "CONNECTED",
+        githubRepoUrl: `https://github.com/demo/${rider.username}-oval`,
+        registrationId: registration.id,
+      },
+    });
+
+    const ovalConnection = await prisma.cAConnection.create({
+      data: {
+        caProjectId: `oval_project_${i}`,
+        caType: ovalCaTypes[i]!,
+        connectorBaseUrl: "https://connector.example/oval",
+        connectorId: `oval_connector_${i}`,
+        connectorSecret: `oval-secret-${i}`,
+        connectorVersion: "0.2.0",
+        handshakeCompletedAt: addDays(now, -2),
+        ingestionSource: "CONNECTOR",
+        ingestionStatus: i < 2 ? "ACTIVE" : "CONNECTED",
+        lastSyncedAt: i < 2 ? addHours(now, -1) : null,
+        raceProjectId: ovalRaceProject.id,
+      },
+    });
+
+    await prisma.session.create({
+      data: {
+        caConnectionId: ovalConnection.id,
+        caSessionId: `oval_session_${i}`,
+        currentGoal: "Optimise pathfinding for edge-heavy graphs.",
+        lastActiveAt: addHours(now, -1),
+        latestActivity: ovalActivities[i],
+        messageCount: 18 + i * 4,
+        progressPercent: ovalProgressPcts[i],
+        riskLevel: i === 3 ? "medium" : "low",
+        riskReason: i === 3 ? "token cost is approaching limit" : "none",
+        startedAt: addDays(now, -2),
+        taskStatus: "in_progress",
+        tokenCost: ovalTokens[i]!,
+        toolCallCount: 5 + i,
+      },
+    });
+
+    // 个人参赛：兼容容器用骑手用户名命名
+    const ovalTeam = await prisma.team.create({
+      data: {
+        captainId: rider.id,
+        members: { create: [{ displayName: rider.username, userId: rider.id }] },
+        name: rider.username,
+        raceId: raceActiveOval.id,
+      },
+    });
+
+    const ovalCodeContent = "export function solve(graph, start, end) { return dijkstra(graph, start, end); }";
+    const ovalRidingRecord = "Analyse edge weights, test boundary inputs, verify path correctness.";
+    const ovalSubId = `sub_oval_${i}`;
+    const ovalArtifactId = `artifact_oval_${i}`;
+    const ovalSubmitterBinding = buildSubmissionBindingJson({
+      raceId: raceActiveOval.id,
+      registrationId: registration.id,
+      submittedAt: now,
+      userId: rider.id,
+    });
+
+    await prisma.submission.create({
+      data: {
+        agentType: ovalAgentTypes[i]!,
+        codeContent: ovalCodeContent,
+        codeLabel: "solution.ts",
+        id: ovalSubId,
+        raceId: raceActiveOval.id,
+        registrationId: registration.id,
+        status: "SCORED",
+        teamId: ovalTeam.id,
+        tokenUsed: ovalTokens[i]!,
+      },
+    });
+
+    await prisma.submissionArtifact.create({
+      data: {
+        agentType: ovalAgentTypes[i]!,
+        codeContent: ovalCodeContent,
+        codeContentHash: buildPayloadDigest(ovalCodeContent),
+        codeLabel: "solution.ts",
+        id: ovalArtifactId,
+        raceId: raceActiveOval.id,
+        recordLabel: "riding-record.txt",
+        registrationId: registration.id,
+        ridingRecord: ovalRidingRecord,
+        ridingRecordHash: buildPayloadDigest(ovalRidingRecord),
+        submissionId: ovalSubId,
+        submitterBindingJson: ovalSubmitterBinding,
+        teamId: ovalTeam.id,
+        tokenUsed: ovalTokens[i]!,
+      },
+    });
+
+    await prisma.leaderboardEntry.create({
+      data: {
+        agentType: ovalAgentTypes[i]!,
+        dialogueScore: Math.round(ovalScores[i]! * 0.85 * 10) / 10,
+        progress: Math.max(0.12, ovalScores[i]! / 88.4),
+        raceId: raceActiveOval.id,
+        registrationId: registration.id,
+        submissionId: ovalSubId,
+        taskScore: Math.round(ovalScores[i]! * 0.9 * 10) / 10,
+        teamId: ovalTeam.id,
+        tokenScore: Math.round((100 - ovalTokens[i]! / 60) * 10) / 10,
+        totalScore: ovalScores[i]!,
+      },
+    });
+
+    await prisma.teamArchive.create({
+      data: {
+        agentType: ovalAgentTypes[i]!,
+        antiCheatPenalty: 0,
+        codeContent: ovalCodeContent,
+        codeContentHash: buildPayloadDigest(ovalCodeContent),
+        codeLabel: "solution.ts",
+        dialogueScore: Math.round(ovalScores[i]! * 0.85 * 10) / 10,
+        progress: Math.max(0.12, ovalScores[i]! / 88.4),
+        raceId: raceActiveOval.id,
+        reasoningScore: Math.round(ovalScores[i]! * 0.88 * 10) / 10,
+        recordLabel: "riding-record.txt",
+        registrationId: registration.id,
+        ridingRecord: ovalRidingRecord,
+        ridingRecordHash: buildPayloadDigest(ovalRidingRecord),
+        submissionId: ovalSubId,
+        submitterBindingJson: ovalSubmitterBinding,
+        taskScore: Math.round(ovalScores[i]! * 0.9 * 10) / 10,
+        teamId: ovalTeam.id,
+        tokenScore: Math.round((100 - ovalTokens[i]! / 60) * 10) / 10,
+        tokenUsed: ovalTokens[i]!,
+        totalScore: ovalScores[i]!,
+      },
+    });
+  }
+  // ── 操场椭圆赛道赛事结束 ──────────────────────────────────────────────────
+
   const activeTeamNames = [
     "Fast Sort Squad",
     "Milk Tea Coder",
@@ -2402,6 +2620,8 @@ async function main() {
 
   for (const raceId of [
     raceActive.id,
+    raceActiveOval.id,
+    raceRegistrationOpen.id,
     raceSignup.id,
     raceFinished.id,
     raceMatrixDraft.id,

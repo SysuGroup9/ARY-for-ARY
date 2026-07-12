@@ -2,16 +2,16 @@
 
 ## 实施步骤
 
-- [x] 核对 `docs/grs004` 中关于 Live Hall 刷新的明确要求
-- [x] 补设计文档
-- [x] 新增最小 `LiveAutoRefresh` client 组件
-- [x] 为 `Live Hall` 与 `Screen Live Display` page 层接入 3 秒刷新
-- [x] 通过 phase gating 限定刷新只在实时阶段启用
-- [x] 补纯函数 / source 回归测试
-- [x] 回归现有 `live-hall` / `live-display` 视图测试
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
-- [x] 更新 `grs004readme.md`
+✅ 核对 `docs/grs004` 中关于 Live Hall 刷新的明确要求
+✅ 补设计文档
+✅ 新增最小 `LiveAutoRefresh` client 组件
+✅ 为 `Live Hall` 与 `Screen Live Display` page 层接入 3 秒刷新
+✅ 通过 phase gating 限定刷新只在实时阶段启用
+✅ 补纯函数 / source 回归测试
+✅ 回归现有 `live-hall` / `live-display` 视图测试
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
+✅ 更新 `grs004readme.md`
 
 ## 验证命令
 

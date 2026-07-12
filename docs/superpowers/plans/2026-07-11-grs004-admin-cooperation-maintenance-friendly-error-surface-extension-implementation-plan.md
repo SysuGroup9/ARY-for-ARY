@@ -2,30 +2,30 @@
 
 ## 实施步骤
 
-- [x] 审计 admin / create race / cooperation / ca-status / maintenance 现有报错暴露点
-- [x] 扩展 `src/lib/action-feedback.ts`
-  - [x] 新增 `admin_roles / create_race / cooperation_request / admin_race_requests / organizer_ca_status / organizer_maintenance`
-  - [x] 修复 `screen_console` 归一化漏项
-  - [x] 补齐合作附件校验、CA operator 等英文技术错误映射
-- [x] 改造 `src/app/actions.ts`
-  - [x] `updateUserRolesAction`
-  - [x] `createRaceAction`
-  - [x] `cooperationRequestAction`
-  - [x] `approveCooperationRequestAction`
-  - [x] `rejectCooperationRequestAction`
-  - [x] `disableCAConnectionAction`
-  - [x] `enableCAConnectionAction`
-  - [x] `rebuildProcessModelsAction`
-  - [x] `generateRaceSnapshotAction`
-  - [x] `archiveRaceAction`
-- [x] 给 admin / create race / cooperation 页面接入 `ErrorNotice`
-- [x] 给对应表单补齐 `returnTo`
-- [x] 修复 cooperation 附件字段名与 server action 不一致
-- [x] 让 `/cooperation?submitted=1` 真正驱动成功态显示
-- [x] 新增/更新聚焦测试
-- [x] 跑聚焦测试
-- [x] 跑 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
+✅ 审计 admin / create race / cooperation / ca-status / maintenance 现有报错暴露点
+✅ 扩展 `src/lib/action-feedback.ts`
+  ✅ 新增 `admin_roles / create_race / cooperation_request / admin_race_requests / organizer_ca_status / organizer_maintenance`
+  ✅ 修复 `screen_console` 归一化漏项
+  ✅ 补齐合作附件校验、CA operator 等英文技术错误映射
+✅ 改造 `src/app/actions.ts`
+  ✅ `updateUserRolesAction`
+  ✅ `createRaceAction`
+  ✅ `cooperationRequestAction`
+  ✅ `approveCooperationRequestAction`
+  ✅ `rejectCooperationRequestAction`
+  ✅ `disableCAConnectionAction`
+  ✅ `enableCAConnectionAction`
+  ✅ `rebuildProcessModelsAction`
+  ✅ `generateRaceSnapshotAction`
+  ✅ `archiveRaceAction`
+✅ 给 admin / create race / cooperation 页面接入 `ErrorNotice`
+✅ 给对应表单补齐 `returnTo`
+✅ 修复 cooperation 附件字段名与 server action 不一致
+✅ 让 `/cooperation?submitted=1` 真正驱动成功态显示
+✅ 新增/更新聚焦测试
+✅ 跑聚焦测试
+✅ 跑 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
 
 ## 验证命令
 

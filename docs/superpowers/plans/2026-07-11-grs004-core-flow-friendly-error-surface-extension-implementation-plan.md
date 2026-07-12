@@ -2,22 +2,22 @@
 
 ## 实施步骤
 
-- [x] 核对 `public register / rider console / organizer console` 当前是否仍缺少 route-level friendly error 接线
-- [x] 审计 `register / withdraw / CA setup / submission / organizer registration / organizer works` 的 action 错误路径
-- [x] 扩展 `src/lib/action-feedback.ts`，增加 organizer scope 与核心业务错误映射
-- [x] 给 `src/app/races/[raceSlug]/register/page.tsx` 接入 `feedbackScope / feedbackMessage`
-- [x] 给 `src/app/console/races/[raceSlug]/rider/[section]/page.tsx` 接入 `feedbackScope / feedbackMessage`
-- [x] 给 `src/app/console/races/[raceSlug]/organizer/[section]/page.tsx` 接入 `feedbackScope / feedbackMessage`
-- [x] 给 `RaceRegisterPageView` 增加页内错误卡片与 `feedbackReturnTo`
-- [x] 给 `RiderConsolePageView` 增加页内错误卡片与相关 `returnTo / feedbackReturnTo`
-- [x] 给 `OrganizerConsolePageView` 增加页内错误卡片与相关 `returnTo / feedbackReturnTo`
-- [x] 给 rider 核心 action 增加 `try/catch + redirect(buildActionFeedbackHref(...))`
-- [x] 给 organizer 报名审核与作品控制 action 增加 `try/catch + redirect(buildActionFeedbackHref(...))`
-- [x] 更新 `src/app/actions.return-to.test.ts`
-- [x] 新增页面级 source tests
-- [x] 回归现有 public / rider / organizer 组件测试
-- [x] 运行 `npm run build`
-- [x] 更新 `docs/superpowers/status.md`
+✅ 核对 `public register / rider console / organizer console` 当前是否仍缺少 route-level friendly error 接线
+✅ 审计 `register / withdraw / CA setup / submission / organizer registration / organizer works` 的 action 错误路径
+✅ 扩展 `src/lib/action-feedback.ts`，增加 organizer scope 与核心业务错误映射
+✅ 给 `src/app/races/[raceSlug]/register/page.tsx` 接入 `feedbackScope / feedbackMessage`
+✅ 给 `src/app/console/races/[raceSlug]/rider/[section]/page.tsx` 接入 `feedbackScope / feedbackMessage`
+✅ 给 `src/app/console/races/[raceSlug]/organizer/[section]/page.tsx` 接入 `feedbackScope / feedbackMessage`
+✅ 给 `RaceRegisterPageView` 增加页内错误卡片与 `feedbackReturnTo`
+✅ 给 `RiderConsolePageView` 增加页内错误卡片与相关 `returnTo / feedbackReturnTo`
+✅ 给 `OrganizerConsolePageView` 增加页内错误卡片与相关 `returnTo / feedbackReturnTo`
+✅ 给 rider 核心 action 增加 `try/catch + redirect(buildActionFeedbackHref(...))`
+✅ 给 organizer 报名审核与作品控制 action 增加 `try/catch + redirect(buildActionFeedbackHref(...))`
+✅ 更新 `src/app/actions.return-to.test.ts`
+✅ 新增页面级 source tests
+✅ 回归现有 public / rider / organizer 组件测试
+✅ 运行 `npm run build`
+✅ 更新 `docs/superpowers/status.md`
 
 ## 验证命令
 

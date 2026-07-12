@@ -2,13 +2,13 @@
 
 ## 实施步骤
 
-- [x] 补设计文档
-- [x] 删除 `registerTeamAction / registerTeam / registerTeamSchema`
-- [x] 更新依赖旧 action 边界的测试
-- [x] 跑聚焦验证
-- [x] 跑 `npm run qa:p0`
-- [x] 更新 `docs/superpowers/status.md`
-- [x] 更新 `grs004readme.md`
+✅ 补设计文档
+✅ 删除 `registerTeamAction / registerTeam / registerTeamSchema`
+✅ 更新依赖旧 action 边界的测试
+✅ 跑聚焦验证
+✅ 跑 `npm run qa:p0`
+✅ 更新 `docs/superpowers/status.md`
+✅ 更新 `grs004readme.md`
 
 ## 验证命令
 
