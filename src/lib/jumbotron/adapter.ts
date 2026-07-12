@@ -39,11 +39,14 @@ export interface AryRaceData {
       aggregateIngestionStatus: string;
       caConnections?: Array<{
         caType?: string;
+        ingestionStatus?: string;
         sessions?: Array<{
           id: string;
           lastActiveAt?: Date;
           latestActivity?: string;
           progressPercent?: number;
+          riskLevel?: string;
+          riskReason?: string;
           tokenCost?: number;
           updatedAt?: Date;
         }>;
@@ -351,6 +354,40 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
           }
       : undefined;
 
+    // ── 综合风险推导：CA接入失败 + 会话风险 + 反作弊扣分 ──
+    const antiCheatPenalty = archive?.antiCheatPenalty ?? 0;
+    const ingestionFailed =
+      registration?.raceProject?.aggregateIngestionStatus === "FAILED" ||
+      (registration?.raceProject?.caConnections ?? []).some(
+        (connection) => connection.ingestionStatus === "FAILED",
+      );
+    const sessionRiskLevel = latestSession?.riskLevel?.toLowerCase();
+    const sessionRiskReason =
+      latestSession?.riskReason && latestSession.riskReason !== "none"
+        ? latestSession.riskReason
+        : undefined;
+
+    const riskReasons: string[] = [];
+    let riskLevel: RacingEntrySnapshot["riskLevel"] = "low";
+    let violationCount = 0;
+
+    if (antiCheatPenalty > 0) {
+      riskLevel = "high";
+      violationCount += 1;
+      riskReasons.push(`检测到诱导词，扣 ${antiCheatPenalty} 分`);
+    }
+    if (ingestionFailed) {
+      if (riskLevel !== "high") riskLevel = "medium";
+      riskReasons.push("CA 接入失败，实况数据中断");
+    }
+    if (sessionRiskLevel === "high" || sessionRiskLevel === "medium") {
+      if (riskLevel === "low") {
+        riskLevel = sessionRiskLevel as RacingEntrySnapshot["riskLevel"];
+      }
+      riskReasons.push(sessionRiskReason ?? "会话风险等级偏高");
+    }
+    const riskReason = riskReasons.length > 0 ? riskReasons.join("；") : undefined;
+
     return {
       entryId: team.id,
       riderName: team.captain.username,
@@ -367,9 +404,10 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
       costTokens: effectiveTokenCost,
       submissionCount,
       costUsd: effectiveTokenCost * 0.0001,
-      riskLevel: (archive?.antiCheatPenalty ?? 0) > 0 ? "medium" : "low",
+      riskLevel,
       obstacleCount: 0,             // mock
-      violationCount: (archive?.antiCheatPenalty ?? 0) > 0 ? 1 : 0,
+      violationCount,
+      riskReason,
       status:
         registration?.raceProject?.aggregateIngestionStatus === "ACTIVE"
           ? "running"
@@ -465,13 +503,43 @@ export function generateAttentionItems(race: AryRaceData): AttentionItem[] {
   const items: AttentionItem[] = [];
 
   for (const registration of race.registrations ?? []) {
-    if (registration.raceProject?.aggregateIngestionStatus === "FAILED") {
+    const raceProject = registration.raceProject;
+    const ingestionFailed =
+      raceProject?.aggregateIngestionStatus === "FAILED" ||
+      (raceProject?.caConnections ?? []).some(
+        (connection) => connection.ingestionStatus === "FAILED",
+      );
+    if (ingestionFailed) {
       items.push({
         itemId: `risk-ca-${registration.id}`,
         entryId: registration.id,
         category: "risk",
         severity: "medium",
-        summary: `${registration.user.username}: CA ingestion failed`,
+        summary: `${registration.user.username}: CA 接入失败，实况数据中断`,
+        status: "active",
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    // 会话级风险（中/高）
+    const riskySession = (raceProject?.caConnections ?? [])
+      .flatMap((connection) => connection.sessions ?? [])
+      .find((session) => {
+        const level = session.riskLevel?.toLowerCase();
+        return level === "medium" || level === "high";
+      });
+    if (riskySession) {
+      const reason =
+        riskySession.riskReason && riskySession.riskReason !== "none"
+          ? riskySession.riskReason
+          : "会话风险等级偏高";
+      items.push({
+        itemId: `risk-session-${registration.id}`,
+        entryId: registration.id,
+        category: "risk",
+        severity:
+          riskySession.riskLevel?.toLowerCase() === "high" ? "high" : "medium",
+        summary: `${registration.user.username}: ${reason}`,
         status: "active",
         createdAt: new Date().toISOString(),
       });

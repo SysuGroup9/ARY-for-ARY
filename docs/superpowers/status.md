@@ -89,13 +89,29 @@ npm install && npm run db:generate && npm run db:deploy && npm run db:seed && np
 |---|---|
 | ✅ 新增 `race_registration_open` 可报名赛事 | 📝 NLP 推理挑战赛，`status: "registration"`，日期用 `addDays(now, ...)` 相对偏移（报名窗口 -3d ~ +4d），解决原有 `race_signup` 日期过期导致无可报名赛事的问题 |
 | ✅ 新增 `race_active_oval` 种子赛事 | 使用操场椭圆赛道（`oval-track/background.png`），状态 `running`，6 名骑手以个人形式参赛（兼容 Team 容器名 = 骑手用户名） |
-| ✅ 首页大屏轮播接入 | `src/app/page.tsx` 新增 `JumbotronBanner`，自动加载所有进行中赛事快照，每8秒自动切换 |
+| ✅ 赛事大厅大屏轮播接入 | 实况大厅"打开大屏"页面（`src/app/jumbotron/[raceId]/page.tsx`）的 phase 过滤补入 `running`，使所有进行中赛事都进入 `JumbotronBanner` 轮播列表，每8秒自动切换（首页 `page.tsx` 未改动） |
 | ✅ 暂停 / 恢复支持 | `JumbotronBanner` 已有 `⏸ 暂停` / `▶ 自动` 按钮；手动切换后自动锁定，再按自动键恢复轮播 |
 
 - 底图：`public/assets/tracks/oval-track/background.png`（标准400米操场跑道鸟瞰图）
 - 赛道：`oval-track`（椭圆，8车道）
 - 参与骑手：`rider_alice ~ rider_frank`，以用户名作为参赛标识（不用队名）
 - 相关文档：`docs/superpowers/specs/2026-07-12-grs004-oval-race-jumbotron-banner-design.md`、`docs/superpowers/plans/2026-07-12-grs004-oval-race-jumbotron-banner-implementation-plan.md`
+
+### 大屏风险数据一致性修复
+
+| 任务 | 说明 |
+|---|---|
+| ✅ 修复"风险数字点开无内容"Bug | 大屏 KPI 显示风险数（如1个），但点开参赛者却全是 `low`/0，风险无处可查 |
+| ✅ 参赛者风险综合推导 | `adapter.ts` 的 `mapToRacingEntries()` 现从三个来源推导每位参赛者风险：CA 接入失败（FAILED）、会话风险等级（Session.riskLevel/riskReason）、反作弊扣分（antiCheatPenalty） |
+| ✅ 新增 `riskReason` 字段 | `RacingEntrySnapshot` 增加 `riskReason?: string`，携带真实风险说明文本 |
+| ✅ KPI 与参赛者一致 | `race-snapshot.ts` 中 KPI `riskCount`/`violationCount` 改为从实际带风险的参赛者条目派生，保证数字与明细完全一致 |
+| ✅ 风险详情面板 UI | 风险 KPI 面板只列出真正带风险的参赛者，展示风险等级徽章 + 违规数 + 风险说明；无风险时显示"当前没有活跃风险" |
+| ✅ Drill-down 面板 | 单个参赛者详情面板新增风险说明行（⚠ 图标 + reason） |
+
+- 根因：KPI `riskCount` 统计"CA接入失败或反作弊扣分"，而参赛者条目的 `riskLevel`/`violationCount` **只反映反作弊扣分**，当风险源为 CA 接入失败时（如 `race_story_running` 的 rider_orion），KPI 计数为1但无任何参赛者体现
+- 涉及文件：`src/lib/jumbotron/track-runtime/types.ts`、`src/lib/jumbotron/adapter.ts`、`src/lib/services/race-snapshot.ts`、`src/app/jumbotron/[raceId]/JumbotronClient.tsx`
+- 验证：`npm run db:seed` 重新生成快照后，`race_active`（KPI 2 ⟷ 2 风险骑手）、`race_active_oval`（1 ⟷ 1）、`race_story_running`（1 ⟷ 1）KPI 数字与参赛者明细完全一致
+- 相关文档：`docs/superpowers/specs/2026-07-12-grs004-jumbotron-risk-consistency-design.md`、`docs/superpowers/plans/2026-07-12-grs004-jumbotron-risk-consistency-implementation-plan.md`
 
 ---
 

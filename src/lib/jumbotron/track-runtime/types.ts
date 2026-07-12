@@ -73,6 +73,7 @@ export interface RacingEntrySnapshot {
   submissionCount?: number;
   costUsd?: number;
   riskLevel: "none" | "low" | "medium" | "high";
+  riskReason?: string;   // 风险原因说明（CA接入失败 / 会话风险 / 反作弊扣分）
   obstacleCount: number;
   violationCount: number;
   status: HorseMotionState;

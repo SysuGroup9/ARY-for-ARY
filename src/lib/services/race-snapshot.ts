@@ -52,12 +52,15 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
                 select: {
                   caType: true,
                   id: true,
+                  ingestionStatus: true,
                   sessions: {
                     select: {
                       id: true,
                       lastActiveAt: true,
                       latestActivity: true,
                       progressPercent: true,
+                      riskLevel: true,
+                      riskReason: true,
                       tokenCost: true,
                       updatedAt: true,
                     },
@@ -125,11 +128,14 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
             caConnections: registration.raceProject.caConnections.map(
               (connection) => ({
                 caType: connection.caType,
+                ingestionStatus: connection.ingestionStatus,
                 sessions: connection.sessions.map((session) => ({
                   id: session.id,
                   lastActiveAt: session.lastActiveAt ?? undefined,
                   latestActivity: session.latestActivity ?? undefined,
                   progressPercent: session.progressPercent ?? undefined,
+                  riskLevel: session.riskLevel ?? undefined,
+                  riskReason: session.riskReason ?? undefined,
                   tokenCost: session.tokenCost,
                   updatedAt: session.updatedAt,
                 })),
@@ -187,6 +193,10 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
   kpis.activeRiders = entries.filter(
     (entry) => entry.status !== "stale" && entry.status !== "idle",
   ).length;
+  // 风险 KPI 从参赛者条目派生，保证顶部计数与详情面板/点开条目完全一致。
+  const riskyEntries = entries.filter((entry) => entry.riskLevel !== "low" && entry.riskLevel !== "none");
+  kpis.riskCount = riskyEntries.length;
+  kpis.violationCount = entries.reduce((sum, entry) => sum + entry.violationCount, 0);
 
   const trackConfig = parseRaceTrackConfigJson(race.trackConfigJson);
 

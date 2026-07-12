@@ -212,13 +212,26 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
               ))}
             </tbody></table>
           )}
-          {kpiDetail === "risk" && (
-            <table><thead><tr><th>队伍</th><th>风险等级</th><th>违规数</th><th>说明</th></tr></thead><tbody>
-              {sorted.map((e) => (
-                <tr key={e.entryId}><td>{e.projectName}</td><td>{e.riskLevel}</td><td>{e.violationCount}</td><td>{e.violationCount > 0 ? "检测到诱导词" : "-"}</td></tr>
-              ))}
-            </tbody></table>
-          )}
+          {kpiDetail === "risk" && (() => {
+            const riskEntries = sorted.filter(
+              (e) => e.riskLevel === "medium" || e.riskLevel === "high" || e.violationCount > 0 || !!e.riskReason,
+            );
+            if (riskEntries.length === 0) {
+              return <p className="jt-kpi-detail__empty">当前没有活跃风险。</p>;
+            }
+            return (
+              <table><thead><tr><th>参赛者</th><th>风险等级</th><th>违规数</th><th>风险说明</th></tr></thead><tbody>
+                {riskEntries.map((e) => (
+                  <tr key={e.entryId}>
+                    <td>{e.projectName}</td>
+                    <td><span className={`jt-risk-badge jt-risk-badge--${e.riskLevel}`}>{riskLevelLabel(e.riskLevel)}</span></td>
+                    <td>{e.violationCount}</td>
+                    <td>{e.riskReason ?? "-"}</td>
+                  </tr>
+                ))}
+              </tbody></table>
+            );
+          })()}
         </div>
       )}
 
@@ -345,11 +358,12 @@ export default function JumbotronClient({ snapshot, trackProfile }: Props) {
                 <div><label>Token 消耗</label><b>{e.costTokens ?? 0}</b></div>
                 <div><label>主动提交次数</label><b>{e.submissionCount ?? 0}</b></div>
                 <div><label>估算费用</label><b>${((e.costTokens ?? 0) * 0.0001).toFixed(2)}</b></div>
-                <div><label>风险等级</label><b style={{color:e.riskLevel==="high"?"#c34e36":e.riskLevel==="medium"?"#e67e22":"#50b86c"}}>{e.riskLevel}</b></div>
+                <div><label>风险等级</label><b style={{color:e.riskLevel==="high"?"#c34e36":e.riskLevel==="medium"?"#e67e22":"#50b86c"}}>{riskLevelLabel(e.riskLevel)}</b></div>
                 <div><label>违规数</label><b>{e.violationCount}</b></div>
                 <div><label>状态</label><b>{e.status}</b></div>
                 <div><label>阶段</label><b>{e.currentPhase ?? "-"}</b></div>
               </div>
+              {e.riskReason && <p className="jt-drill__risk">⚠ {e.riskReason}</p>}
               {e.lastMessage && <p className="jt-drill__msg">💬 {e.lastMessage.summary}</p>}
             </div>
           </div>
@@ -390,6 +404,9 @@ function formatTime(s: number) {
 }
 function fmtNum(n: number) { return n >= 1000 ? `${(n/1000).toFixed(1)}K` : String(n); }
 function rankColor(r: number) { return r === 1 ? "#c34e36" : r === 2 ? "#8b6e5a" : r === 3 ? "#687357" : "#999"; }
+function riskLevelLabel(level: string) {
+  return level === "high" ? "高" : level === "medium" ? "中" : level === "low" ? "低" : "无";
+}
 
 const styles = `
 .jt {
@@ -438,6 +455,13 @@ const styles = `
 .jt-kpi-detail table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .jt-kpi-detail th { text-align: left; padding: 4px 8px; color: #8b7b6e; font-size: 11px; border-bottom: 1px solid rgba(68,55,37,0.1); }
 .jt-kpi-detail td { padding: 3px 8px; border-bottom: 1px solid rgba(68,55,37,0.04); }
+.jt-kpi-detail__empty { font-size: 12px; color: #8b7b6e; padding: 8px 4px; margin: 0; }
+.jt-risk-badge { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+.jt-risk-badge--high { background: rgba(195,78,54,0.12); color: #c34e36; }
+.jt-risk-badge--medium { background: rgba(230,126,34,0.14); color: #e67e22; }
+.jt-risk-badge--low { background: rgba(80,184,108,0.12); color: #50b86c; }
+.jt-risk-badge--none { background: rgba(68,55,37,0.06); color: #8b7b6e; }
+.jt-drill__risk { margin-top: 14px; padding: 10px 14px; background: rgba(195,78,54,0.08); border: 1px solid rgba(195,78,54,0.2); border-radius: 8px; font-size: 12px; color: #c34e36; font-weight: 600; }
 
 /* Main */
 .jt-main { display: flex; flex: 1; min-height: 0; gap: 6px; padding: 6px; }

@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(node -e \"const s=require\\('./public/assets/snapshots/race_active.json'\\); console.log\\('riskCount:', s.kpis.riskCount, 'violationCount:', s.kpis.violationCount\\); console.log\\('attentionItems:', JSON.stringify\\(s.attentionItems,null,2\\)\\); console.log\\('entries risk:'\\); s.entries.forEach\\(e=>console.log\\(e.projectName, '| risk:', e.riskLevel, '| violations:', e.violationCount\\)\\);\")",
+      "Bash(npx tsx -e ' *)",
+      "Bash(node -e \"console.log\\('node works'\\)\")",
+      "Bash(npm run *)",
+      "Bash(node -e ' *)",
+      "Bash(npx vitest *)",
+      "Bash(node -e \"const s=require\\('./package.json'\\).scripts; Object.entries\\(s\\).forEach\\(\\([k,v]\\)=>console.log\\(k+': '+v\\)\\)\")",
+      "Bash(npx tsx *)",
+      "Bash(git stash *)"
     ]
   }
 }
