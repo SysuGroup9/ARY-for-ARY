@@ -115,7 +115,7 @@ npm install && npm run db:generate && npm run db:deploy && npm run db:seed && np
 
 ---
 
-## 当前整体状态（2026-07-12，GRS004）
+## 当前整体状态（2026-07-14，GRS004）
 
 项目已从"底层模型和规则对齐"推进到"用户可以直接操作和验证"的阶段。本地可部署、可回归测试、可手工验收、可演示的主链路已具备：
 
@@ -266,9 +266,46 @@ npm install && npm run db:generate && npm run db:deploy && npm run db:seed && np
 
 ## ⏳ 待实现
 
-> 经代码核查，原"待实现"列表中的所有条目均已在代码中实现。当前项目无剩余未完成的防伪防篡改、Screen Console、Report、CA 完整性任务。
+暂无待实现任务。
 
-如需追踪新任务，请在此补充。
+---
+
+## ✅ 协作功能（DEV-COLLAB，2026-07-13 完成，2026-07-14 收尾）
+
+将参赛模型从个人升级为 Team 形式，新增 Team 内任务管理、协作交流、知识库聚合视图。
+
+| 阶段 | 内容 | 状态 |
+|---|---|---|
+| 阶段一 | Schema 迁移 + 基础校验（3 枚举 + 2 模型 + 7 模型修改） | ✅ 已完成（10 测试） |
+| 阶段二 | 核心服务重构（Team/Registration/Work/Submission） | ✅ 已完成（11 测试） |
+| 阶段三 | 协作模块新增（Task/Message/知识库，含 archiver） | ✅ 已完成（15 测试） |
+| 阶段四 | 评分体系重构（Award/赛果/Judging） | ✅ 已完成（7 测试） |
+| 阶段五 | Server Actions 接入 + E2E 集成 | ✅ 已完成（8 测试） |
+
+**总计**：15 个文件修改，51 个单元测试用例全部通过。tsc --noEmit 零错误，ESLint 零错误。E2E 回归 35 项 100% 通过率。
+
+**核心变更**：
+- Schema：新增 `TeamMemberRole`/`TeamMemberStatus`/`TaskStatus` 枚举，`TeamTask`/`CollaborationMessage` 模型
+- 参赛模型：个人 → Team（1 Leader + N Mate），Registration 增加 teamId
+- 审批流程：双审批（Organizer 批准报名 + Leader 批准成员）
+- 作品归属：Work/Submission/Award 改为 Team 维度
+- 协作能力：Team 内任务管理、私聊消息、知识库聚合视图（含 ZIP 导出）
+- 评分重构：Award/Results/Judging 全部从 registration 维度切换到 team 维度
+
+### 2026-07-14 收尾修复
+
+| 修复 | 说明 |
+|---|---|
+| ✅ 成员名显示 "—" | `listRaces()` 增加 `members.user` include，Organizer/Admin 控制台团队列表正确显示用户名 |
+| ✅ 成员数算入 PENDING | Organizer/Admin "成员数" 过滤口径从 `!== "REMOVED"` 改为 `=== "APPROVED"`，与 Rider 视角对齐 |
+| ✅ 知识库无代码提示 | 无提交时前端显示 "暂无代码提交记录"，不再触发 `no_code.txt` 文件下载 |
+| ✅ 代码下载文件化 | `code/route.ts` 从 `NextResponse.json(code)` 改为 `NextResponse(code.codeContent)` + `Content-Disposition`，正确触发文件下载 |
+
+**验证**：tsc/ESLint 零错误，全量单元测试通过，E2E 35 项 100% 通过率。
+
+**文档入口**：
+- Design: `docs/superpowers/specs/2026-07-12-grs004-collaboration-design.md`
+- Plan: `docs/superpowers/plans/2026-07-12-grs004-collaboration-implementation-plan.md`
 
 ---
 

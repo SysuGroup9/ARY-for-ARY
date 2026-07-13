@@ -8,6 +8,7 @@ export function buildWorkSeedRecord(input: {
   raceId: string;
   registrationId: string;
   repoUrl: string;
+  teamId?: string;
   teamName: string;
   videoUrl: string;
 }) {
@@ -33,6 +34,7 @@ export function buildWorkSeedRecord(input: {
     sourceRefJson: JSON.stringify(sourceRef),
     status: "SUBMITTED" as const,
     summary: input.excerpt,
+    teamId: input.teamId ?? undefined,
     techNotes: input.archiveCode,
     title: input.teamName,
     videoUrl: input.videoUrl,

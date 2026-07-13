@@ -141,10 +141,49 @@ async function main() {
   const addHours = (date: Date, hours: number) =>
     new Date(date.getTime() + hours * 60 * 60 * 1000);
 
+  // GRS004: 多人 Team 辅助函数，支持混合 PENDING/APPROVED 状态
+  async function createMultiMemberTeam(input: {
+    raceId: string;
+    teamName: string;
+    members: Array<{
+      user: { id: string; username: string };
+      role: "LEADER" | "MATE";
+      status: "APPROVED" | "PENDING";
+    }>;
+  }) {
+    const leader = input.members.find((m) => m.role === "LEADER")!;
+    const team = await prisma.team.create({
+      data: {
+        captainId: leader.user.id,
+        leaderId: leader.user.id,
+        name: input.teamName,
+        raceId: input.raceId,
+      },
+    });
+    for (const m of input.members) {
+      await prisma.teamMember.create({
+        data: {
+          teamId: team.id,
+          userId: m.user.id,
+          displayName: m.user.username,
+          role: m.role,
+          status: m.status,
+        },
+      });
+    }
+    return team;
+  }
+
   async function createTeamRegistrationBundle(input: {
     aggregateIngestionStatus?: "ACTIVE" | "CONNECTED" | "FAILED" | "NOT_CONFIGURED";
     approvedAt?: Date;
     createRaceProject?: boolean;
+    extraMembers?: Array<{
+      displayName: string;
+      role?: "LEADER" | "MATE";
+      status?: "APPROVED" | "PENDING" | "REJECTED";
+      user: { id: string; username: string };
+    }>;
     githubRepoUrl?: string;
     raceId: string;
     registrationStatus?: "APPROVED" | "REJECTED" | "SUBMITTED" | "WITHDRAWN";
@@ -166,15 +205,65 @@ async function main() {
       },
     });
 
+    // 构建 TeamMember 列表：Leader + 额外成员
+    const memberCreates = [
+      { displayName: input.user.username, role: "LEADER" as const, status: "APPROVED" as const, userId: input.user.id },
+      ...(input.extraMembers ?? []).map((m) => ({
+        displayName: m.displayName,
+        role: m.role ?? "MATE" as const,
+        status: m.status ?? "APPROVED" as const,
+        userId: m.user.id,
+      })),
+    ];
+
     const team = await prisma.team.create({
       data: {
         captainId: input.user.id,
+        leaderId: input.user.id,
         members: {
-          create: [{ displayName: input.user.username, userId: input.user.id }],
+          create: memberCreates,
         },
         name: input.teamName,
         raceId: input.raceId,
       },
+    });
+
+    // 为额外成员创建 Registration 并回写 teamId
+    if (input.extraMembers) {
+      for (const m of input.extraMembers) {
+        const mateReg = await prisma.registration.create({
+          data: {
+            approvedAt:
+              registrationStatus === "APPROVED"
+                ? input.approvedAt ?? now
+                : undefined,
+            raceId: input.raceId,
+            status: registrationStatus,
+            submittedAt: input.submittedAt ?? now,
+            teamId: team.id,
+            userId: m.user.id,
+          },
+        });
+        // 为 mate 创建 RaceProject
+        if (input.createRaceProject !== false) {
+          await prisma.raceProject.create({
+            data: {
+              aggregateIngestionStatus:
+                input.aggregateIngestionStatus ?? "NOT_CONFIGURED",
+              githubRepoUrl:
+                input.githubRepoUrl ??
+                `https://github.com/demo/${m.user.username}-${input.raceId}`,
+              registrationId: mateReg.id,
+            },
+          });
+        }
+      }
+    }
+
+    // 回写 Leader 的 Registration.teamId
+    await prisma.registration.update({
+      where: { id: registration.id },
+      data: { teamId: team.id },
     });
 
     const raceProject =
@@ -598,44 +687,84 @@ async function main() {
     },
   });
 
-  const ovalScores = [88.4, 82.1, 76.5, 71.0, 63.3, 55.7];
-  const ovalTokens = [1540, 2080, 1960, 3100, 2750, 4400];
-  // caType 用 CAType 枚举值；agentType 用 AgentType 枚举值（两者分开）
-  const ovalCaTypes = ["CLAUDE_CODE", "CODEX", "CLAUDE_CODE", "CODEX", "CLAUDE_CODE", "CODEX"] as const;
-  const ovalAgentTypes = ["CLAUDE", "OPENAI", "CLAUDE", "OPENAI", "CLAUDE", "OPENAI"] as const;
-  const ovalProgressPcts = [72, 65, 58, 50, 43, 35];
-  const ovalActivities = [
-    "正在优化 Dijkstra 路径计算",
-    "处理稠密图边界条件",
-    "调整启发函数权重",
-    "测试多约束路径方案",
-    "分析 token 消耗趋势",
-    "完善最优路径验证",
+  // race_active_oval: 2 teams (3-member each with mixed PENDING/APPROVED)
+  const ovalTeamDefs = [
+    {
+      teamName: "Pathfinders Alpha",
+      score: 88.4, token: 1540, agent: "CLAUDE" as const, caType: "CLAUDE_CODE" as const,
+      progress: 72, activity: "正在优化 Dijkstra 路径计算",
+      leader: riders[0]!,
+      mates: [
+        { user: riders[1]!, role: "MATE" as const, status: "PENDING" as const },
+        { user: riders[2]!, role: "MATE" as const, status: "APPROVED" as const },
+      ],
+    },
+    {
+      teamName: "Graph Explorers",
+      score: 63.3, token: 2750, agent: "CLAUDE" as const, caType: "CLAUDE_CODE" as const,
+      progress: 43, activity: "分析 token 消耗趋势",
+      leader: riders[3]!,
+      mates: [
+        { user: riders[4]!, role: "MATE" as const, status: "PENDING" as const },
+        { user: riders[5]!, role: "MATE" as const, status: "APPROVED" as const },
+      ],
+    },
   ];
 
-  for (let i = 0; i < 6; i++) {
-    const rider = riders[i]!;
+  for (let i = 0; i < ovalTeamDefs.length; i++) {
+    const def = ovalTeamDefs[i]!;
+    const allMembers = [
+      { user: def.leader, role: "LEADER" as const, status: "APPROVED" as const },
+      ...def.mates,
+    ];
+    const team = await createMultiMemberTeam({
+      raceId: raceActiveOval.id,
+      teamName: def.teamName,
+      members: allMembers,
+    });
+
+    // Leader Registration
     const registration = await prisma.registration.create({
       data: {
         approvedAt: addDays(now, -2),
         raceId: raceActiveOval.id,
         status: "APPROVED",
-        userId: rider.id,
+        teamId: team.id,
+        userId: def.leader.id,
       },
     });
-
-    const ovalRaceProject = await prisma.raceProject.create({
+    const raceProject = await prisma.raceProject.create({
       data: {
         aggregateIngestionStatus: i < 2 ? "ACTIVE" : "CONNECTED",
-        githubRepoUrl: `https://github.com/demo/${rider.username}-oval`,
+        githubRepoUrl: `https://github.com/demo/${def.leader.username}-oval`,
         registrationId: registration.id,
       },
     });
 
+    // Mate Registrations
+    for (const mate of def.mates) {
+      const mateReg = await prisma.registration.create({
+        data: {
+          approvedAt: addDays(now, -2),
+          raceId: raceActiveOval.id,
+          status: mate.status === "PENDING" ? "SUBMITTED" : "APPROVED",
+          teamId: team.id,
+          userId: mate.user.id,
+        },
+      });
+      await prisma.raceProject.create({
+        data: {
+          aggregateIngestionStatus: i < 2 ? "ACTIVE" : "CONNECTED",
+          githubRepoUrl: `https://github.com/demo/${mate.user.username}-oval`,
+          registrationId: mateReg.id,
+        },
+      });
+    }
+
     const ovalConnection = await prisma.cAConnection.create({
       data: {
         caProjectId: `oval_project_${i}`,
-        caType: ovalCaTypes[i]!,
+        caType: def.caType,
         connectorBaseUrl: "https://connector.example/oval",
         connectorId: `oval_connector_${i}`,
         connectorSecret: `oval-secret-${i}`,
@@ -644,7 +773,7 @@ async function main() {
         ingestionSource: "CONNECTOR",
         ingestionStatus: i < 2 ? "ACTIVE" : "CONNECTED",
         lastSyncedAt: i < 2 ? addHours(now, -1) : null,
-        raceProjectId: ovalRaceProject.id,
+        raceProjectId: raceProject.id,
       },
     });
 
@@ -654,25 +783,15 @@ async function main() {
         caSessionId: `oval_session_${i}`,
         currentGoal: "Optimise pathfinding for edge-heavy graphs.",
         lastActiveAt: addHours(now, -1),
-        latestActivity: ovalActivities[i],
+        latestActivity: def.activity,
         messageCount: 18 + i * 4,
-        progressPercent: ovalProgressPcts[i],
-        riskLevel: i === 3 ? "medium" : "low",
-        riskReason: i === 3 ? "token cost is approaching limit" : "none",
+        progressPercent: def.progress,
+        riskLevel: i === 1 ? "medium" : "low",
+        riskReason: i === 1 ? "token cost is approaching limit" : "none",
         startedAt: addDays(now, -2),
         taskStatus: "in_progress",
-        tokenCost: ovalTokens[i]!,
+        tokenCost: def.token,
         toolCallCount: 5 + i,
-      },
-    });
-
-    // 个人参赛：兼容容器用骑手用户名命名
-    const ovalTeam = await prisma.team.create({
-      data: {
-        captainId: rider.id,
-        members: { create: [{ displayName: rider.username, userId: rider.id }] },
-        name: rider.username,
-        raceId: raceActiveOval.id,
       },
     });
 
@@ -684,26 +803,27 @@ async function main() {
       raceId: raceActiveOval.id,
       registrationId: registration.id,
       submittedAt: now,
-      userId: rider.id,
+      teamId: team.id,
+      userId: def.leader.id,
     });
 
     await prisma.submission.create({
       data: {
-        agentType: ovalAgentTypes[i]!,
+        agentType: def.agent,
         codeContent: ovalCodeContent,
         codeLabel: "solution.ts",
         id: ovalSubId,
         raceId: raceActiveOval.id,
         registrationId: registration.id,
         status: "SCORED",
-        teamId: ovalTeam.id,
-        tokenUsed: ovalTokens[i]!,
+        teamId: team.id,
+        tokenUsed: def.token,
       },
     });
 
     await prisma.submissionArtifact.create({
       data: {
-        agentType: ovalAgentTypes[i]!,
+        agentType: def.agent,
         codeContent: ovalCodeContent,
         codeContentHash: buildPayloadDigest(ovalCodeContent),
         codeLabel: "solution.ts",
@@ -715,102 +835,143 @@ async function main() {
         ridingRecordHash: buildPayloadDigest(ovalRidingRecord),
         submissionId: ovalSubId,
         submitterBindingJson: ovalSubmitterBinding,
-        teamId: ovalTeam.id,
-        tokenUsed: ovalTokens[i]!,
+        teamId: team.id,
+        tokenUsed: def.token,
       },
     });
 
     await prisma.leaderboardEntry.create({
       data: {
-        agentType: ovalAgentTypes[i]!,
-        dialogueScore: Math.round(ovalScores[i]! * 0.85 * 10) / 10,
-        progress: Math.max(0.12, ovalScores[i]! / 88.4),
+        agentType: def.agent,
+        dialogueScore: Math.round(def.score * 0.85 * 10) / 10,
+        progress: Math.max(0.12, def.score / 88.4),
         raceId: raceActiveOval.id,
         registrationId: registration.id,
         submissionId: ovalSubId,
-        taskScore: Math.round(ovalScores[i]! * 0.9 * 10) / 10,
-        teamId: ovalTeam.id,
-        tokenScore: Math.round((100 - ovalTokens[i]! / 60) * 10) / 10,
-        totalScore: ovalScores[i]!,
+        taskScore: Math.round(def.score * 0.9 * 10) / 10,
+        teamId: team.id,
+        tokenScore: Math.round((100 - def.token / 60) * 10) / 10,
+        totalScore: def.score,
       },
     });
 
     await prisma.teamArchive.create({
       data: {
-        agentType: ovalAgentTypes[i]!,
+        agentType: def.agent,
         antiCheatPenalty: 0,
         codeContent: ovalCodeContent,
         codeContentHash: buildPayloadDigest(ovalCodeContent),
         codeLabel: "solution.ts",
-        dialogueScore: Math.round(ovalScores[i]! * 0.85 * 10) / 10,
-        progress: Math.max(0.12, ovalScores[i]! / 88.4),
+        dialogueScore: Math.round(def.score * 0.85 * 10) / 10,
+        progress: Math.max(0.12, def.score / 88.4),
         raceId: raceActiveOval.id,
-        reasoningScore: Math.round(ovalScores[i]! * 0.88 * 10) / 10,
+        reasoningScore: Math.round(def.score * 0.88 * 10) / 10,
         recordLabel: "riding-record.txt",
         registrationId: registration.id,
         ridingRecord: ovalRidingRecord,
         ridingRecordHash: buildPayloadDigest(ovalRidingRecord),
         submissionId: ovalSubId,
         submitterBindingJson: ovalSubmitterBinding,
-        taskScore: Math.round(ovalScores[i]! * 0.9 * 10) / 10,
-        teamId: ovalTeam.id,
-        tokenScore: Math.round((100 - ovalTokens[i]! / 60) * 10) / 10,
-        tokenUsed: ovalTokens[i]!,
-        totalScore: ovalScores[i]!,
+        taskScore: Math.round(def.score * 0.9 * 10) / 10,
+        teamId: team.id,
+        tokenScore: Math.round((100 - def.token / 60) * 10) / 10,
+        tokenUsed: def.token,
+        totalScore: def.score,
       },
     });
   }
   // ── 操场椭圆赛道赛事结束 ──────────────────────────────────────────────────
 
-  const activeTeamNames = [
-    "Fast Sort Squad",
-    "Milk Tea Coder",
-    "Bug Crusher",
-    "Late Night Commit",
-    "Requirement Master",
-    "Boundary Test Crew",
-    "Refactor Pioneer",
-    "Performance Hunter",
+  // race_active: 3 teams (2 multi-member with PENDING/APPROVED mates + 1 single-member)
+  const activeTeamDefs = [
+    {
+      teamName: "Fast Sort Squad",
+      score: 92.5, token: 1320, agent: "CLAUDE" as const,
+      leader: riders[0]!,
+      mates: [
+        { user: riders[1]!, role: "MATE" as const, status: "PENDING" as const },
+        { user: riders[2]!, role: "MATE" as const, status: "APPROVED" as const },
+      ],
+    },
+    {
+      teamName: "Milk Tea Coder",
+      score: 87.3, token: 2150, agent: "OPENAI" as const,
+      leader: riders[3]!,
+      mates: [
+        { user: riders[4]!, role: "MATE" as const, status: "PENDING" as const },
+      ],
+    },
+    {
+      teamName: "Bug Crusher",
+      score: 81.0, token: 1800, agent: "COPILOT" as const,
+      leader: riders[5]!,
+      mates: [],
+    },
   ];
-  const activeScores = [92.5, 87.3, 81.0, 75.8, 68.2, 60.4, 52.1, 38.9];
-  const activeTokens = [1320, 2150, 1800, 2900, 3500, 4200, 1680, 5100];
-  const activeAgents = [
-    "CLAUDE",
-    "OPENAI",
-    "COPILOT",
-    "DEEPSEEK",
-    "CLAUDE",
-    "OPENAI",
-    "COPILOT",
-    "CLAUDE",
-  ] as const;
 
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < activeTeamDefs.length; i++) {
+    const def = activeTeamDefs[i]!;
     const submissionId = `sub_active_${i}`;
     const artifactId = `artifact_active_${i}`;
     const activeCodeContent = "export function solve(input) { return [...input].sort((a, b) => a - b); }";
     const activeRidingRecord = "Clarify constraints, validate edge cases, then verify final sorting behavior.";
+
+    // 创建 Team 及所有成员
+    const allMembers = [
+      { user: def.leader, role: "LEADER" as const, status: "APPROVED" as const },
+      ...def.mates,
+    ];
+    const team = await createMultiMemberTeam({
+      raceId: raceActive.id,
+      teamName: def.teamName,
+      members: allMembers,
+    });
+
+    // 为 Leader 创建 Registration + RaceProject + Connection
     const registration = await prisma.registration.create({
       data: {
         approvedAt: new Date("2026-06-18T08:05:00+08:00"),
         raceId: raceActive.id,
         status: "APPROVED",
-        userId: riders[i].id,
+        teamId: team.id,
+        userId: def.leader.id,
       },
-    });
-    const activeSubmitterBindingJson = buildSubmissionBindingJson({
-      raceId: raceActive.id,
-      registrationId: registration.id,
-      submittedAt: new Date(),
-      userId: riders[i].id,
     });
 
     const raceProject = await prisma.raceProject.create({
       data: {
-        aggregateIngestionStatus: i < 3 ? "ACTIVE" : "CONNECTED",
-        githubRepoUrl: `https://github.com/demo/${riders[i].username}-${raceActive.id}`,
+        aggregateIngestionStatus: i < 2 ? "ACTIVE" : "CONNECTED",
+        githubRepoUrl: `https://github.com/demo/${def.leader.username}-${raceActive.id}`,
         registrationId: registration.id,
       },
+    });
+
+    // 为 Mates 创建 Registration + RaceProject
+    for (const mate of def.mates) {
+      const mateReg = await prisma.registration.create({
+        data: {
+          approvedAt: new Date("2026-06-18T08:05:00+08:00"),
+          raceId: raceActive.id,
+          status: mate.status === "PENDING" ? "SUBMITTED" : "APPROVED",
+          teamId: team.id,
+          userId: mate.user.id,
+        },
+      });
+      await prisma.raceProject.create({
+        data: {
+          aggregateIngestionStatus: i < 2 ? "ACTIVE" : "CONNECTED",
+          githubRepoUrl: `https://github.com/demo/${mate.user.username}-${raceActive.id}`,
+          registrationId: mateReg.id,
+        },
+      });
+    }
+
+    const activeSubmitterBindingJson = buildSubmissionBindingJson({
+      raceId: raceActive.id,
+      registrationId: registration.id,
+      submittedAt: new Date(),
+      teamId: team.id,
+      userId: def.leader.id,
     });
 
     const primaryConnection = await prisma.cAConnection.create({
@@ -823,13 +984,13 @@ async function main() {
         connectorVersion: "0.1.0",
         handshakeCompletedAt: new Date("2026-06-18T08:10:00+08:00"),
         ingestionSource: "CONNECTOR",
-        ingestionStatus: i < 3 ? "ACTIVE" : "CONNECTED",
-        lastSyncedAt: i < 3 ? new Date("2026-06-19T10:00:00+08:00") : null,
+        ingestionStatus: i < 2 ? "ACTIVE" : "CONNECTED",
+        lastSyncedAt: i < 2 ? new Date("2026-06-19T10:00:00+08:00") : null,
         raceProjectId: raceProject.id,
       },
     });
 
-    if (i < 3) {
+    if (i < 2) {
       await prisma.session.create({
         data: {
           caConnectionId: primaryConnection.id,
@@ -837,47 +998,36 @@ async function main() {
           currentGoal: "Keep sorting implementation moving forward.",
           endedAt: null,
           lastActiveAt: new Date("2026-06-19T10:00:00+08:00"),
-          latestActivity: `${riders[i].username} is pushing the active race implementation forward.`,
+          latestActivity: `${def.leader.username} is pushing the active race implementation forward.`,
           messageCount: 42 + i * 3,
           progressPercent: 90 - i * 18,
           riskLevel: i === 2 ? "medium" : "low",
           riskReason: i === 2 ? "One active blocker remains." : "none",
           startedAt: new Date("2026-06-19T09:00:00+08:00"),
           taskStatus: "in_progress",
-          tokenCost: activeTokens[i],
+          tokenCost: def.token,
           toolCallCount: 8 + i,
         },
       });
     }
 
-    const team = await prisma.team.create({
-      data: {
-        id: `team_active_${i}`,
-        captainId: riders[i].id,
-        members: {
-          create: [{ displayName: riders[i].username, userId: riders[i].id }],
-        },
-        name: activeTeamNames[i],
-        raceId: raceActive.id,
-      },
-    });
-
+    // Per-team 数据：仅 Leader 时创建
     await prisma.submission.create({
       data: {
-        agentType: activeAgents[i],
+        agentType: def.agent,
         codeContent: "export function solve(input) { return [...input].sort((a, b) => a - b); }",
         codeLabel: "solution.ts",
         id: submissionId,
         raceId: raceActive.id,
         status: "QUEUED",
         teamId: team.id,
-        tokenUsed: activeTokens[i],
+        tokenUsed: def.token,
       },
     });
 
     await prisma.submissionArtifact.create({
       data: {
-        agentType: activeAgents[i],
+        agentType: def.agent,
         codeContent: "export function solve(input) { return [...input].sort((a, b) => a - b); }",
         codeLabel: "solution.ts",
         id: artifactId,
@@ -886,48 +1036,48 @@ async function main() {
         ridingRecord: "Clarify constraints, validate edge cases, then verify final sorting behavior.",
         submissionId,
         teamId: team.id,
-        tokenUsed: activeTokens[i],
+        tokenUsed: def.token,
       },
     });
 
     await prisma.teamArchive.create({
       data: {
-        agentType: activeAgents[i],
-        antiCheatPenalty: i === 3 ? 10 : 0,
+        agentType: def.agent,
+        antiCheatPenalty: i === 1 ? 10 : 0,
         codeContent: activeCodeContent,
         codeContentHash: buildPayloadDigest(activeCodeContent),
         codeLabel: "solution.ts",
-        dialogueScore: Math.round(activeScores[i] * 0.85 * 10) / 10,
-        keywordScore: Math.round(activeScores[i] * 0.8 * 10) / 10,
-        progress: Math.max(0.12, activeScores[i] / 92.5),
+        dialogueScore: Math.round(def.score * 0.85 * 10) / 10,
+        keywordScore: Math.round(def.score * 0.8 * 10) / 10,
+        progress: Math.max(0.12, def.score / 92.5),
         raceId: raceActive.id,
         registrationId: registration.id,
-        reasoningScore: Math.round(activeScores[i] * 0.88 * 10) / 10,
+        reasoningScore: Math.round(def.score * 0.88 * 10) / 10,
         recordLabel: "riding-record.txt",
         ridingRecord: activeRidingRecord,
         ridingRecordHash: buildPayloadDigest(activeRidingRecord),
         submissionId,
         submitterBindingJson: activeSubmitterBindingJson,
-        taskScore: Math.round(activeScores[i] * 0.9 * 10) / 10,
+        taskScore: Math.round(def.score * 0.9 * 10) / 10,
         teamId: team.id,
-        tokenScore: Math.round((100 - activeTokens[i] / 60) * 10) / 10,
-        tokenUsed: activeTokens[i],
-        totalScore: activeScores[i],
+        tokenScore: Math.round((100 - def.token / 60) * 10) / 10,
+        tokenUsed: def.token,
+        totalScore: def.score,
       },
     });
 
     await prisma.leaderboardEntry.create({
       data: {
-        agentType: activeAgents[i],
-        dialogueScore: Math.round(activeScores[i] * 0.85 * 10) / 10,
-        progress: Math.max(0.12, activeScores[i] / 92.5),
+        agentType: def.agent,
+        dialogueScore: Math.round(def.score * 0.85 * 10) / 10,
+        progress: Math.max(0.12, def.score / 92.5),
         raceId: raceActive.id,
         registrationId: registration.id,
         submissionId,
-        taskScore: Math.round(activeScores[i] * 0.9 * 10) / 10,
+        taskScore: Math.round(def.score * 0.9 * 10) / 10,
         teamId: team.id,
-        tokenScore: Math.round((100 - activeTokens[i] / 60) * 10) / 10,
-        totalScore: activeScores[i],
+        tokenScore: Math.round((100 - def.token / 60) * 10) / 10,
+        totalScore: def.score,
       },
     });
 
@@ -978,16 +1128,28 @@ async function main() {
     });
   }
 
-  const finishedTeamNames = [
-    "Render Rocket",
-    "Memory Tuner",
-    "Lazy Load Expert",
-    "Cache Master",
-    "Frame Rate Fury",
-    "Refactor Unit",
+  // race_finished: 2 teams (3-member each with mixed PENDING/APPROVED)
+  const finishedTeamDefs = [
+    {
+      teamName: "Render Rocket",
+      score: 94.1, token: 2100, agent: "CLAUDE" as const,
+      leader: riders[0]!,
+      mates: [
+        { user: riders[1]!, role: "MATE" as const, status: "PENDING" as const },
+        { user: riders[2]!, role: "MATE" as const, status: "APPROVED" as const },
+      ],
+    },
+    {
+      teamName: "Memory Tuner",
+      score: 89.7, token: 3400, agent: "OPENAI" as const,
+      leader: riders[3]!,
+      mates: [
+        { user: riders[4]!, role: "MATE" as const, status: "PENDING" as const },
+        { user: riders[5]!, role: "MATE" as const, status: "APPROVED" as const },
+      ],
+    },
   ];
-  const finishedScores = [94.1, 89.7, 85.2, 78.3, 71.6, 64.0];
-  const finishedTokens = [2100, 3400, 2800, 4600, 5200, 6100];
+
   const finishedResultBridge: Array<{
     registrationId: string;
     reportTitle: string;
@@ -995,31 +1157,64 @@ async function main() {
     workId: string;
   }> = [];
 
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < finishedTeamDefs.length; i++) {
+    const def = finishedTeamDefs[i]!;
     const submissionId = `sub_finished_${i}`;
     const finishedCodeContent = "// optimized storefront implementation";
     const finishedRidingRecord = "Start from diagnostics, then improve loading strategy and rendering stability.";
+
+    const allMembers = [
+      { user: def.leader, role: "LEADER" as const, status: "APPROVED" as const },
+      ...def.mates,
+    ];
+    const team = await createMultiMemberTeam({
+      raceId: raceFinished.id,
+      teamName: def.teamName,
+      members: allMembers,
+    });
+
     const registration = await prisma.registration.create({
       data: {
         approvedAt: new Date("2026-06-15T12:00:00+08:00"),
         raceId: raceFinished.id,
         status: "APPROVED",
-        userId: riders[i].id,
+        teamId: team.id,
+        userId: def.leader.id,
       },
     });
+    const raceProject = await prisma.raceProject.create({
+      data: {
+        aggregateIngestionStatus: "ACTIVE",
+        githubRepoUrl: `https://github.com/demo/${def.leader.username}-${raceFinished.id}`,
+        registrationId: registration.id,
+      },
+    });
+
+    for (const mate of def.mates) {
+      const mateReg = await prisma.registration.create({
+        data: {
+          approvedAt: new Date("2026-06-15T12:00:00+08:00"),
+          raceId: raceFinished.id,
+          status: mate.status === "PENDING" ? "SUBMITTED" : "APPROVED",
+          teamId: team.id,
+          userId: mate.user.id,
+        },
+      });
+      await prisma.raceProject.create({
+        data: {
+          aggregateIngestionStatus: "ACTIVE",
+          githubRepoUrl: `https://github.com/demo/${mate.user.username}-${raceFinished.id}`,
+          registrationId: mateReg.id,
+        },
+      });
+    }
+
     const finishedSubmitterBindingJson = buildSubmissionBindingJson({
       raceId: raceFinished.id,
       registrationId: registration.id,
       submittedAt: new Date(),
-      userId: riders[i].id,
-    });
-
-    const raceProject = await prisma.raceProject.create({
-      data: {
-        aggregateIngestionStatus: "ACTIVE",
-        githubRepoUrl: `https://github.com/demo/${riders[i].username}-${raceFinished.id}`,
-        registrationId: registration.id,
-      },
+      teamId: team.id,
+      userId: def.leader.id,
     });
 
     const connection = await prisma.cAConnection.create({
@@ -1046,14 +1241,14 @@ async function main() {
         currentGoal: "Finalize performance optimization and report.",
         endedAt: new Date("2026-06-17T17:30:00+08:00"),
         lastActiveAt: new Date("2026-06-17T17:30:00+08:00"),
-        latestActivity: `${finishedTeamNames[i]} finished the performance run and captured the final summary.`,
+        latestActivity: `${def.teamName} finished the performance run and captured the final summary.`,
         messageCount: 30 + i * 2,
         progressPercent: 100,
         riskLevel: "low",
         riskReason: "completed",
         startedAt: new Date("2026-06-17T15:00:00+08:00"),
         taskStatus: "completed",
-        tokenCost: finishedTokens[i],
+        tokenCost: def.token,
         toolCallCount: 6 + i,
       },
     });
@@ -1062,11 +1257,12 @@ async function main() {
       data: buildWorkSeedRecord({
         archiveCode: "// optimized storefront implementation",
         demoUrl: `https://demo.example/${raceFinished.id}/work-${i}`,
-        excerpt: `${finishedTeamNames[i]} improved rendering and explained the tradeoffs clearly.`,
+        excerpt: `${def.teamName} improved rendering and explained the tradeoffs clearly.`,
         raceId: raceFinished.id,
         registrationId: registration.id,
-        repoUrl: raceProject.githubRepoUrl,
-        teamName: finishedTeamNames[i],
+        repoUrl: raceProject!.githubRepoUrl,
+        teamId: team.id,
+        teamName: def.teamName,
         videoUrl: `https://video.example/${raceFinished.id}/work-${i}`,
       }),
     });
@@ -1081,15 +1277,15 @@ async function main() {
 
     await prisma.judgingRecord.create({
       data: {
-        comments: `Judge summary for ${finishedTeamNames[i]}.`,
+        comments: `Judge summary for ${def.teamName}.`,
         judgeAssignmentId: judgeAssignment.id,
         scoreResultJson: JSON.stringify({
-          overall: finishedScores[i],
-          presentation: Math.round(finishedScores[i] * 0.9 * 10) / 10,
+          overall: def.score,
+          presentation: Math.round(def.score * 0.9 * 10) / 10,
         }),
         scoreRidingJson: JSON.stringify({
-          costControl: Math.round((100 - finishedTokens[i] / 100) * 10) / 10,
-          riding: Math.round(finishedScores[i] * 0.92 * 10) / 10,
+          costControl: Math.round((100 - def.token / 100) * 10) / 10,
+          riding: Math.round(def.score * 0.92 * 10) / 10,
         }),
         submittedAt: new Date("2026-06-18T10:00:00+08:00"),
       },
@@ -1099,8 +1295,8 @@ async function main() {
       data: {
         registrationId: registration.id,
         sourceRefJson: JSON.stringify({ workId: work.id }),
-        summary: `${finishedTeamNames[i]} work asset and public summary.`,
-        title: `${finishedTeamNames[i]} Work`,
+        summary: `${def.teamName} work asset and public summary.`,
+        title: `${def.teamName} Work`,
         type: "WORK",
         visibility: "PUBLIC",
       },
@@ -1108,36 +1304,24 @@ async function main() {
 
     await prisma.report.create({
       data: buildRiderReportSeed({
-        body: `Rider report for ${finishedTeamNames[i]}.`,
+        body: `Rider report for ${def.teamName}.`,
         raceId: raceFinished.id,
         subjectRegistrationId: registration.id,
-        summary: `${finishedTeamNames[i]} rider report summary.`,
-        title: `${finishedTeamNames[i]} Rider Report`,
+        summary: `${def.teamName} rider report summary.`,
+        title: `${def.teamName} Rider Report`,
       }),
     });
 
     finishedResultBridge.push({
       registrationId: registration.id,
-      reportTitle: `${finishedTeamNames[i]} Rider Report`,
-      teamName: finishedTeamNames[i],
+      reportTitle: `${def.teamName} Rider Report`,
+      teamName: def.teamName,
       workId: work.id,
-    });
-
-    const team = await prisma.team.create({
-      data: {
-        id: `team_finished_${i}`,
-        captainId: riders[i].id,
-        members: {
-          create: [{ displayName: riders[i].username, userId: riders[i].id }],
-        },
-        name: finishedTeamNames[i],
-        raceId: raceFinished.id,
-      },
     });
 
     await prisma.submission.create({
       data: {
-        agentType: activeAgents[i],
+        agentType: def.agent,
         codeContent: "// optimized storefront implementation",
         codeLabel: "optimized.tsx",
         id: submissionId,
@@ -1146,82 +1330,80 @@ async function main() {
         ridingRecord: "Start from diagnostics, then improve loading strategy and rendering stability.",
         status: "QUEUED",
         teamId: team.id,
-        tokenUsed: finishedTokens[i],
+        tokenUsed: def.token,
       },
     });
 
     await prisma.teamArchive.create({
       data: {
-        agentType: activeAgents[i],
+        agentType: def.agent,
         antiCheatPenalty: 0,
         codeContent: finishedCodeContent,
         codeContentHash: buildPayloadDigest(finishedCodeContent),
         codeLabel: "optimized.tsx",
-        dialogueScore: Math.round(finishedScores[i] * 0.9 * 10) / 10,
-        keywordScore: Math.round(finishedScores[i] * 0.88 * 10) / 10,
-        progress: Math.max(0.3, finishedScores[i] / 94.1),
+        dialogueScore: Math.round(def.score * 0.9 * 10) / 10,
+        keywordScore: Math.round(def.score * 0.88 * 10) / 10,
+        progress: Math.max(0.3, def.score / 94.1),
         raceId: raceFinished.id,
         registrationId: registration.id,
-        reasoningScore: Math.round(finishedScores[i] * 0.85 * 10) / 10,
+        reasoningScore: Math.round(def.score * 0.85 * 10) / 10,
         recordLabel: "riding-record.txt",
         ridingRecord: finishedRidingRecord,
         ridingRecordHash: buildPayloadDigest(finishedRidingRecord),
         submissionId,
         submitterBindingJson: finishedSubmitterBindingJson,
-        taskScore: Math.round(finishedScores[i] * 0.92 * 10) / 10,
+        taskScore: Math.round(def.score * 0.92 * 10) / 10,
         teamId: team.id,
-        tokenScore: Math.round((100 - finishedTokens[i] / 100) * 10) / 10,
-        tokenUsed: finishedTokens[i],
-        totalScore: finishedScores[i],
+        tokenScore: Math.round((100 - def.token / 100) * 10) / 10,
+        tokenUsed: def.token,
+        totalScore: def.score,
       },
     });
 
     await prisma.leaderboardEntry.create({
       data: {
-        agentType: activeAgents[i],
-        dialogueScore: Math.round(finishedScores[i] * 0.9 * 10) / 10,
-        progress: Math.max(0.3, finishedScores[i] / 94.1),
+        agentType: def.agent,
+        dialogueScore: Math.round(def.score * 0.9 * 10) / 10,
+        progress: Math.max(0.3, def.score / 94.1),
         raceId: raceFinished.id,
         registrationId: registration.id,
         submissionId,
-        taskScore: Math.round(finishedScores[i] * 0.92 * 10) / 10,
+        taskScore: Math.round(def.score * 0.92 * 10) / 10,
         teamId: team.id,
-        tokenScore: Math.round((100 - finishedTokens[i] / 100) * 10) / 10,
-        totalScore: finishedScores[i],
+        tokenScore: Math.round((100 - def.token / 100) * 10) / 10,
+        totalScore: def.score,
       },
     });
 
     await prisma.harnessEntry.create({
       data: {
-        harnessScore: finishedScores[i],
-        keywordScore: Math.round(finishedScores[i] * 0.82 * 10) / 10,
+        harnessScore: def.score,
+        keywordScore: Math.round(def.score * 0.82 * 10) / 10,
         raceId: raceFinished.id,
         registrationId: registration.id,
-        reasoningScore: Math.round(finishedScores[i] * 0.87 * 10) / 10,
+        reasoningScore: Math.round(def.score * 0.87 * 10) / 10,
         teamId: team.id,
       },
     });
 
     await prisma.teamComment.create({
       data: {
-        content: `Review summary for ${finishedTeamNames[i]}.`,
+        content: `Review summary for ${def.teamName}.`,
         raceId: raceFinished.id,
         teamId: team.id,
       },
     });
 
-    if (i < 3) {
-      await prisma.ridingHighlight.create({
-        data: {
-          agentType: activeAgents[i],
-          codeSnippet: `// ${finishedTeamNames[i]}\nconst MemoizedList = React.memo(VirtualList);`,
-          excerpt: `${finishedTeamNames[i]} improved rendering strategy and explained the tradeoffs clearly.`,
-          raceId: raceFinished.id,
-          score: finishedScores[i],
-          teamId: team.id,
-        },
-      });
-    }
+    await prisma.ridingHighlight.create({
+      data: {
+        agentType: def.agent,
+        codeSnippet: `// ${def.teamName}\nconst MemoizedList = React.memo(VirtualList);`,
+        excerpt: `${def.teamName} improved rendering strategy and explained the tradeoffs clearly.`,
+        raceId: raceFinished.id,
+        score: def.score,
+        teamId: team.id,
+      },
+    });
   }
 
   const workIdByRegistrationId = Object.fromEntries(
@@ -1231,21 +1413,12 @@ async function main() {
     bestWorkRegistrationId: finishedResultBridge[1]!.registrationId,
     overallRegistrationId: finishedResultBridge[0]!.registrationId,
     raceId: raceFinished.id,
-    ridingRegistrationId: finishedResultBridge[2]!.registrationId,
+    ridingRegistrationId: finishedResultBridge[1]!.registrationId,
     workIdByRegistrationId,
   });
 
   for (const award of [
     ...awardSeeds,
-    {
-      awardName: "Best Recovery",
-      decisionReason: "Strong correction path under changing constraints.",
-      publishedAt: new Date("2026-06-19T00:00:00Z"),
-      raceId: raceFinished.id,
-      rank: 1,
-      registrationId: finishedResultBridge[2]!.registrationId,
-      workId: workIdByRegistrationId[finishedResultBridge[2]!.registrationId],
-    },
     {
       awardName: "Best Cost Control",
       decisionReason: "Strongest cost efficiency among finished riders.",
@@ -1429,6 +1602,7 @@ async function main() {
       raceId: raceMatrixSubmitting.id,
       registrationId: registration.id,
       repoUrl: raceProject!.githubRepoUrl,
+      teamId: team.id,
       teamName: `${config.teamName} Artifact`,
       videoUrl: `https://video.example/${raceMatrixSubmitting.id}/artifact-${index}`,
     });
@@ -1460,7 +1634,8 @@ async function main() {
           raceId: raceMatrixSubmitting.id,
           registrationId: registration.id,
           submittedAt: now,
-          userId: config.user.id,
+          teamId: team.id,
+      userId: config.user.id,
         }),
         teamId: team.id,
         tokenUsed: config.tokenUsed,
@@ -1484,7 +1659,8 @@ async function main() {
           raceId: raceMatrixSubmitting.id,
           registrationId: registration.id,
           submittedAt: now,
-          userId: config.user.id,
+          teamId: team.id,
+      userId: config.user.id,
         }),
         teamId: team.id,
         tokenUsed: config.tokenUsed,
@@ -1530,7 +1706,8 @@ async function main() {
             raceId: raceMatrixSubmitting.id,
             registrationId: registration.id,
             submittedAt: now,
-            userId: config.user.id,
+            teamId: team.id,
+      userId: config.user.id,
           }),
           taskScore: config.score - 3,
           teamId: team.id,
@@ -1649,6 +1826,7 @@ async function main() {
           raceId: raceMatrixJudging.id,
           registrationId: registration.id,
           repoUrl: raceProject!.githubRepoUrl,
+          teamId: team.id,
           teamName: config.teamName,
           videoUrl: `https://video.example/${raceMatrixJudging.id}/review-${index}`,
         }),
@@ -1845,6 +2023,7 @@ async function main() {
         raceId: raceMatrixArchived.id,
         registrationId: registration.id,
         repoUrl: raceProject!.githubRepoUrl,
+        teamId: team.id,
         teamName: config.teamName,
         videoUrl: `https://video.example/${raceMatrixArchived.id}/showcase-${index}`,
       }),
@@ -1876,7 +2055,8 @@ async function main() {
           raceId: raceMatrixArchived.id,
           registrationId: registration.id,
           submittedAt: addDays(now, -18),
-          userId: config.user.id,
+          teamId: team.id,
+      userId: config.user.id,
         }),
         taskScore: 85 - index * 5,
         teamId: team.id,
@@ -1971,6 +2151,7 @@ async function main() {
     },
   });
 
+  // race_story_running: 2 teams (all 2-member)
   const storyRunningConfigs = [
     {
       aggregateIngestionStatus: "ACTIVE" as const,
@@ -1980,19 +2161,9 @@ async function main() {
       teamName: "Dock Delta",
       tokenUsed: 2200,
       user: storyRiders[0]!,
+      mate: storyRiders[1]!,
       workStatus: "SUBMITTED" as const,
       workVisibility: "PUBLIC" as const,
-    },
-    {
-      aggregateIngestionStatus: "ACTIVE" as const,
-      agentType: "CLAUDE" as const,
-      progress: 81,
-      score: 88.1,
-      teamName: "Inventory Echo",
-      tokenUsed: 2860,
-      user: storyRiders[1]!,
-      workStatus: "SUBMITTED" as const,
-      workVisibility: "INTERNAL" as const,
     },
     {
       aggregateIngestionStatus: "CONNECTED" as const,
@@ -2002,18 +2173,8 @@ async function main() {
       teamName: "Route Foxtrot",
       tokenUsed: 1940,
       user: storyRiders[2]!,
+      mate: storyRiders[3]!,
       workStatus: "DRAFT" as const,
-      workVisibility: "PRIVATE" as const,
-    },
-    {
-      aggregateIngestionStatus: "FAILED" as const,
-      agentType: "OPENAI" as const,
-      progress: 48,
-      score: 61.9,
-      teamName: "Exception Gamma",
-      tokenUsed: 1750,
-      user: storyRiders[3]!,
-      workStatus: "HIDDEN" as const,
       workVisibility: "PRIVATE" as const,
     },
   ];
@@ -2032,6 +2193,7 @@ async function main() {
     const { registration, raceProject, team } = await createTeamRegistrationBundle({
       aggregateIngestionStatus: config.aggregateIngestionStatus,
       approvedAt: addDays(now, -5),
+      extraMembers: config.mate ? [{ displayName: config.mate.username, user: config.mate }] : undefined,
       raceId: raceStoryRunning.id,
       teamName: config.teamName,
       user: config.user,
@@ -2039,24 +2201,19 @@ async function main() {
 
     await createConnectionWithOptionalSession({
       caProjectId: `story_running_project_${index}`,
-      caType: index === 1 ? "CLAUDE_CODE" : index === 2 ? "OTHER" : "CODEX",
+      caType: index === 0 ? "CODEX" : "CLAUDE_CODE",
       connectorBaseUrl: "https://connector.example/story-running",
       connectorId: `story_running_connector_${index}`,
       connectorSecret: `story-running-secret-${index}`,
       ingestionStatus:
-        config.aggregateIngestionStatus === "FAILED"
-          ? "FAILED"
-          : config.aggregateIngestionStatus === "CONNECTED"
-            ? "CONNECTED"
-            : "ACTIVE",
+        config.aggregateIngestionStatus === "CONNECTED"
+          ? "CONNECTED"
+          : "ACTIVE",
       latestActivity: `${config.teamName} is managing live warehouse incidents.`,
       progressPercent: config.progress,
       raceProjectId: raceProject!.id,
-      riskLevel: config.aggregateIngestionStatus === "FAILED" ? "medium" : "low",
-      riskReason:
-        config.aggregateIngestionStatus === "FAILED"
-          ? "One connector stalled during live routing."
-          : "none",
+      riskLevel: "low",
+      riskReason: "none",
       sessionId:
         config.aggregateIngestionStatus === "CONNECTED"
           ? undefined
@@ -2091,6 +2248,7 @@ async function main() {
       raceId: raceStoryRunning.id,
       registrationId: registration.id,
       repoUrl: raceProject!.githubRepoUrl,
+      teamId: team.id,
       teamName: config.teamName,
       videoUrl: `https://video.example/${raceStoryRunning.id}/story-${index}`,
     });
@@ -2119,7 +2277,8 @@ async function main() {
           raceId: raceStoryRunning.id,
           registrationId: registration.id,
           submittedAt: now,
-          userId: config.user.id,
+          teamId: team.id,
+      userId: config.user.id,
         }),
         teamId: team.id,
         tokenUsed: config.tokenUsed,
@@ -2143,25 +2302,23 @@ async function main() {
           raceId: raceStoryRunning.id,
           registrationId: registration.id,
           submittedAt: now,
-          userId: config.user.id,
+          teamId: team.id,
+      userId: config.user.id,
         }),
         teamId: team.id,
         tokenUsed: config.tokenUsed,
       },
     });
 
-    if (index < 3) {
+    if (index < 2) {
       await prisma.runnerTask.create({
         data: {
           artifactId,
           raceId: raceStoryRunning.id,
           registrationId: registration.id,
           resultHash: index === 0 ? "story-running-progress-hash" : "",
-          runnerComment:
-            index === 2
-              ? "Harness replay is waiting for a fresh connector snapshot."
-              : "Runner queue accepted the latest live artifact.",
-          status: index === 2 ? "CLAIMED" : "QUEUED",
+          runnerComment: "Runner queue accepted the latest live artifact.",
+          status: "QUEUED",
           submissionId,
           taskType: index === 1 ? "HARNESS_EVAL" : "PROGRESS_EVAL",
           teamId: team.id,
@@ -2169,7 +2326,7 @@ async function main() {
       });
     }
 
-    if (index < 3) {
+    if (index < 2) {
       await prisma.teamArchive.create({
         data: {
           agentType: config.agentType,
@@ -2191,7 +2348,8 @@ async function main() {
             raceId: raceStoryRunning.id,
             registrationId: registration.id,
             submittedAt: now,
-            userId: config.user.id,
+            teamId: team.id,
+      userId: config.user.id,
           }),
           taskScore: config.score - 2,
           teamId: team.id,
@@ -2269,8 +2427,8 @@ async function main() {
   const runningPendingThread = await prisma.feedbackThread.create({
     data: {
       raceId: raceStoryRunning.id,
-      registrationId: storyRunningBundles[2]!.registrationId,
-      teamId: storyRunningBundles[2]!.teamId,
+      registrationId: storyRunningBundles[1]!.registrationId,
+      teamId: storyRunningBundles[1]!.teamId,
     },
   });
   await prisma.feedbackMessage.createMany({
@@ -2286,7 +2444,7 @@ async function main() {
         threadId: runningResolvedThread.id,
       },
       {
-        authorId: storyRunningBundles[2]!.userId,
+        authorId: storyRunningBundles[1]!.userId,
         content: "Our backup connector is attached, but the harness replay still looks stale.",
         threadId: runningPendingThread.id,
       },
@@ -2318,6 +2476,7 @@ async function main() {
     },
   });
 
+  // race_story_completed: 2 teams (all 2-member)
   const storyCompletedConfigs = [
     {
       agentType: "OPENAI" as const,
@@ -2325,13 +2484,7 @@ async function main() {
       teamName: "Ticket Atlas",
       tokenUsed: 2480,
       user: storyRiders[0]!,
-    },
-    {
-      agentType: "CLAUDE" as const,
-      score: 90.8,
-      teamName: "Notice Pulse",
-      tokenUsed: 2760,
-      user: storyRiders[1]!,
+      mate: storyRiders[1]!,
     },
     {
       agentType: "COPILOT" as const,
@@ -2339,13 +2492,7 @@ async function main() {
       teamName: "Queue Harbor",
       tokenUsed: 3120,
       user: storyRiders[2]!,
-    },
-    {
-      agentType: "OPENAI" as const,
-      score: 79.6,
-      teamName: "Workflow Lantern",
-      tokenUsed: 3380,
-      user: storyRiders[3]!,
+      mate: storyRiders[3]!,
     },
   ];
 
@@ -2359,6 +2506,7 @@ async function main() {
     const { registration, raceProject, team } = await createTeamRegistrationBundle({
       aggregateIngestionStatus: "ACTIVE",
       approvedAt: addDays(now, -12),
+      extraMembers: config.mate ? [{ displayName: config.mate.username, user: config.mate }] : undefined,
       raceId: raceStoryCompleted.id,
       teamName: config.teamName,
       user: config.user,
@@ -2391,6 +2539,7 @@ async function main() {
         raceId: raceStoryCompleted.id,
         registrationId: registration.id,
         repoUrl: raceProject!.githubRepoUrl,
+        teamId: team.id,
         teamName: config.teamName,
         videoUrl: `https://video.example/${raceStoryCompleted.id}/campus-${index}`,
       }),
@@ -2438,7 +2587,8 @@ async function main() {
           raceId: raceStoryCompleted.id,
           registrationId: registration.id,
           submittedAt: addDays(now, -6),
-          userId: config.user.id,
+          teamId: team.id,
+      userId: config.user.id,
         }),
         teamId: team.id,
         tokenUsed: config.tokenUsed,
@@ -2466,7 +2616,8 @@ async function main() {
           raceId: raceStoryCompleted.id,
           registrationId: registration.id,
           submittedAt: addDays(now, -6),
-          userId: config.user.id,
+          teamId: team.id,
+      userId: config.user.id,
         }),
         taskScore: config.score - 2,
         teamId: team.id,
@@ -2502,7 +2653,7 @@ async function main() {
       },
     });
 
-    if (index < 3) {
+    if (index < 2) {
       await prisma.ridingHighlight.create({
         data: {
           agentType: config.agentType,
@@ -2535,24 +2686,13 @@ async function main() {
     storyCompletedBridge.map((item) => [item.registrationId, item.workId]),
   );
 
-  for (const award of [
-    ...buildAwardSeedRecords({
-      bestWorkRegistrationId: storyCompletedBridge[1]!.registrationId,
-      overallRegistrationId: storyCompletedBridge[0]!.registrationId,
-      raceId: raceStoryCompleted.id,
-      ridingRegistrationId: storyCompletedBridge[2]!.registrationId,
-      workIdByRegistrationId: storyCompletedWorkIdByRegistrationId,
-    }),
-    {
-      awardName: "Best Campus Rollout",
-      decisionReason: "Strongest deployment and adoption narrative.",
-      publishedAt: addDays(now, -4),
-      raceId: raceStoryCompleted.id,
-      rank: 1,
-      registrationId: storyCompletedBridge[3]!.registrationId,
-      workId: storyCompletedWorkIdByRegistrationId[storyCompletedBridge[3]!.registrationId],
-    },
-  ]) {
+  for (const award of buildAwardSeedRecords({
+    bestWorkRegistrationId: storyCompletedBridge[1]!.registrationId,
+    overallRegistrationId: storyCompletedBridge[0]!.registrationId,
+    raceId: raceStoryCompleted.id,
+    ridingRegistrationId: storyCompletedBridge[1]!.registrationId,
+    workIdByRegistrationId: storyCompletedWorkIdByRegistrationId,
+  })) {
     await prisma.award.create({ data: award });
   }
 
@@ -2644,18 +2784,15 @@ async function main() {
 
   const finishedWorks = await prisma.work.findMany({
     where: {
-      registration: {
-        raceId: raceFinished.id,
-      },
-    },
-    include: {
-      registration: {
-        include: {
-          user: true,
-        },
-      },
+      registrationId: { not: null },
     },
   });
+  const finishedWorkRegistrationIds = finishedWorks.map(w => w.registrationId!).filter(Boolean);
+  const finishedWorkRegistrations = await prisma.registration.findMany({
+    where: { id: { in: finishedWorkRegistrationIds }, raceId: raceFinished.id },
+    include: { user: true },
+  });
+  const finishedRegistrationMap = new Map(finishedWorkRegistrations.map(r => [r.id, r]));
   const finishedEvidences = await prisma.evidence.findMany({
     where: {
       registration: {
@@ -2706,29 +2843,14 @@ async function main() {
     where: {
       judgeAssignment: {
         work: {
-          registration: {
-            raceId: raceFinished.id,
-          },
+          registrationId: { in: finishedWorkRegistrationIds },
         },
       },
     },
     include: {
       judgeAssignment: {
         include: {
-          work: {
-            include: {
-              registration: {
-                include: {
-                  evidences: {
-                    orderBy: {
-                      createdAt: "asc",
-                    },
-                  },
-                  user: true,
-                },
-              },
-            },
-          },
+          work: true,
         },
       },
     },
@@ -2783,10 +2905,12 @@ async function main() {
 
   await prisma.$transaction(async (tx) => {
     for (const judgingRecord of finishedJudgingRecords) {
-      const registration = judgingRecord.judgeAssignment.work.registration;
       const work = judgingRecord.judgeAssignment.work;
+      const registration = finishedRegistrationMap.get(work.registrationId ?? "");
+      if (!registration) continue;
+      const registrationEvidences = finishedEvidences.filter(e => e.registrationId === registration.id);
       const sourceRef = buildJudgingRecordSourceRef({
-        evidences: registration.evidences.map((evidence) => ({
+        evidences: registrationEvidences.map((evidence) => ({
           id: evidence.id,
           integrityStatus: evidence.integrityStatus,
           sourceDigest: evidence.sourceDigest,
@@ -2821,14 +2945,14 @@ async function main() {
         ? (worksByRegistrationId.get(award.registrationId) ?? null)
         : null;
       const sourceRef = buildAwardSourceRef({
-        evidences: (evidenceRefsByRegistrationId.get(award.registrationId) ?? []).map((evidence) => ({
+        evidences: (evidenceRefsByRegistrationId.get(award.registrationId ?? "") ?? []).map((evidence) => ({
           id: evidence.id,
           sourceDigest: evidence.sourceDigest,
           type: evidence.type,
         })),
         registration: {
-          id: award.registrationId,
-          userId: award.registration.userId,
+          id: award.registrationId ?? "",
+          userId: award.registrationId ? (finishedRegistrationMap.get(award.registrationId)?.userId ?? "") : "",
         },
         work: work
           ? {
@@ -2889,7 +3013,7 @@ async function main() {
         works: subjectWork.map((work) => ({
           contentHash: work!.contentHash,
           id: work!.id,
-          registrationId: work!.registrationId,
+          registrationId: work!.registrationId ?? "",
           title: work!.title,
         })),
       });

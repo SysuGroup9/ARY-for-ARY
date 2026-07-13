@@ -3,7 +3,6 @@ import type { Prisma } from "@/generated/prisma/client";
 import { buildWorkSourceRef, verifyWorkReadIntegrity } from "@/lib/material-integrity-helpers";
 import { getRacePhase } from "@/lib/race-phase";
 import { prisma } from "@/lib/prisma";
-import { ensureCompatibilityContainerForApprovedRegistration } from "@/lib/services/registrations";
 import { saveWorkDraftSchema } from "@/lib/validation";
 import { hasRole, parseRolesJson } from "@/lib/user-roles";
 
@@ -56,11 +55,11 @@ function buildWorkAssetData(input: {
   };
 }
 
-async function upsertWorkAssetForRegistrationWithDb(
+async function upsertWorkAssetForTeamWithDb(
   db: Prisma.TransactionClient,
   input: {
     fallbackRepoUrl?: string;
-    registrationId: string;
+    teamId: string;
     status: "DRAFT" | "SUBMITTED";
     visibility: "PRIVATE" | "PUBLIC";
     work: WorkMaterialInput;
@@ -68,7 +67,7 @@ async function upsertWorkAssetForRegistrationWithDb(
 ) {
   const existing = await db.work.findUnique({
     where: {
-      registrationId: input.registrationId,
+      teamId: input.teamId,
     },
   });
 
@@ -96,9 +95,74 @@ async function upsertWorkAssetForRegistrationWithDb(
 
   return db.work.create({
     data: {
-      registrationId: input.registrationId,
+      teamId: input.teamId,
       ...workData,
     },
+  });
+}
+
+export async function upsertSubmittedWorkForTeam(
+  db: Prisma.TransactionClient,
+  input: {
+    fallbackRepoUrl?: string;
+    teamId: string;
+    work: WorkMaterialInput;
+  },
+) {
+  return upsertWorkAssetForTeamWithDb(db, {
+    fallbackRepoUrl: input.fallbackRepoUrl,
+    teamId: input.teamId,
+    status: "SUBMITTED",
+    visibility: "PRIVATE",
+    work: input.work,
+  });
+}
+
+// [GRS004] 向后兼容：保留旧函数签名，内部委托到新实现
+export async function upsertWorkAssetForRegistrationWithDb(
+  db: Prisma.TransactionClient,
+  input: {
+    fallbackRepoUrl?: string;
+    registrationId: string;
+    status: "DRAFT" | "SUBMITTED";
+    visibility: "PRIVATE" | "PUBLIC";
+    work: WorkMaterialInput;
+  },
+) {
+  // 通过 registrationId 找到对应的 teamId
+  const reg = await (db as Prisma.TransactionClient).registration.findUnique({
+    where: { id: input.registrationId },
+    select: { teamId: true },
+  });
+  if (reg?.teamId) {
+    return upsertWorkAssetForTeamWithDb(db, {
+      fallbackRepoUrl: input.fallbackRepoUrl,
+      teamId: reg.teamId,
+      status: input.status,
+      visibility: input.visibility,
+      work: input.work,
+    });
+  }
+  // 兜底：无 teamId 时按 registrationId 查找
+  const existing = await db.work.findFirst({
+    where: { registrationId: input.registrationId },
+  });
+  if (existing?.status === "LOCKED") {
+    throw new Error("当前作品已锁定，不能继续修改");
+  }
+  const workData = {
+    ...buildWorkAssetData({
+      fallbackRepoUrl: input.fallbackRepoUrl,
+      material: input.work,
+    }),
+    status: input.status,
+    visibility: input.visibility,
+  };
+  if (existing) {
+    return db.work.update({ where: { id: existing.id }, data: workData });
+  }
+  return db.work.create({
+    data: { registrationId: input.registrationId, ...workData },
   });
 }
 
@@ -151,10 +215,16 @@ export async function saveWorkDraftForRider(riderId: string, formData: FormData)
     throw new Error("当前报名尚未通过审核");
   }
 
-  await ensureCompatibilityContainerForApprovedRegistration({
-    raceId: parsed.raceId,
-    userId: riderId,
+  // GRS004: 双重校验 — 必须 Registration.approved + TeamMember.approved
+  if (!registration.teamId) {
+    throw new Error("请先创建或加入队伍后再提交作品");
+  }
+  const teamMember = await prisma.teamMember.findFirst({
+    where: { teamId: registration.teamId, userId: riderId, status: "APPROVED" },
   });
+  if (!teamMember) {
+    throw new Error("请等待队长审批通过后再提交作品");
+  }
 
   const phase = getRacePhase(registration.race);
   if (
@@ -236,9 +306,7 @@ export async function sanitizePublicWork<T extends {
 export async function listWorksForRace(raceId: string) {
   const works = await prisma.work.findMany({
     where: {
-      registration: {
-        raceId,
-      },
+      team: { raceId },
     },
     include: {
       awards: true,
@@ -248,11 +316,12 @@ export async function listWorksForRace(raceId: string) {
           judgingRecord: true,
         },
       },
-      registration: {
+      team: {
         include: {
-          evidences: true,
-          race: true,
-          user: true,
+          members: {
+            where: { status: { not: "REMOVED" } },
+            include: { user: true },
+          },
         },
       },
     },
@@ -277,9 +346,7 @@ export async function getWorkForPublicSlug(input: {
   const work = await prisma.work.findFirst({
     where: {
       id: input.workId,
-      registration: {
-        raceId: input.raceId,
-      },
+      team: { raceId: input.raceId },
     },
     include: {
       awards: {
@@ -302,11 +369,21 @@ export async function getWorkForPublicSlug(input: {
           judgingRecord: true,
         },
       },
-      registration: {
+      team: {
         include: {
-          evidences: true,
-          race: true,
-          user: true,
+          members: {
+            where: { status: { not: "REMOVED" } },
+            include: { user: true },
+          },
+          // GRS004: Team registrations for author/evidence/race context
+          registrations: {
+            where: { status: { not: "WITHDRAWN" } },
+            include: {
+              user: true,
+              evidences: { where: { visibility: "PUBLIC" } },
+              race: true,
+            },
+          },
         },
       },
     },
@@ -346,24 +423,20 @@ export async function getWorkForLegacyTeamSlug(input: {
     return null;
   }
 
-  const work = await prisma.work.findUnique({
+  const work = await prisma.work.findFirst({
     where: {
       registrationId: registration.id,
     },
     include: {
       awards: {
         where: {
-          publishedAt: {
-            not: null,
-          },
+          publishedAt: { not: null },
         },
       },
       judgeAssignments: {
         where: {
           judgingRecord: {
-            submittedAt: {
-              not: null,
-            },
+            submittedAt: { not: null },
           },
         },
         include: {
@@ -371,11 +444,12 @@ export async function getWorkForLegacyTeamSlug(input: {
           judgingRecord: true,
         },
       },
-      registration: {
+      team: {
         include: {
-          evidences: true,
-          race: true,
-          user: true,
+          members: {
+            where: { status: { not: "REMOVED" } },
+            include: { user: true },
+          },
         },
       },
     },
@@ -396,7 +470,7 @@ async function getManagedWorkForAction(input: {
         id: input.workId,
       },
       include: {
-        registration: {
+        team: {
           include: {
             race: true,
           },
@@ -416,9 +490,9 @@ async function getManagedWorkForAction(input: {
   const actorRoles = actor ? parseRolesJson(actor.rolesJson) : [];
   const isAdmin = hasRole(actorRoles, "ADMIN");
   const canUseSystem = Boolean(input.allowSystem) && isAdmin;
-  const canManageRace = work
+  const canManageRace = work?.team
     ? hasRole(actorRoles, "ORGANIZER") &&
-      work.registration.race.organizerId === input.actorUserId
+      work.team.race.organizerId === input.actorUserId
     : false;
 
   if (!work || (!canManageRace && !canUseSystem)) {
@@ -435,55 +509,42 @@ export async function hideWorkForRace(input: {
 }) {
   const [work, actor] = await Promise.all([
     prisma.work.findUnique({
-      where: {
-        id: input.workId,
-      },
+      where: { id: input.workId },
       include: {
-        registration: {
+        team: {
           include: {
             race: true,
+            members: { where: { status: "APPROVED" }, include: { user: true } },
           },
         },
       },
     }),
     prisma.user.findUnique({
-      where: {
-        id: input.actorUserId,
-      },
-      select: {
-        rolesJson: true,
-      },
+      where: { id: input.actorUserId },
+      select: { rolesJson: true },
     }),
   ]);
 
   const actorRoles = actor ? parseRolesJson(actor.rolesJson) : [];
   const isAdmin = hasRole(actorRoles, "ADMIN");
   const isOrganizer = hasRole(actorRoles, "ORGANIZER");
-  const isOwnerRider = work
-    ? work.registration.userId === input.actorUserId &&
-      hasRole(actorRoles, "RIDER")
-    : false;
+  const isTeamMember = work?.team?.members.some(m => m.userId === input.actorUserId) ?? false;
   const canUseSystem = Boolean(input.allowSystem) && isAdmin;
-  const canManageRace = work
-    ? work.registration.race.organizerId === input.actorUserId && isOrganizer
+  const canManageRace = work?.team
+    ? work.team.race.organizerId === input.actorUserId && isOrganizer
     : false;
 
-  if (!work || (!isOwnerRider && !canManageRace && !canUseSystem)) {
+  if (!work || (!isTeamMember && !canManageRace && !canUseSystem)) {
     throw new Error("无权隐藏这份作品");
   }
 
-  if (isOwnerRider && work.status !== "DRAFT") {
+  if (isTeamMember && work.status !== "DRAFT") {
     throw new Error("只有草稿作品才能由骑手自行隐藏");
   }
 
   return prisma.work.update({
-    where: {
-      id: work.id,
-    },
-    data: {
-      status: "HIDDEN",
-      visibility: "PRIVATE",
-    },
+    where: { id: work.id },
+    data: { status: "HIDDEN", visibility: "PRIVATE" },
   });
 }
 

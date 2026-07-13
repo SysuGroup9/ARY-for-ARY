@@ -18,7 +18,17 @@ export async function listRaces() {
       organizer: true,
       teams: {
         include: {
-          members: true,
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                },
+              },
+            },
+          },
+          works: true,
           captain: {
             select: {
               id: true,
@@ -51,7 +61,6 @@ export async function listRaces() {
               },
             },
           },
-          work: true,
           user: true,
         },
         orderBy: {
@@ -212,16 +221,8 @@ export async function listRaces() {
               : null,
         })),
       ),
-      registrations: await Promise.all(
-        race.registrations.map(async (registration) => ({
-          ...registration,
-          work:
-            registration.work &&
-            (await verifyWorkReadIntegrity({ work: registration.work })).ok
-              ? registration.work
-              : null,
-        })),
-      ),
+      // GRS004: Work 属于 Team 维度，不再按 Registration.work 做完整性校验
+      registrations: race.registrations,
       trackId: normalizeTrackId(race.trackId),
       trackConfig: parseRaceTrackConfigJson(race.trackConfigJson),
       screenDisplay: normalizeScreenDisplayState(race.screenDisplay),

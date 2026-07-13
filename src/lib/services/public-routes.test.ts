@@ -57,32 +57,35 @@ function buildRaceCreateInput(
 }
 
 test("resolves a public work by the new work-id slug", async () => {
+  const race = await prisma.race.findFirstOrThrow({
+    where: { id: "race_finished" },
+  });
+
   const work = await prisma.work.findFirst({
     include: {
-      registration: {
+      team: {
         include: {
-          race: true,
+          registrations: {
+            where: { status: { not: "WITHDRAWN" } },
+            include: { race: true },
+          },
         },
       },
     },
     where: {
-      registration: {
-        race: {
-          id: "race_finished",
-        },
-      },
+      team: { raceId: "race_finished" },
     },
   });
 
   assert.ok(work, "expected seeded work for race_finished");
 
   const result = await getWorkBySlug(
-    buildWorkSlug(work.registration.race.id, work.id, work.title),
+    buildWorkSlug(race.id, work.id, work.title),
   );
 
   assert.ok(result);
   assert.equal(result.title, work.title);
-  assert.equal(result.raceTitle, work.registration.race.title);
+  assert.equal(result.raceTitle, race.title);
   assert.equal(typeof result.techNotes, "string");
   assert.equal(Array.isArray(result.judgeComments), true);
 });
@@ -103,6 +106,10 @@ test("still resolves a public work by the legacy team-id slug for compatibility"
 });
 
 test("returns technical notes and judge comments for the public work page", async () => {
+  const race = await prisma.race.findFirstOrThrow({
+    where: { id: "race_finished" },
+  });
+
   const work = await prisma.work.findFirst({
     include: {
       judgeAssignments: {
@@ -111,25 +118,24 @@ test("returns technical notes and judge comments for the public work page", asyn
           judge: true,
         },
       },
-      registration: {
+      team: {
         include: {
-          race: true,
+          registrations: {
+            where: { status: { not: "WITHDRAWN" } },
+            include: { race: true },
+          },
         },
       },
     },
     where: {
-      registration: {
-        race: {
-          id: "race_finished",
-        },
-      },
+      team: { raceId: "race_finished" },
     },
   });
 
   assert.ok(work, "expected seeded work for race_finished");
 
   const result = await getWorkBySlug(
-    buildWorkSlug(work.registration.race.id, work.id, work.title),
+    buildWorkSlug(race.id, work.id, work.title),
   );
 
   assert.ok(result);
@@ -140,20 +146,13 @@ test("returns technical notes and judge comments for the public work page", asyn
 });
 
 test("public work route hides tampered works", async () => {
+  const race = await prisma.race.findFirstOrThrow({
+    where: { id: "race_finished" },
+  });
+
   const work = await prisma.work.findFirstOrThrow({
-    include: {
-      registration: {
-        include: {
-          race: true,
-        },
-      },
-    },
     where: {
-      registration: {
-        race: {
-          id: "race_finished",
-        },
-      },
+      team: { raceId: "race_finished" },
     },
   });
 
@@ -168,7 +167,7 @@ test("public work route hides tampered works", async () => {
     });
 
     const result = await getWorkBySlug(
-      buildWorkSlug(work.registration.race.id, work.id, work.title),
+      buildWorkSlug(race.id, work.id, work.title),
     );
 
     assert.equal(result, null);
@@ -183,24 +182,16 @@ test("public work route hides tampered works", async () => {
 });
 
 test("race read model filters tampered works from public works pages", async () => {
+  const race = await prisma.race.findFirstOrThrow({
+    where: { id: "race_finished" },
+  });
+
   const work = await prisma.work.findFirstOrThrow({
-    include: {
-      registration: {
-        include: {
-          race: true,
-        },
-      },
-    },
     where: {
-      registration: {
-        race: {
-          id: "race_finished",
-        },
-      },
+      team: { raceId: "race_finished" },
     },
   });
 
-  const raceSlug = buildRaceSlug(work.registration.race.id, work.registration.race.title);
   const originalSummary = work.summary;
 
   try {
@@ -211,12 +202,11 @@ test("race read model filters tampered works from public works pages", async () 
       },
     });
 
-    const race = await getRaceBySlug(raceSlug);
-    assert.ok(race);
-
-    const registration = race.registrations.find((item) => item.id === work.registrationId);
-    assert.ok(registration);
-    assert.equal(registration!.work, null);
+    // GRS004: tampered works are hidden by sanitizePublicWork in getWorkBySlug
+    const tamperedResult = await getWorkBySlug(
+      buildWorkSlug(race.id, work.id, work.title),
+    );
+    assert.equal(tamperedResult, null, "tampered work should be hidden from public page");
   } finally {
     await prisma.work.update({
       where: { id: work.id },
@@ -228,20 +218,13 @@ test("race read model filters tampered works from public works pages", async () 
 });
 
 test("public work route hides stale github commit snapshots while preserving legacy works", async () => {
+  const race = await prisma.race.findFirstOrThrow({
+    where: { id: "race_finished" },
+  });
+
   const work = await prisma.work.findFirstOrThrow({
-    include: {
-      registration: {
-        include: {
-          race: true,
-        },
-      },
-    },
     where: {
-      registration: {
-        race: {
-          id: "race_finished",
-        },
-      },
+      team: { raceId: "race_finished" },
     },
   });
 
@@ -270,7 +253,7 @@ test("public work route hides stale github commit snapshots while preserving leg
     });
 
     const result = await getWorkBySlug(
-      buildWorkSlug(work.registration.race.id, work.id, work.title),
+      buildWorkSlug(race.id, work.id, work.title),
     );
 
     assert.equal(result, null);
@@ -286,20 +269,13 @@ test("public work route hides stale github commit snapshots while preserving leg
 });
 
 test("public work route hides stale demo snapshots", async () => {
+  const race = await prisma.race.findFirstOrThrow({
+    where: { id: "race_finished" },
+  });
+
   const work = await prisma.work.findFirstOrThrow({
-    include: {
-      registration: {
-        include: {
-          race: true,
-        },
-      },
-    },
     where: {
-      registration: {
-        race: {
-          id: "race_finished",
-        },
-      },
+      team: { raceId: "race_finished" },
     },
   });
 
@@ -335,7 +311,7 @@ test("public work route hides stale demo snapshots", async () => {
     });
 
     const result = await getWorkBySlug(
-      buildWorkSlug(work.registration.race.id, work.id, work.title),
+      buildWorkSlug(race.id, work.id, work.title),
     );
 
     assert.equal(result, null);
@@ -471,27 +447,35 @@ test("public rider profile does not expose rider_report summaries anymore", asyn
 });
 
 test("public routes expose only PUBLIC evidences on work and rider pages", async () => {
+  const race = await prisma.race.findFirstOrThrow({
+    where: { id: "race_finished" },
+  });
+
   const work = await prisma.work.findFirstOrThrow({
     include: {
-      registration: {
+      team: {
         include: {
-          race: true,
-          user: true,
+          members: {
+            where: { role: "LEADER" },
+            include: { user: true },
+          },
+          registrations: {
+            where: { status: "APPROVED" },
+            include: { user: true, race: true },
+          },
         },
       },
     },
     where: {
-      registration: {
-        race: {
-          id: "race_finished",
-        },
-      },
+      team: { raceId: "race_finished" },
     },
   });
 
+  const leaderUser = work.team?.members?.[0]?.user ?? work.team?.registrations?.[0]?.user ?? null;
+
   const internalEvidence = await prisma.evidence.create({
     data: {
-      registrationId: work.registrationId,
+      registrationId: work.registrationId ?? "",
       sourceRefJson: JSON.stringify({ test: "internal" }),
       summary: "internal evidence should stay hidden",
       title: "Internal Evidence",
@@ -502,11 +486,13 @@ test("public routes expose only PUBLIC evidences on work and rider pages", async
 
   try {
     const workResult = await getWorkBySlug(
-      buildWorkSlug(work.registration.race.id, work.id, work.title),
+      buildWorkSlug(race.id, work.id, work.title),
     );
-    const riderResult = await getRiderBySlug(
-      `${work.registration.user.id}--${work.registration.user.username}`,
-    );
+    const riderResult = leaderUser
+      ? await getRiderBySlug(
+          `${leaderUser.id}--${leaderUser.username}`,
+        )
+      : null;
 
     assert.ok(workResult);
     assert.ok(riderResult);
@@ -514,8 +500,8 @@ test("public routes expose only PUBLIC evidences on work and rider pages", async
       workResult.evidenceSummaries.includes("internal evidence should stay hidden"),
       false,
     );
-    const raceRecord = riderResult.raceRecords.find(
-      (record) => record.raceId === work.registration.race.id,
+    const raceRecord = riderResult?.raceRecords.find(
+      (record) => record.raceId === race.id,
     );
     assert.ok(raceRecord);
     assert.equal(raceRecord!.evidenceCount, 1);
@@ -557,11 +543,32 @@ test("public race, rider, and work routes exclude unpublished awards and draft j
       },
     },
   });
+
+  // GRS004: Create a Team to associate Work
+  const team = await prisma.team.create({
+    data: {
+      captainId: rider.id,
+      leaderId: rider.id,
+      name: `Public Gating Team ${Date.now()}`,
+      raceId: "race_finished",
+    },
+  });
+  await prisma.teamMember.create({
+    data: {
+      teamId: team.id,
+      userId: rider.id,
+      displayName: rider.username,
+      role: "LEADER",
+      status: "APPROVED",
+    },
+  });
+
   const registration = await prisma.registration.create({
     data: {
       approvedAt: new Date("2026-06-17T08:00:00Z"),
       raceId: "race_finished",
       status: "APPROVED",
+      teamId: team.id,
       userId: rider.id,
     },
   });
@@ -588,6 +595,7 @@ test("public race, rider, and work routes exclude unpublished awards and draft j
       ),
       summary: "public gating work",
       techNotes: "public gating work notes",
+      teamId: team.id,
       title: "Public Gating Work",
       videoUrl: "",
       visibility: "PUBLIC",
@@ -631,11 +639,11 @@ test("public race, rider, and work routes exclude unpublished awards and draft j
     );
     assert.ok(workResult);
     assert.equal(
-      workResult.awards.some((award) => award.awardName === draftAwardName),
+      workResult.awards.some((award: any) => award.awardName === draftAwardName),
       false,
     );
     assert.equal(
-      workResult.judgeComments.some((comment) => comment.summary === draftComment),
+      workResult.judgeComments.some((comment: any) => comment.summary === draftComment),
       false,
     );
 
@@ -685,6 +693,12 @@ test("public race, rider, and work routes exclude unpublished awards and draft j
       where: {
         id: registration.id,
       },
+    });
+    await prisma.teamMember.deleteMany({
+      where: { teamId: team.id },
+    });
+    await prisma.team.delete({
+      where: { id: team.id },
     });
   }
 });

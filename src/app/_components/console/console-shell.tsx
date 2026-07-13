@@ -28,6 +28,7 @@ export const riderConsoleSections = [
   "riding",
   "submission",
   "review",
+  "collaboration",
   "report",
 ] as const;
 

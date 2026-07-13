@@ -1079,12 +1079,14 @@ export function buildSubmissionBindingJson(input: {
   raceId: string;
   registrationId: string;
   submittedAt: Date;
+  teamId: string;
   userId: string;
 }) {
   return JSON.stringify({
     raceId: input.raceId,
     registrationId: input.registrationId,
     submittedAt: input.submittedAt.toISOString(),
+    teamId: input.teamId,
     userId: input.userId,
   });
 }
@@ -1095,6 +1097,7 @@ export function parseSubmissionBindingJson(
   raceId: string;
   registrationId: string;
   submittedAt: string;
+  teamId: string;
   userId: string;
 } {
   try {

@@ -80,7 +80,17 @@ function buildRaceData(overrides?: Partial<AryRaceData>): AryRaceData {
 }
 
 test("falls back to derived overall progress for active races when leaderboard progress is missing", () => {
-  const entries = mapToRacingEntries(buildRaceData());
+  const now = new Date();
+  const entries = mapToRacingEntries(
+    buildRaceData({
+      raceStart: new Date(now.getTime() - 2 * 3600_000),  // 2 hours ago
+      raceEnd: new Date(now.getTime() + 2 * 3600_000),    // 2 hours from now
+      registrations: [
+        { id: "reg_1", userId: "r1", user: { id: "r1", username: "alice" }, raceProject: null, work: null },
+        { id: "reg_2", userId: "r2", user: { id: "r2", username: "bob" }, raceProject: null, work: null },
+      ],
+    }),
+  );
 
   assert.equal(entries.length, 2);
   assert.equal(entries[0].overallProgress, 1);
@@ -206,7 +216,7 @@ test("finished races also ignore all-zero placeholder progress when ranked score
   assert.equal(entries[1].status, "finished");
 });
 
-test("prefers registration work titles over legacy team names when work assets exist", () => {
+test("uses team name as projectName and riderName when teams exist", () => {
   const entries = mapToRacingEntries(
     buildRaceData({
       registrations: [
@@ -223,7 +233,7 @@ test("prefers registration work titles over legacy team names when work assets e
         },
       ],
       teams: [
-        { id: "team_1", name: "Legacy Team Name", captain: { id: "r1", username: "alice" } },
+        { id: "team_1", name: "Team Alpha", captain: { id: "r1", username: "alice" } },
       ],
       leaderboardEntries: [
         {
@@ -254,7 +264,10 @@ test("prefers registration work titles over legacy team names when work assets e
   );
 
   assert.equal(entries.length, 1);
-  assert.equal(entries[0].projectName, "Alpha Work");
+  // Jumbotron now uses team name, not work title
+  assert.equal(entries[0].projectName, "Team Alpha");
+  assert.equal(entries[0].riderName, "Team Alpha");
+  assert.equal(entries[0].entryId, "team_1");
 });
 
 test("prefers screen feed projection items over mock messages when projection exists", () => {
@@ -281,8 +294,15 @@ test("prefers screen feed projection items over mock messages when projection ex
 });
 
 test("prefers current leaderboard projection progress when legacy leaderboard rows are absent", () => {
+  const now = new Date();
   const entries = mapToRacingEntries(
     buildRaceData({
+      raceStart: new Date(now.getTime() - 2 * 3600_000),
+      raceEnd: new Date(now.getTime() + 2 * 3600_000),
+      registrations: [
+        { id: "reg_1", userId: "r1", user: { id: "r1", username: "alice" }, raceProject: null, work: null },
+        { id: "reg_2", userId: "r2", user: { id: "r2", username: "bob" }, raceProject: null, work: null },
+      ],
       projections: [
         {
           id: "proj_leader",
@@ -370,6 +390,20 @@ test("prefers failed aggregate ingestion status to create process attention item
           work: null,
         },
       ],
+      leaderboardEntries: [
+        {
+          id: "lb_1",
+          registrationId: "reg_1",
+          teamId: "team_1",
+          totalScore: 90,
+          progress: null,
+          taskScore: 81,
+          tokenScore: 70,
+          dialogueScore: 76,
+          agentType: "CLAUDE",
+          createdAt: new Date("2026-06-18T12:00:00.000Z"),
+        },
+      ],
       teamArchives: [],
       teams: [
         { id: "team_1", name: "Alpha", captain: { id: "r1", username: "alice" } },
@@ -377,12 +411,16 @@ test("prefers failed aggregate ingestion status to create process attention item
     }),
   );
 
-  assert.equal(items.some((item) => item.summary.includes("CA ingestion failed")), true);
+  assert.equal(items.some((item) => item.summary.includes("CA 接入失败")), true);
+  assert.equal(items[0].entryId, "team_1");
 });
 
 test("can derive jumbotron entries directly from registrations when team compatibility rows are absent", () => {
+  const now = new Date();
   const entries = mapToRacingEntries(
     buildRaceData({
+      raceStart: new Date(now.getTime() - 2 * 3600_000),
+      raceEnd: new Date(now.getTime() + 2 * 3600_000),
       registrations: [
         {
           id: "reg_only",
@@ -406,6 +444,20 @@ test("can derive jumbotron entries directly from registrations when team compati
           work: { id: "work_only", title: "Alice Solo Work", summary: "summary" },
         },
       ],
+      leaderboardEntries: [
+        {
+          id: "lb_only",
+          registrationId: "reg_only",
+          teamId: "reg_only",
+          totalScore: 90,
+          progress: null,
+          taskScore: 81,
+          tokenScore: 70,
+          dialogueScore: 76,
+          agentType: "CLAUDE",
+          createdAt: now,
+        },
+      ],
       projections: [
         {
           id: "proj_only",
@@ -422,7 +474,6 @@ test("can derive jumbotron entries directly from registrations when team compati
         },
       ],
       teams: [],
-      leaderboardEntries: [],
       submissions: [],
       teamArchives: [],
     }),
@@ -430,8 +481,9 @@ test("can derive jumbotron entries directly from registrations when team compati
 
   assert.equal(entries.length, 1);
   assert.equal(entries[0].entryId, "reg_only");
+  // When no teams, falls back to work title or username
   assert.equal(entries[0].projectName, "Alice Solo Work");
-  assert.equal(entries[0].riderName, "alice");
+  assert.equal(entries[0].riderName, "Alice Solo Work");
   assert.equal(entries[0].roundProgress, 0.75);
 });
 
@@ -491,7 +543,7 @@ test("prefers ca connection type, session token cost, and latest activity over l
   assert.equal(entries[0].lastMessage?.summary, "Alice completed the planning checkpoint.");
 });
 
-test("uses registration ids as the primary jumbotron entry id when registrations exist", () => {
+test("uses team id as the primary jumbotron entry id when teams exist", () => {
   const entries = mapToRacingEntries(
     buildRaceData({
       registrations: [
@@ -508,12 +560,27 @@ test("uses registration ids as the primary jumbotron entry id when registrations
         },
       ],
       teams: [
-        { id: "team_1", name: "Legacy Team Name", captain: { id: "r1", username: "alice" } },
+        { id: "team_1", name: "Team Alpha", captain: { id: "r1", username: "alice" } },
+      ],
+      leaderboardEntries: [
+        {
+          id: "lb_1",
+          registrationId: "reg_primary",
+          teamId: "team_1",
+          totalScore: 90,
+          progress: null,
+          taskScore: 81,
+          tokenScore: 70,
+          dialogueScore: 76,
+          agentType: "CLAUDE",
+          createdAt: new Date("2026-06-18T12:00:00.000Z"),
+        },
       ],
     }),
   );
 
-  assert.equal(entries[0].entryId, "reg_primary");
+  // When teams exist, entryId is team.id
+  assert.equal(entries[0].entryId, "team_1");
 });
 
 test("generates fallback process messages from session latestActivity when screen feed projection is absent", () => {
@@ -544,16 +611,31 @@ test("generates fallback process messages from session latestActivity when scree
           work: null,
         },
       ],
+      leaderboardEntries: [
+        {
+          id: "lb_1",
+          registrationId: "reg_msg",
+          teamId: "team_1",
+          totalScore: 90,
+          progress: null,
+          taskScore: 81,
+          tokenScore: 70,
+          dialogueScore: 76,
+          agentType: "CLAUDE",
+          createdAt: new Date("2026-06-18T12:00:00.000Z"),
+        },
+      ],
       feedbackThreads: [],
       projections: [],
       teams: [
-        { id: "team_1", name: "Legacy Team Name", captain: { id: "r1", username: "alice" } },
+        { id: "team_1", name: "Team Alpha", captain: { id: "r1", username: "alice" } },
       ],
     }),
   );
 
   assert.equal(messages[0]?.summary, "Alice unblocked the core task.");
   assert.equal(messages[0]?.source, "session");
+  assert.equal(messages[0]?.entryId, "team_1");
 });
 
 test("does not fabricate mock riding messages when no projection, feedback, or session activity exists", () => {

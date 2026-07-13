@@ -34,7 +34,14 @@ export async function listRegistrationsForRace(raceId: string) {
           },
         },
       },
-      work: true,
+      team: {
+        include: {
+          members: {
+            where: { status: { not: "REMOVED" } },
+            include: { user: true },
+          },
+        },
+      },
       user: true,
     },
     orderBy: {
@@ -74,7 +81,14 @@ export async function getRegistrationForUser(raceId: string, userId: string) {
           },
         },
       },
-      work: true,
+      team: {
+        include: {
+          members: {
+            where: { status: { not: "REMOVED" } },
+            include: { user: true },
+          },
+        },
+      },
       user: true,
     },
   });
@@ -93,77 +107,6 @@ export async function ensureRaceProjectForRegistration(input: {
       registrationId: input.registrationId,
     },
   });
-}
-
-async function ensureCompatibilityTeamForRegistration(input: {
-  raceId: string;
-  tx: Prisma.TransactionClient;
-  userId: string;
-  username: string;
-}) {
-  const existingTeam = await input.tx.team.findFirst({
-    where: {
-      captainId: input.userId,
-      raceId: input.raceId,
-    },
-    include: {
-      members: true,
-    },
-  });
-
-  if (existingTeam) {
-    return existingTeam;
-  }
-
-  return input.tx.team.create({
-    data: {
-      captainId: input.userId,
-      members: {
-        create: [
-          {
-            displayName: input.username,
-            userId: input.userId,
-          },
-        ],
-      },
-      name: `${input.username} solo`,
-      raceId: input.raceId,
-    },
-  });
-}
-
-export async function ensureCompatibilityContainerForApprovedRegistration(input: {
-  raceId: string;
-  userId: string;
-}) {
-  const registration = await prisma.registration.findUnique({
-    where: {
-      raceId_userId: {
-        raceId: input.raceId,
-        userId: input.userId,
-      },
-    },
-    include: {
-      user: true,
-    },
-  });
-
-  if (!registration) {
-    throw new Error("请先完成个人报名");
-  }
-
-  if (registration.status !== "APPROVED") {
-    throw new Error("当前报名尚未通过审核");
-  }
-
-  return prisma.$transaction((tx) =>
-    ensureCompatibilityTeamForRegistration({
-      raceId: input.raceId,
-      tx,
-      userId: input.userId,
-      username: registration.user.username,
-    }),
-  );
 }
 
 async function getManagedRegistrationForAction(input: {
@@ -207,7 +150,7 @@ async function getManagedRegistrationForAction(input: {
   return registration;
 }
 
-export async function registerForRace(userId: string, raceId: string) {
+export async function registerForRace(userId: string, raceId: string, teamId?: string) {
   const race = await prisma.race.findUnique({
     where: { id: raceId },
   });
@@ -226,6 +169,19 @@ export async function registerForRace(userId: string, raceId: string) {
 
   if (!user) {
     throw new Error("User not found");
+  }
+
+  // GRS004: 如果指定了 teamId，验证 Team 存在且已 approved
+  if (teamId) {
+    const team = await prisma.team.findUnique({ where: { id: teamId } });
+    if (!team) throw new Error("队伍不存在");
+
+    const leaderReg = await prisma.registration.findUnique({
+      where: { raceId_userId: { raceId, userId: team.captainId } },
+    });
+    if (!leaderReg || leaderReg.status !== "APPROVED") {
+      throw new Error("该队伍尚未通过审核，暂不能加入");
+    }
   }
 
   return prisma.$transaction(async (tx) => {
@@ -266,6 +222,7 @@ export async function registerForRace(userId: string, raceId: string) {
           raceId,
           status: flow.nextRegistrationStatus as RegistrationStatus,
           userId,
+          teamId: teamId ?? null, // GRS004: 关联 Team
         },
         include: {
           raceProject: true,
@@ -317,14 +274,8 @@ export async function registerForRace(userId: string, raceId: string) {
       });
     }
 
-    if (flow.ensureCompatibilityTeam) {
-      await ensureCompatibilityTeamForRegistration({
-        raceId,
-        tx,
-        userId,
-        username: user.username,
-      });
-    }
+    // GRS004: 不再自动创建兼容队伍。队伍由 createTeam/joinTeam 显式创建。
+    // ensureCompatibilityTeam 流程已废弃。
 
     return tx.registration.findUnique({
       where: { id: registration.id },
@@ -364,23 +315,38 @@ export async function approveRegistrationForRace(input: {
       },
     });
 
-    await tx.raceProject.upsert({
-      where: {
-        registrationId: registration.id,
-      },
-      update: {},
-      create: {
-        aggregateIngestionStatus: getRaceProjectInitialStatus(),
-        registrationId: registration.id,
-      },
-    });
+    // GRS004: 如果 Registration 关联了 Team，RaceProject 改为关联 Team
+    if (registration.teamId) {
+      // 检查是否已有该 Team 的 RaceProject（Leader 审批时已创建）
+      const existingTeamRp = await tx.raceProject.findFirst({
+        where: { teamId: registration.teamId },
+      });
+      await tx.raceProject.upsert({
+        where: {
+          registrationId: registration.id,
+        },
+        update: { teamId: registration.teamId },
+        create: {
+          aggregateIngestionStatus: getRaceProjectInitialStatus(),
+          registrationId: registration.id,
+          // 如果已有 team 级别的 RaceProject，不重复设置 teamId
+          ...(existingTeamRp ? {} : { teamId: registration.teamId }),
+        },
+      });
+    } else {
+      await tx.raceProject.upsert({
+        where: {
+          registrationId: registration.id,
+        },
+        update: {},
+        create: {
+          aggregateIngestionStatus: getRaceProjectInitialStatus(),
+          registrationId: registration.id,
+        },
+      });
+    }
 
-    await ensureCompatibilityTeamForRegistration({
-      raceId: registration.raceId,
-      tx,
-      userId: registration.userId,
-      username: registration.user.username,
-    });
+    // GRS004: 不再自动创建兼容队伍，由 createTeam/joinTeam 显式控制。
 
     return tx.registration.findUnique({
       where: {
@@ -412,6 +378,33 @@ export async function rejectRegistrationForRace(input: {
 
   if (registration.status === "WITHDRAWN") {
     throw new Error("已撤回的报名不能再拒绝");
+  }
+
+  // GRS004: 如果被拒绝的是 Team 的 Leader，直接删除 Team
+  // （只有 approved 的 Team 才能被 Mate 选择加入，不存在 Mate 已加入的情况）
+  if (registration.teamId) {
+    const team = await prisma.team.findUnique({
+      where: { id: registration.teamId },
+      include: { members: true },
+    });
+    if (team && team.leaderId === registration.userId) {
+      return prisma.$transaction(async (tx) => {
+        // 级联删除 Team（Prisma 会级联删除 TeamMember 等）
+        await tx.team.delete({ where: { id: team.id } });
+        return tx.registration.update({
+          where: { id: registration.id },
+          data: {
+            rejectedAt: registration.rejectedAt ?? new Date(),
+            status: "REJECTED",
+            teamId: null,
+          },
+          include: {
+            raceProject: true,
+            user: true,
+          },
+        });
+      });
+    }
   }
 
   return prisma.registration.update({

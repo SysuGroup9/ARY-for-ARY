@@ -39,7 +39,16 @@ export async function rebuildRaceProcessProjections(raceId: string) {
             },
           },
           user: true,
-          work: true,
+        },
+      },
+      teams: {
+        include: {
+          members: {
+            where: { status: { not: "REMOVED" } },
+            include: {
+              user: true,
+            },
+          },
         },
       },
       leaderboardEntries: {
@@ -60,50 +69,100 @@ export async function rebuildRaceProcessProjections(raceId: string) {
     throw new Error("Race not found");
   }
 
-  const registrationItems = race.registrations.map((registration) => {
-    const connections = registration.raceProject?.caConnections ?? [];
+  // GRS004: Team 维度的注册状态投影
+  const regByUserId = new Map(
+    race.registrations.map((r) => [r.userId, r]),
+  );
+
+  const approvedTeams = race.teams.filter((team) =>
+    team.members.some((m) => regByUserId.get(m.userId)?.status === "APPROVED"),
+  );
+
+  const registrationItems = approvedTeams.map((team) => {
+    const memberProjections = team.members.map((member) => {
+      const reg = regByUserId.get(member.userId);
+      const connections = reg?.raceProject?.caConnections ?? [];
+      return {
+        aggregateIngestionStatus:
+          reg?.raceProject?.aggregateIngestionStatus ?? "NOT_CONFIGURED",
+        caConnectionCount: connections.length,
+        sessionCount: connections.reduce(
+          (sum, connection) => sum + connection.sessions.length,
+          0,
+        ),
+      };
+    });
+
+    const worstStatus = memberProjections.some((p) => p.aggregateIngestionStatus === "FAILED")
+      ? "FAILED"
+      : memberProjections.some((p) => p.aggregateIngestionStatus === "ACTIVE")
+        ? "ACTIVE"
+        : memberProjections.some((p) => p.aggregateIngestionStatus === "CONNECTED")
+          ? "CONNECTED"
+          : "NOT_CONFIGURED";
+    const totalCaConnections = memberProjections.reduce((sum, p) => sum + p.caConnectionCount, 0);
+    const totalSessions = memberProjections.reduce((sum, p) => sum + p.sessionCount, 0);
+
     return buildRegistrationStatusProjectionPayload({
-      aggregateIngestionStatus:
-        registration.raceProject?.aggregateIngestionStatus ?? "NOT_CONFIGURED",
-      caConnectionCount: connections.length,
-      raceProjectId: registration.raceProject?.id ?? null,
-      registrationId: registration.id,
-      registrationStatus: registration.status,
-      sessionCount: connections.reduce(
-        (sum, connection) => sum + connection.sessions.length,
-        0,
-      ),
-      username: registration.user.username,
+      aggregateIngestionStatus: worstStatus as "ACTIVE" | "CONNECTED" | "FAILED" | "NOT_CONFIGURED",
+      caConnectionCount: totalCaConnections,
+      raceProjectId: null,
+      registrationId: team.id,
+      registrationStatus: "APPROVED",
+      sessionCount: totalSessions,
+      username: team.name,
     });
   });
 
   const leaderboardItems = buildCurrentLeaderboardProjectionPayload(
-    race.registrations.map((registration) => {
-      const sessions = registration.raceProject?.caConnections.flatMap(
-        (connection) => connection.sessions,
-      ) ?? [];
-      const latestSession = [...sessions].sort(
-        (left, right) =>
-          (right.lastActiveAt ?? right.startedAt).getTime() -
-          (left.lastActiveAt ?? left.startedAt).getTime(),
-      )[0];
+    approvedTeams.map((team) => {
+      let totalProgress = 0;
+      let totalToken = 0;
+      let memberCount = 0;
+
+      for (const member of team.members) {
+        const reg = regByUserId.get(member.userId);
+        const sessions =
+          reg?.raceProject?.caConnections.flatMap(
+            (connection) => connection.sessions,
+          ) ?? [];
+        const latestSession = [...sessions].sort(
+          (left, right) =>
+            (right.lastActiveAt ?? right.startedAt).getTime() -
+            (left.lastActiveAt ?? left.startedAt).getTime(),
+        )[0];
+        if (latestSession) {
+          totalProgress += latestSession.progressPercent ?? 0;
+          totalToken += sessions.reduce((sum, session) => sum + session.tokenCost, 0);
+          memberCount++;
+        }
+      }
 
       return {
-        entryId: registration.id,
-        progressPercent: latestSession?.progressPercent ?? 0,
-        tokenCost: sessions.reduce((sum, session) => sum + session.tokenCost, 0),
-        username: registration.user.username,
+        entryId: team.id,
+        progressPercent: memberCount > 0 ? totalProgress / memberCount : 0,
+        tokenCost: totalToken,
+        username: team.name,
       };
     }),
   );
 
   const raceProgress = buildRaceProgressProjectionPayload({
-    activeConnections: race.registrations.reduce(
-      (sum, registration) =>
+    activeConnections: race.teams.reduce(
+      (sum, team) =>
         sum +
-        (registration.raceProject?.caConnections.filter(
-          (connection) => connection.ingestionStatus === "ACTIVE",
-        ).length ?? 0),
+        team.members.reduce(
+          (memberSum, member) => {
+            const reg = regByUserId.get(member.userId);
+            return (
+              memberSum +
+              (reg?.raceProject?.caConnections.filter(
+                (connection) => connection.ingestionStatus === "ACTIVE",
+              ).length ?? 0)
+            );
+          },
+          0,
+        ),
       0,
     ),
     activeRegistrations: race.registrations.filter(
@@ -123,10 +182,28 @@ export async function rebuildRaceProcessProjections(raceId: string) {
     raceId,
     totalRegistrations: race.registrations.length,
   });
-  const publicWorkCount = race.registrations.filter(
-    (registration) => registration.work?.visibility === "PUBLIC",
-  ).length;
+  const teamIds = race.teams.map((t) => t.id);
+  const publicWorks = await prisma.work.findMany({
+    where: { teamId: { in: teamIds }, visibility: "PUBLIC" },
+  });
+  const publicWorkCount = publicWorks.length;
   const publishedAwardCount = race.awards.length;
+
+  const teamSessionItems = approvedTeams.flatMap((team) =>
+    team.members.flatMap((member) => {
+      const reg = regByUserId.get(member.userId);
+      return (
+        reg?.raceProject?.caConnections.flatMap((connection) =>
+          connection.sessions.slice(0, 1).map((session) => ({
+            summary:
+              session.latestActivity ??
+              `[${team.name}] ${member.user.username} session ${session.caSessionId} has ${session.messageCount} messages.`,
+            type: "session_summary" as const,
+          })),
+        ) ?? []
+      );
+    }),
+  );
 
   const screenFeed = buildScreenFeedProjectionPayload({
     items: [
@@ -150,16 +227,7 @@ export async function rebuildRaceProcessProjections(raceId: string) {
             },
           ]
         : []),
-      ...race.registrations.flatMap((registration) =>
-        registration.raceProject?.caConnections.flatMap((connection) =>
-          connection.sessions.slice(0, 1).map((session) => ({
-            summary:
-              session.latestActivity ??
-              `${registration.user.username} session ${session.caSessionId} has ${session.messageCount} messages.`,
-            type: "session_summary" as const,
-          })),
-        ) ?? [],
-      ),
+      ...teamSessionItems,
       ...(leaderboardItems.length > 0
         ? [
             {
@@ -180,22 +248,27 @@ export async function rebuildRaceProcessProjections(raceId: string) {
         summary: item.content,
         type: "announcement" as const,
       })),
-      ...race.registrations.flatMap((registration) =>
-        registration.raceProject?.caConnections.flatMap((connection) =>
-          connection.sessions
-            .filter((session) => session.latestActivity || session.messageCount > 0)
-            .map((session) => ({
-              createdAt:
-                (session.lastActiveAt ?? session.startedAt).toISOString(),
-              registrationId: registration.id,
-              severity: "info" as const,
-              summary:
-                session.latestActivity ??
-                `${registration.user.username} session ${session.caSessionId} has ${session.messageCount} messages.`,
-              type: "session_activity" as const,
-              username: registration.user.username,
-            })),
-        ) ?? [],
+      ...approvedTeams.flatMap((team) =>
+        team.members.flatMap((member) => {
+          const reg = regByUserId.get(member.userId);
+          return (
+            reg?.raceProject?.caConnections.flatMap((connection) =>
+              connection.sessions
+                .filter((session) => session.latestActivity || session.messageCount > 0)
+                .map((session) => ({
+                  createdAt:
+                    (session.lastActiveAt ?? session.startedAt).toISOString(),
+                  registrationId: reg.id,
+                  severity: "info" as const,
+                  summary:
+                    session.latestActivity ??
+                    `[${team.name}] ${member.user.username} session ${session.caSessionId} has ${session.messageCount} messages.`,
+                  type: "session_activity" as const,
+                  username: member.user.username,
+                })),
+            ) ?? []
+          );
+        }),
       ),
       ...race.registrations
         .filter(
@@ -226,27 +299,58 @@ export async function rebuildRaceProcessProjections(raceId: string) {
       type: ProjectionType.REGISTRATION_STATUS,
     },
     {
-      payload: race.registrations.map((registration) => ({
-        registrationId: registration.id,
-        tokenCost:
-          registration.raceProject?.caConnections.reduce(
-            (sum, connection) =>
+      payload: approvedTeams.map((team) => ({
+        registrationId: team.id,
+        tokenCost: team.members.reduce(
+          (sum, member) => {
+            const reg = regByUserId.get(member.userId);
+            return (
               sum +
-              connection.sessions.reduce(
-                (inner, session) => inner + session.tokenCost,
+              (reg?.raceProject?.caConnections.reduce(
+                (connSum, connection) =>
+                  connSum +
+                  connection.sessions.reduce(
+                    (sessionSum, session) => sessionSum + session.tokenCost,
+                    0,
+                  ),
                 0,
-              ),
-            0,
-          ) ?? 0,
+              ) ?? 0)
+            );
+          },
+          0,
+        ),
       })),
       type: ProjectionType.COST,
     },
     {
-      payload: race.registrations.map((registration) => ({
-        aggregateIngestionStatus:
-          registration.raceProject?.aggregateIngestionStatus ?? "NOT_CONFIGURED",
-        registrationId: registration.id,
-      })),
+      payload: approvedTeams.map((team) => {
+        const worstStatus = team.members.some(
+          (m) => {
+            const reg = regByUserId.get(m.userId);
+            return reg?.raceProject?.aggregateIngestionStatus === "FAILED";
+          },
+        )
+          ? "FAILED"
+          : team.members.some(
+                (m) => {
+                  const reg = regByUserId.get(m.userId);
+                  return reg?.raceProject?.aggregateIngestionStatus === "ACTIVE";
+                },
+              )
+            ? "ACTIVE"
+            : team.members.some(
+                  (m) => {
+                    const reg = regByUserId.get(m.userId);
+                    return reg?.raceProject?.aggregateIngestionStatus === "CONNECTED";
+                  },
+                )
+              ? "CONNECTED"
+              : "NOT_CONFIGURED";
+        return {
+          aggregateIngestionStatus: worstStatus,
+          registrationId: team.id,
+        };
+      }),
       type: ProjectionType.RISK,
     },
     {
