@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { assertManagedRaceActionAccess } from "@/lib/services/races";
-import { getCompatibilityContainerForRegistration } from "@/lib/services/rider-bridge";
 import { feedbackReplySchema, feedbackSchema } from "@/lib/validation";
 
 export async function sendFeedback(authorId: string, formData: FormData) {
@@ -9,17 +8,32 @@ export async function sendFeedback(authorId: string, formData: FormData) {
     content: formData.get("content"),
   });
 
-  const team = await getCompatibilityContainerForRegistration({
-    raceId: parsed.raceId,
-    userId: authorId,
+  const registration = await prisma.registration.findUnique({
+    where: {
+      raceId_userId: {
+        raceId: parsed.raceId,
+        userId: authorId,
+      },
+    },
+    select: { id: true, teamId: true },
   });
 
-  if (!team) {
+  if (!registration) {
     throw new Error("请先报名参赛后再反馈");
+  }
+  if (!registration.teamId) {
+    throw new Error("请先创建或加入队伍后再反馈");
+  }
+  // GRS004: 双重校验 — 必须 TeamMember.approved
+  const teamMember = await prisma.teamMember.findFirst({
+    where: { teamId: registration.teamId, userId: authorId, status: "APPROVED" },
+  });
+  if (!teamMember) {
+    throw new Error("请等待队长审批通过后再发送反馈");
   }
 
   return prisma.$transaction(async (tx) => {
-    const registration = await tx.registration.findUnique({
+    const existingReg = await tx.registration.findUnique({
       where: {
         raceId_userId: {
           raceId: parsed.raceId,
@@ -28,7 +42,7 @@ export async function sendFeedback(authorId: string, formData: FormData) {
       },
     });
 
-    if (!registration) {
+    if (!existingReg) {
       throw new Error("请先报名参赛后再反馈");
     }
 
@@ -36,14 +50,14 @@ export async function sendFeedback(authorId: string, formData: FormData) {
       (await tx.feedbackThread.findFirst({
         where: {
           raceId: parsed.raceId,
-          registrationId: registration.id,
+          registrationId: existingReg.id,
         },
       })) ??
       (await tx.feedbackThread.create({
         data: {
           raceId: parsed.raceId,
-          registrationId: registration.id,
-          teamId: team.id,
+          registrationId: existingReg.id,
+          teamId: registration.teamId,
         },
       }));
 

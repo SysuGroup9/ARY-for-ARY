@@ -139,6 +139,23 @@ enum AgentType {
   CUSTOM
 }
 
+enum TeamMemberRole {
+  LEADER
+  MATE
+}
+
+enum TeamMemberStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REMOVED
+}
+
+enum TaskStatus {
+  TODO
+  DONE
+}
+
 model User {
   id           String    @id @default(cuid())
   username     String    @unique
@@ -156,7 +173,13 @@ model User {
   assignedJudgeAssignments JudgeAssignment[] @relation("AssignedByJudgeAssignments")
   teamMemberships TeamMember[]
   teamCaptains   Team[]  @relation("TeamCaptain")
+  teamLeaders    Team[]  @relation("TeamLeader")
   feedbackMessages FeedbackMessage[]
+  teamTasksCreated TeamTask[] @relation("TaskCreator")
+  teamTasksAssigned TeamTask[] @relation("TaskAssignee")
+  sentMessages   CollaborationMessage[] @relation("MessageSender")
+  receivedMessages CollaborationMessage[] @relation("MessageReceiver")
+  modifiedSubmissions Submission[] @relation("SubmissionModifier")
 }
 
 model Race {
@@ -232,6 +255,7 @@ model Registration {
   id           String             @id @default(cuid())
   raceId       String
   userId       String
+  teamId       String?
   status       RegistrationStatus @default(SUBMITTED)
   submittedAt  DateTime           @default(now())
   approvedAt   DateTime?
@@ -239,12 +263,12 @@ model Registration {
   withdrawnAt  DateTime?
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
- 
+  
   race         Race               @relation(fields: [raceId], references: [id], onDelete: Cascade)
   user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team         Team?              @relation(fields: [teamId], references: [id], onDelete: SetNull)
   raceProject  RaceProject?
   evidences    Evidence[]
-  work         Work?
   awards       Award[]
   reports      Report[]           @relation("SubjectReports")
   submissions  Submission[]
@@ -257,19 +281,22 @@ model Registration {
   harnessEntries HarnessEntry[]
   highlights   RidingHighlight[]
   teamComments TeamComment[]
- 
+  
   @@unique([raceId, userId])
+  @@index([teamId])
 }
 
 model RaceProject {
   id                        String          @id @default(cuid())
-  registrationId            String          @unique
+  registrationId            String?         @unique
+  teamId                    String?         @unique
   githubRepoUrl             String          @default("")
   aggregateIngestionStatus  IngestionStatus @default(NOT_CONFIGURED)
   createdAt                 DateTime        @default(now())
   updatedAt                 DateTime        @updatedAt
 
-  registration              Registration    @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  registration              Registration?   @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+  team                      Team?           @relation(fields: [teamId], references: [id], onDelete: SetNull)
   caConnections             CAConnection[]
 }
 
@@ -415,7 +442,8 @@ model SecurityAudit {
 
 model Work {
   id             String       @id @default(cuid())
-  registrationId String       @unique
+  registrationId String?      
+  teamId         String?      @unique
   title          String
   summary        String
   demoUrl        String       @default("")
@@ -429,9 +457,11 @@ model Work {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  team           Team?         @relation(fields: [teamId], references: [id], onDelete: SetNull)
   judgeAssignments JudgeAssignment[]
   awards         Award[]
+
+  @@index([teamId])
 }
 
 model JudgeAssignment {
@@ -469,7 +499,8 @@ model JudgingRecord {
 model Award {
   id              String       @id @default(cuid())
   raceId           String
-  registrationId   String
+  registrationId   String?
+  teamId           String?
   workId           String?
   awardName        String
   rank             Int
@@ -481,10 +512,12 @@ model Award {
   updatedAt        DateTime    @updatedAt
 
   race             Race        @relation(fields: [raceId], references: [id], onDelete: Cascade)
-  registration     Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  registration     Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+  team             Team?       @relation(fields: [teamId], references: [id], onDelete: SetNull)
   work             Work?       @relation(fields: [workId], references: [id], onDelete: SetNull)
 
   @@unique([raceId, awardName, rank])
+  @@index([teamId])
 }
 
 model Report {
@@ -540,11 +573,13 @@ model Team {
   id         String   @id @default(cuid())
   raceId      String
   captainId   String
+  leaderId    String?
   name        String
   createdAt   DateTime @default(now())
 
   race        Race      @relation(fields: [raceId], references: [id], onDelete: Cascade)
   captain     User      @relation("TeamCaptain", fields: [captainId], references: [id], onDelete: Cascade)
+  leader      User?     @relation("TeamLeader", fields: [leaderId], references: [id], onDelete: SetNull)
   members     TeamMember[]
   submissions Submission[]
   archives    TeamArchive[]
@@ -555,19 +590,29 @@ model Team {
   comments    TeamComment[]
   runnerTasks RunnerTask[]
   artifacts   SubmissionArtifact[]
+  raceProject  RaceProject?
+  works       Work[]
+  awards      Award[]
+  registrations Registration[]
+  tasks       TeamTask[]
+  messages    CollaborationMessage[]
 
-  @@unique([raceId, captainId])
+  @@unique([raceId, name])
 }
 
 model TeamMember {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   teamId       String
   userId       String?
   displayName  String
-  createdAt    DateTime @default(now())
+  role         TeamMemberRole   @default(MATE)
+  status       TeamMemberStatus @default(PENDING)
+  createdAt    DateTime         @default(now())
 
   team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([teamId, userId])
 }
 
 model Submission {
@@ -585,6 +630,8 @@ model Submission {
   submitterBindingJson String @default("{}")
   tokenUsed        Int
   agentType        AgentType
+  modifiedByUserId String?
+  changeSummary    String      @default("")
   passRate         Float?
   codeReviewScore  Float?
   reasoningScore   Float?
@@ -604,10 +651,12 @@ model Submission {
   race             Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
   team             Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
   registration     Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+  modifiedBy       User?    @relation("SubmissionModifier", fields: [modifiedByUserId], references: [id], onDelete: SetNull)
   artifact         SubmissionArtifact?
   runnerTasks      RunnerTask[]
 
   @@index([registrationId, createdAt])
+  @@index([teamId, createdAt])
 }
 
 model SubmissionArtifact {
@@ -814,6 +863,42 @@ model TeamComment {
  
   @@unique([raceId, teamId])
   @@index([registrationId])
+}
+
+model TeamTask {
+  id          String     @id @default(cuid())
+  teamId       String
+  creatorId    String
+  assigneeId   String?
+  title        String
+  description  String     @default("")
+  status       TaskStatus @default(TODO)
+  createdAt    DateTime   @default(now())
+  completedAt  DateTime?
+
+  team         Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  creator      User       @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  assignee     User?      @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  @@index([teamId, status])
+}
+
+model CollaborationMessage {
+  id              String   @id @default(cuid())
+  teamId           String
+  senderId         String
+  receiverId       String
+  content          String
+  linkedAssetType  String   @default("")
+  linkedAssetId    String   @default("")
+  createdAt        DateTime @default(now())
+
+  team             Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  sender           User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver         User     @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([teamId, createdAt])
+  @@index([senderId, receiverId, createdAt])
 }
 
 model CooperationRequest {

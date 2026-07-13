@@ -11,17 +11,15 @@
     "currentRound": 1,
     "nextPhase": "已结束",
     "elapsedTime": 0,
-    "systemTime": "2026-07-12T09:39:37.205Z"
+    "systemTime": "2026-07-13T18:04:10.170Z"
   },
   "entries": [
     {
-      "entryId": "cmrhlqovp00300os3wuma88xj",
-      "riderName": "rider_iris",
-      "projectName": "rider_iris",
+      "entryId": "team_signup_2",
+      "riderName": "API Builder",
+      "projectName": "API Builder",
       "caProvider": "other",
-      "rank": 1,
-      "score": 0,
-      "overallProgress": 0,
+      "overallProgress": 0.5,
       "roundProgress": 1,
       "phaseProgress": 1,
       "currentPhase": "PRD",
@@ -32,16 +30,14 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "updatedAt": "2026-07-12T09:39:37.205Z"
+      "updatedAt": "2026-07-13T18:04:10.170Z"
     },
     {
-      "entryId": "cmrhlqovx00320os38hw80xoe",
-      "riderName": "rider_jack",
-      "projectName": "rider_jack",
+      "entryId": "team_signup_0",
+      "riderName": "Interface Artist",
+      "projectName": "Interface Artist",
       "caProvider": "other",
-      "rank": 2,
-      "score": 0,
-      "overallProgress": 0,
+      "overallProgress": 0.5,
       "roundProgress": 1,
       "phaseProgress": 1,
       "currentPhase": "PRD",
@@ -52,16 +48,14 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "updatedAt": "2026-07-12T09:39:37.205Z"
+      "updatedAt": "2026-07-13T18:04:10.170Z"
     },
     {
-      "entryId": "cmrhlqow600340os3xzfydyoy",
-      "riderName": "rider_kate",
-      "projectName": "rider_kate",
+      "entryId": "team_signup_1",
+      "riderName": "REST Master",
+      "projectName": "REST Master",
       "caProvider": "other",
-      "rank": 3,
-      "score": 0,
-      "overallProgress": 0,
+      "overallProgress": 0.5,
       "roundProgress": 1,
       "phaseProgress": 1,
       "currentPhase": "PRD",
@@ -72,10 +66,10 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "updatedAt": "2026-07-12T09:39:37.205Z"
+      "updatedAt": "2026-07-13T18:04:10.170Z"
     }
   ],
-  "generatedAt": "2026-07-12T09:39:37.205Z",
+  "generatedAt": "2026-07-13T18:04:10.170Z",
   "kpis": {
     "completionRate": 0,
     "totalTokens": 0,
@@ -90,18 +84,7 @@
     "obstacleCount": 0,
     "violationCount": 0
   },
-  "messages": [
-    {
-      "messageId": "screen-feed-0",
-      "entryId": "team_signup_0",
-      "source": "projection",
-      "type": "milestone",
-      "severity": "info",
-      "summary": "Current process leaderboard is available.",
-      "createdAt": "2026-07-12T09:39:37.205Z",
-      "displayMode": "ticker"
-    }
-  ],
+  "messages": [],
   "raceId": "race_signup",
   "trackId": "oval-track"
 }

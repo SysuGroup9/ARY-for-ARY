@@ -16,8 +16,9 @@ function buildRiderReportContent(input: {
   awards: Array<{ awardName: string; rank: number }>;
   evidenceCount: number;
   judgeComments: string[];
+  memberCount: number;
   raceTitle: string;
-  username: string;
+  teamName: string;
   workTitle: null | string;
 }) {
   const awardsLabel = input.awards.length
@@ -29,18 +30,19 @@ function buildRiderReportContent(input: {
     ? input.judgeComments.join(" | ")
     : "none";
   const workLabel = input.workTitle ?? "none";
+  const membersLabel = `${input.teamName} (${input.memberCount} members)`;
 
   return {
     body: [
       `Race: ${input.raceTitle}`,
-      `Rider: ${input.username}`,
+      `Team: ${membersLabel}`,
       `Work: ${workLabel}`,
       `Awards: ${awardsLabel}`,
       `Evidence Count: ${input.evidenceCount}`,
       `Judge Comments: ${judgeCommentsLabel}`,
     ].join("\n"),
-    summary: `${input.username} / ${workLabel} / awards ${awardsLabel} / evidence ${input.evidenceCount}`,
-    title: `${input.raceTitle} / ${input.username} Rider Report`,
+    summary: `${input.teamName} / ${workLabel} / awards ${awardsLabel} / evidence ${input.evidenceCount}`,
+    title: `${input.raceTitle} / ${input.teamName} Rider Report`,
   };
 }
 
@@ -48,18 +50,18 @@ function buildRaceReportContent(input: {
   awardCount: number;
   organizerComment: string;
   raceTitle: string;
-  registrationCount: number;
+  teamCount: number;
   workCount: number;
 }) {
   return {
     body: [
       `Race: ${input.raceTitle}`,
-      `Registrations: ${input.registrationCount}`,
+      `Teams: ${input.teamCount}`,
       `Works: ${input.workCount}`,
       `Published Awards: ${input.awardCount}`,
       `Organizer Notes: ${input.organizerComment || "none"}`,
     ].join("\n"),
-    summary: `${input.registrationCount} registrations / ${input.workCount} works / ${input.awardCount} published awards`,
+    summary: `${input.teamCount} teams / ${input.workCount} works / ${input.awardCount} published awards`,
     title: `${input.raceTitle} Race Report`,
   };
 }
@@ -275,90 +277,36 @@ export async function generateReportsForRace(input: {
   raceId: string;
 }) {
   const race = await getRaceForManagedReportAction(input);
-  const [registrations, projections, publishedAwards, judgingRecords] = await Promise.all([
-    prisma.registration.findMany({
-      where: {
-        raceId: input.raceId,
-      },
+  // GRS004: 改为 Team 维度查询
+  const [teams, projections, publishedAwards, judgingRecords, works] = await Promise.all([
+    prisma.team.findMany({
+      where: { raceId: input.raceId },
       include: {
-        awards: {
-          where: {
-            publishedAt: {
-              not: null,
-            },
-          },
-          orderBy: [
-            {
-              awardName: "asc",
-            },
-            {
-              rank: "asc",
-            },
-          ],
-        },
-        evidences: {
-          orderBy: {
-            createdAt: "asc",
-          },
-        },
-        user: true,
-        work: true,
+        members: { where: { status: "APPROVED" }, include: { user: true } },
+        awards: { where: { publishedAt: { not: null } }, orderBy: [{ awardName: "asc" }, { rank: "asc" }] },
+        works: true,
       },
-      orderBy: {
-        createdAt: "asc",
-      },
+      orderBy: { createdAt: "asc" },
     }),
     prisma.projection.findMany({
-      where: {
-        raceId: input.raceId,
-      },
-      orderBy: {
-        type: "asc",
-      },
+      where: { raceId: input.raceId },
+      orderBy: { type: "asc" },
     }),
     prisma.award.findMany({
-      where: {
-        publishedAt: {
-          not: null,
-        },
-        raceId: input.raceId,
-      },
-      orderBy: [
-        {
-          awardName: "asc",
-        },
-        {
-          rank: "asc",
-        },
-      ],
+      where: { publishedAt: { not: null }, raceId: input.raceId },
+      orderBy: [{ awardName: "asc" }, { rank: "asc" }],
     }),
     prisma.judgingRecord.findMany({
       where: {
-        submittedAt: {
-          not: null,
-        },
-        judgeAssignment: {
-          work: {
-            registration: {
-              raceId: input.raceId,
-            },
-          },
-        },
+        submittedAt: { not: null },
+        judgeAssignment: { work: { team: { raceId: input.raceId } } },
       },
-      include: {
-        judgeAssignment: {
-          include: {
-            work: {
-              include: {
-                registration: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        submittedAt: "asc",
-      },
+      include: { judgeAssignment: { include: { work: { include: { team: true } } } } },
+      orderBy: { submittedAt: "asc" },
+    }),
+    prisma.work.findMany({
+      where: { team: { raceId: input.raceId } },
+      include: { team: { include: { members: { where: { status: "APPROVED" }, include: { user: true } } } } },
     }),
   ]);
 
@@ -371,66 +319,71 @@ export async function generateReportsForRace(input: {
     awardName: award.awardName,
     id: award.id,
     rank: award.rank,
-    registrationId: award.registrationId,
+    teamId: award.teamId,
   }));
-  const publicEvidenceHighlights = registrations
-    .flatMap((registration) =>
-      registration.evidences
-        .filter((evidence) => evidence.visibility === "PUBLIC")
-        .map((evidence) => evidence.summary),
-    )
-    .slice(0, 8);
+  const publicEvidenceHighlights = teams
+    .flatMap((team) => team.works)
+    .filter(Boolean)
+    .slice(0, 8)
+    .map((work) => work.summary);
   const submittedJudgeComments = judgingRecords
     .map((record) => record.comments.trim())
     .filter((comment) => comment.length > 0);
 
+  // 构建 teamId → members 映射（用于 Evidence 聚合）
+  const registrationsByTeamId = await prisma.registration.findMany({
+    where: { raceId: input.raceId, status: "APPROVED" },
+    include: { evidences: { orderBy: { createdAt: "asc" } }, user: true },
+  }).then((regs) => {
+    const map = new Map<string, typeof regs>();
+    for (const reg of regs) {
+      const key = reg.teamId ?? reg.id;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(reg);
+    }
+    return map;
+  });
+
   const createdReports = [];
 
-  for (const registration of registrations) {
+  // 为每个 Team 生成一份 RIDER_REPORT
+  for (const team of teams) {
+    const teamRegs = registrationsByTeamId.get(team.id) ?? [];
+    const teamWork = team.works[0] ?? null;
+    const allEvidences = teamRegs.flatMap((reg) => reg.evidences);
+    const teamAwards = team.awards;
+
+    const teamJudgeComments = judgingRecords
+      .filter((record) => record.judgeAssignment.work.teamId === team.id)
+      .map((record) => record.comments.trim())
+      .filter((comment) => comment.length > 0);
+
     const riderReportContent = buildRiderReportContent({
-      awards: registration.awards.map((award) => ({
-        awardName: award.awardName,
-        rank: award.rank,
-      })),
-      evidenceCount: registration.evidences.length,
-      judgeComments: judgingRecords
-        .filter(
-          (record) =>
-            record.judgeAssignment.work.registration.id === registration.id,
-        )
-        .map((record) => record.comments.trim())
-        .filter((comment) => comment.length > 0),
+      awards: teamAwards.map((award) => ({ awardName: award.awardName, rank: award.rank })),
+      evidenceCount: allEvidences.length,
+      judgeComments: teamJudgeComments,
+      memberCount: team.members.length,
       raceTitle: race.title,
-      username: registration.user.username,
-      workTitle: registration.work?.title ?? null,
+      teamName: team.name,
+      workTitle: teamWork?.title ?? null,
     });
+
     const riderSourceRef = buildReportSourceRef({
       awards: awardRefs
-        .filter((award) => award.registrationId === registration.id)
-        .map((award) => ({
-          awardName: award.awardName,
-          id: award.id,
-          rank: award.rank,
-        })),
-      evidences: registration.evidences.map((evidence) => ({
+        .filter((award) => award.teamId === team.id)
+        .map((award) => ({ awardName: award.awardName, id: award.id, rank: award.rank })),
+      evidences: allEvidences.map((evidence) => ({
         id: evidence.id,
-        registrationId: registration.id,
+        registrationId: evidence.registrationId,
         sourceDigest: evidence.sourceDigest,
         type: evidence.type,
       })),
       projections: projectionRefs,
       raceId: race.id,
       reportType: ReportType.RIDER_REPORT,
-      subjectRegistrationId: registration.id,
-      works: registration.work
-        ? [
-            {
-              contentHash: registration.work.contentHash,
-              id: registration.work.id,
-              registrationId: registration.id,
-              title: registration.work.title,
-            },
-          ]
+      subjectRegistrationId: teamRegs[0]?.id ?? null,
+      works: teamWork
+        ? [{ contentHash: teamWork.contentHash, id: teamWork.id, registrationId: teamRegs[0]?.id ?? "", title: teamWork.title }]
         : [],
     });
 
@@ -441,7 +394,7 @@ export async function generateReportsForRace(input: {
         sourceDigest: buildPayloadDigest(riderSourceRef),
         sourceRefJson: JSON.stringify(riderSourceRef),
         status: "GENERATED",
-        subjectRegistrationId: registration.id,
+        subjectRegistrationId: teamRegs[0]?.id ?? null,
         summary: riderReportContent.summary,
         title: riderReportContent.title,
         type: ReportType.RIDER_REPORT,
@@ -453,39 +406,32 @@ export async function generateReportsForRace(input: {
     awardCount: publishedAwards.length,
     organizerComment: race.organizerComment,
     raceTitle: race.title,
-    registrationCount: registrations.length,
-    workCount: registrations.filter((registration) => registration.work).length,
+    teamCount: teams.length,
+    workCount: works.length,
   });
   const raceReportSourceRef = buildReportSourceRef({
-    awards: awardRefs.map((award) => ({
-      awardName: award.awardName,
-      id: award.id,
-      rank: award.rank,
-    })),
-    evidences: registrations.flatMap((registration) =>
-      registration.evidences.map((evidence) => ({
-        id: evidence.id,
-        registrationId: registration.id,
-        sourceDigest: evidence.sourceDigest,
-        type: evidence.type,
-      })),
-    ),
+    awards: awardRefs.map((award) => ({ awardName: award.awardName, id: award.id, rank: award.rank })),
+    evidences: teams.flatMap((team) => {
+      const teamRegs = registrationsByTeamId.get(team.id) ?? [];
+      return teamRegs.flatMap((reg) =>
+        reg.evidences.map((evidence) => ({
+          id: evidence.id,
+          registrationId: evidence.registrationId,
+          sourceDigest: evidence.sourceDigest,
+          type: evidence.type,
+        })),
+      );
+    }),
     projections: projectionRefs,
     raceId: race.id,
     reportType: ReportType.RACE_REPORT,
     subjectRegistrationId: null,
-    works: registrations.flatMap((registration) =>
-      registration.work
-        ? [
-            {
-              contentHash: registration.work.contentHash,
-              id: registration.work.id,
-              registrationId: registration.id,
-              title: registration.work.title,
-            },
-          ]
-        : [],
-    ),
+    works: works.map((w) => ({
+      contentHash: w.contentHash,
+      id: w.id,
+      registrationId: w.team?.members[0]?.user.id ?? "",
+      title: w.title,
+    })),
   });
   createdReports.push(
     await upsertGeneratedDraftReport(prisma, {
@@ -507,37 +453,30 @@ export async function generateReportsForRace(input: {
     raceTitle: race.title,
   });
   const reviewSummarySourceRef = buildReportSourceRef({
-    awards: awardRefs.map((award) => ({
-      awardName: award.awardName,
-      id: award.id,
-      rank: award.rank,
-    })),
-    evidences: registrations.flatMap((registration) =>
-      registration.evidences
-        .filter((evidence) => evidence.visibility === "PUBLIC")
-        .map((evidence) => ({
-          id: evidence.id,
-          registrationId: registration.id,
-          sourceDigest: evidence.sourceDigest,
-          type: evidence.type,
-        })),
-    ),
+    awards: awardRefs.map((award) => ({ awardName: award.awardName, id: award.id, rank: award.rank })),
+    evidences: teams.flatMap((team) => {
+      const teamRegs = registrationsByTeamId.get(team.id) ?? [];
+      return teamRegs.flatMap((reg) =>
+        reg.evidences
+          .filter((evidence) => evidence.visibility === "PUBLIC")
+          .map((evidence) => ({
+            id: evidence.id,
+            registrationId: evidence.registrationId,
+            sourceDigest: evidence.sourceDigest,
+            type: evidence.type,
+          })),
+      );
+    }),
     projections: projectionRefs,
     raceId: race.id,
     reportType: ReportType.REVIEW_SUMMARY,
     subjectRegistrationId: null,
-    works: registrations.flatMap((registration) =>
-      registration.work
-        ? [
-            {
-              contentHash: registration.work.contentHash,
-              id: registration.work.id,
-              registrationId: registration.id,
-              title: registration.work.title,
-            },
-          ]
-        : [],
-    ),
+    works: works.map((w) => ({
+      contentHash: w.contentHash,
+      id: w.id,
+      registrationId: w.team?.members[0]?.user.id ?? "",
+      title: w.title,
+    })),
   });
   createdReports.push(
     await upsertGeneratedDraftReport(prisma, {

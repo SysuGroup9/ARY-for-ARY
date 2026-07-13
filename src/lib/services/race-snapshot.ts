@@ -70,7 +70,6 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
             },
           },
           user: { select: { id: true, username: true } },
-          work: { select: { id: true, summary: true, title: true } },
         },
       },
       submissions: {
@@ -93,7 +92,8 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
 
   const raceData: AryRaceData = {
     feedbackThreads: race.feedbackThreads.map((thread) => ({
-      teamId: thread.registrationId ?? thread.teamId,
+      registrationId: thread.registrationId,
+      teamId: thread.teamId,
       messages: thread.messages.map((message) => ({
         content: message.content,
         createdAt: message.createdAt,
@@ -106,8 +106,9 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
       dialogueScore: entry.dialogueScore,
       id: entry.id,
       progress: entry.progress,
+      registrationId: entry.registrationId,
       taskScore: entry.taskScore,
-      teamId: entry.registrationId ?? entry.teamId,
+      teamId: entry.teamId,
       tokenScore: entry.tokenScore,
       totalScore: entry.totalScore,
     })),
@@ -146,26 +147,22 @@ export async function buildRaceSnapshot(raceId: string): Promise<RaceSnapshot> {
         : null,
       user: registration.user,
       userId: registration.userId,
-      work: registration.work
-        ? {
-            id: registration.work.id,
-            summary: registration.work.summary,
-            title: registration.work.title,
-          }
-        : null,
+      work: null, // Work now belongs to Team, queried separately below
     })),
     signupEnd: race.signupEnd,
     signupStart: race.signupStart,
     submissions: race.submissions.map((submission) => ({
       createdAt: submission.createdAt,
       id: submission.id,
-      teamId: submission.registrationId ?? submission.teamId,
+      registrationId: submission.registrationId,
+      teamId: submission.teamId,
     })),
     summary: race.summary,
     teamArchives: race.teamArchives.map((archive) => ({
       agentType: archive.agentType,
       antiCheatPenalty: archive.antiCheatPenalty,
-      teamId: archive.registrationId ?? archive.teamId,
+      registrationId: archive.registrationId,
+      teamId: archive.teamId,
       tokenUsed: archive.tokenUsed,
       totalScore: archive.totalScore,
     })),

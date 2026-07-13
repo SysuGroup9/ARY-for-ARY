@@ -198,3 +198,51 @@ export const judgingRecordSchema = z.object({
   scoreRidingTotal: z.coerce.number().min(0).max(100),
   submit: z.boolean().default(false),
 });
+
+// ---- Collaboration (GRS004) ----
+
+export const createTeamSchema = z.object({
+  raceId: z.string().min(1),
+  name: z.string().trim().min(2, "队伍名称至少 2 个字符").max(30, "队伍名称最多 30 个字符"),
+});
+
+export const joinTeamSchema = z.object({
+  teamId: z.string().min(1),
+});
+
+export const approveMemberSchema = z.object({
+  teamId: z.string().min(1),
+  memberId: z.string().min(1),
+});
+
+export const removeMemberSchema = z.object({
+  teamId: z.string().min(1),
+  memberId: z.string().min(1),
+});
+
+export const createTaskSchema = z.object({
+  teamId: z.string().min(1),
+  title: z.string().trim().min(1, "任务标题不能为空").max(200),
+  description: z.string().trim().max(2000).default(""),
+  assigneeId: z.string().min(1, "请指定负责人"),
+});
+
+export const completeTaskSchema = z.object({
+  taskId: z.string().min(1),
+});
+
+export const sendMessageSchema = z.object({
+  teamId: z.string().min(1),
+  receiverId: z.string().min(1),
+  content: z.string().trim().min(1, "消息不能为空").max(4000),
+  linkedAssetType: z.string().max(50).default(""),
+  linkedAssetId: z.string().max(100).default(""),
+});
+
+export const exportKnowledgeBaseSchema = z.object({
+  teamId: z.string().min(1),
+});
+
+export const downloadLatestCodeSchema = z.object({
+  teamId: z.string().min(1),
+});

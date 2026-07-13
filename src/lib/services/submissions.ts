@@ -6,10 +6,7 @@ import { buildPayloadDigest } from "@/lib/ca-integrity-helpers";
 import { buildSubmissionBindingJson } from "@/lib/material-integrity-helpers";
 import { prisma } from "@/lib/prisma";
 import { getRacePhase } from "@/lib/race-phase";
-import {
-  ensureCompatibilityContainerForApprovedRegistration,
-  getRegistrationForUser,
-} from "@/lib/services/registrations";
+import { getRegistrationForUser } from "@/lib/services/registrations";
 import { recordSecurityAudit } from "@/lib/services/security-audit";
 import { upsertSubmittedWorkForRegistration } from "@/lib/services/works";
 import {
@@ -44,10 +41,16 @@ export async function createSubmission(
     throw new Error("当前报名尚未通过审核");
   }
 
-  const team = await ensureCompatibilityContainerForApprovedRegistration({
-    raceId: parsed.raceId,
-    userId: riderId,
+  if (!registration.teamId) {
+    throw new Error("请先创建或加入队伍后再提交作品");
+  }
+  // GRS004: 双重校验 — 必须 TeamMember.approved
+  const teamMember = await prisma.teamMember.findFirst({
+    where: { teamId: registration.teamId, userId: riderId, status: "APPROVED" },
   });
+  if (!teamMember) {
+    throw new Error("请等待队长审批通过后再提交作品");
+  }
 
   const registrationId = registration.id;
 
@@ -73,7 +76,7 @@ export async function createSubmission(
 
   const lastSubmission = await prisma.submission.findFirst({
     where: {
-      teamId: team.id,
+      teamId: registration.teamId,
     },
     orderBy: {
       createdAt: "desc",
@@ -97,6 +100,7 @@ export async function createSubmission(
       raceId: parsed.raceId,
       registrationId,
       submittedAt,
+      teamId: registration.teamId,
       userId: riderId,
     });
 
@@ -126,8 +130,10 @@ export async function createSubmission(
         ridingRecordHash,
         status: SubmissionStatus.QUEUED,
         submitterBindingJson,
-        teamId: team.id,
+        teamId: registration.teamId,
         tokenUsed: parsed.tokenUsed,
+        modifiedByUserId: riderId,
+        changeSummary: "赛中提交",
       },
     });
 
@@ -144,7 +150,7 @@ export async function createSubmission(
         ridingRecordHash,
         submissionId: submission.id,
         submitterBindingJson,
-        teamId: team.id,
+        teamId: registration.teamId,
         tokenUsed: parsed.tokenUsed,
       },
     });
@@ -197,10 +203,16 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
     throw new Error("当前报名尚未通过审核");
   }
 
-  const team = await ensureCompatibilityContainerForApprovedRegistration({
-    raceId: parsed.raceId,
-    userId: riderId,
+  if (!registration.teamId) {
+    throw new Error("请先创建或加入队伍后再提交作品");
+  }
+  // GRS004: 双重校验 — 必须 TeamMember.approved
+  const teamMember = await prisma.teamMember.findFirst({
+    where: { teamId: registration.teamId, userId: riderId, status: "APPROVED" },
   });
+  if (!teamMember) {
+    throw new Error("请等待队长审批通过后再提交作品");
+  }
 
   const registrationId = registration.id;
 
@@ -227,6 +239,7 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
       raceId: parsed.raceId,
       registrationId,
       submittedAt,
+      teamId: registration.teamId,
       userId: riderId,
     });
 
@@ -256,8 +269,10 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
         ridingRecordHash,
         status: SubmissionStatus.QUEUED,
         submitterBindingJson,
-        teamId: team.id,
+        teamId: registration.teamId,
         tokenUsed: parsed.tokenUsed,
+        modifiedByUserId: riderId,
+        changeSummary: "赛后最终提交",
       },
     });
 
@@ -274,7 +289,7 @@ export async function createFinalSubmission(riderId: string, formData: FormData)
         ridingRecordHash,
         submissionId: submission.id,
         submitterBindingJson,
-        teamId: team.id,
+        teamId: registration.teamId,
         tokenUsed: parsed.tokenUsed,
       },
     });

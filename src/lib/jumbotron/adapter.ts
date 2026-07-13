@@ -183,20 +183,35 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
 
   const ranked = [...leaderboardEntries].sort((a, b) => b.totalScore - a.totalScore);
   const maxScore = ranked[0]?.totalScore ?? 100;
-  const registrationsById = new Map(
-    (race.registrations ?? []).map((registration) => [registration.id, registration]),
-  );
-  const registrationsByUserId = new Map(
-    (race.registrations ?? []).map((registration) => [registration.userId, registration]),
-  );
+  // 构建 teamId → registrations[] 的映射（Team 维度聚合）
+  const registrationsByTeamId = new Map<string, Array<typeof race.registrations extends Array<infer T> ? T : never>>();
+  for (const registration of race.registrations ?? []) {
+    // 从 leaderboardEntries 推断 teamId（leaderboardEntry.teamId 是可靠的 Team 标识）
+    const leaderboardEntry = leaderboardEntries.find(
+      (entry) => entry.registrationId === registration.id || entry.teamId === registration.id,
+    );
+    const teamId = leaderboardEntry?.teamId ?? registration.id;
+    if (!registrationsByTeamId.has(teamId)) {
+      registrationsByTeamId.set(teamId, []);
+    }
+    registrationsByTeamId.get(teamId)!.push(registration);
+  }
+  // 构建 registrationId → teamId 映射
+  const teamIdByRegistrationId = new Map<string, string>();
+  for (const [teamId, regs] of registrationsByTeamId) {
+    for (const reg of regs) {
+      teamIdByRegistrationId.set(reg.id, teamId);
+    }
+  }
+
   const archiveMap = new Map(
-    teamArchives.map((archive) => [archive.registrationId ?? archive.teamId, archive]),
+    teamArchives.map((archive) => [archive.teamId, archive]),
   );
   const feedbackMap = new Map(
-    feedbackThreads.map((thread) => [thread.registrationId ?? thread.teamId, thread]),
+    feedbackThreads.map((thread) => [thread.teamId, thread]),
   );
   const submissionCountMap = submissions.reduce((map, submission) => {
-    const containerId = submission.registrationId ?? submission.teamId;
+    const containerId = submission.teamId;
     map.set(containerId, (map.get(containerId) ?? 0) + 1);
     return map;
   }, new Map<string, number>());
@@ -241,16 +256,21 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
     }
   }
 
-  const rosterTeams =
-    (race.registrations?.length ?? 0) > 0
-      ? (race.registrations ?? []).map((registration) => ({
-          id: registration.id,
-          name: registration.work?.title ?? registration.user.username,
-          captain: registration.user,
-        }))
-      : teams;
+  // 以 Team 为单位构建 roster（不再以 registration 为单位）
+  const rosterTeams = teams.length > 0
+    ? teams.map((team) => ({
+        id: team.id,
+        name: team.name,
+        captain: team.captain,
+      }))
+    : (race.registrations ?? []).map((registration) => ({
+        id: registration.id,
+        name: registration.work?.title ?? registration.user.username,
+        captain: registration.user,
+      }));
 
   return rosterTeams.map((team) => {
+    const teamRegistrations = registrationsByTeamId.get(team.id) ?? [];
     const projected =
       projectedEntries.get(team.id) ??
       projectedRows.find((item) => item.username === team.captain.username);
@@ -258,31 +278,32 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
       ? projected.rank - 1
       : ranked.findIndex(
           (entry) =>
-            entry.registrationId === team.id ||
             entry.teamId === team.id ||
-            registrationsById.get(entry.registrationId ?? "")?.userId === team.captain.id,
+            entry.registrationId === team.id ||
+            teamIdByRegistrationId.get(entry.registrationId ?? "") === team.id,
         );
     const entry = ranked[rank];
-    const registration = registrationsByUserId.get(team.captain.id);
-    const containerId = registration?.id ?? team.id;
-    const archive = archiveMap.get(containerId) ?? archiveMap.get(team.id);
-    const feedback = feedbackMap.get(containerId) ?? feedbackMap.get(team.id);
-    const submissionCount =
-      submissionCountMap.get(containerId) ?? submissionCountMap.get(team.id) ?? 0;
-    const sessionTokenCost =
-      registration?.raceProject?.caConnections?.reduce(
-        (sum, connection) =>
-          sum +
-          (connection.sessions?.reduce(
-            (inner, session) => inner + (session.tokenCost ?? 0),
-            0,
-          ) ?? 0),
-        0,
-      ) ?? 0;
-    const primaryConnection = registration?.raceProject?.caConnections?.[0];
+    const archive = archiveMap.get(team.id);
+    const feedback = feedbackMap.get(team.id);
+    const submissionCount = submissionCountMap.get(team.id) ?? 0;
+
+    // 聚合 Team 下所有 Registration 的 CA Connection 数据
+    const allConnections = teamRegistrations.flatMap(
+      (reg) => reg.raceProject?.caConnections ?? [],
+    );
+    const sessionTokenCost = allConnections.reduce(
+      (sum, connection) =>
+        sum +
+        (connection.sessions?.reduce(
+          (inner, session) => inner + (session.tokenCost ?? 0),
+          0,
+        ) ?? 0),
+      0,
+    );
+    const primaryConnection = allConnections[0];
     const latestSession =
-      registration?.raceProject?.caConnections
-        ?.flatMap((connection) => connection.sessions ?? [])
+      allConnections
+        .flatMap((connection) => connection.sessions ?? [])
         .sort(
           (left, right) =>
             getSessionActivityTime(right) - getSessionActivityTime(left),
@@ -355,12 +376,15 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
       : undefined;
 
     // ── 综合风险推导：CA接入失败 + 会话风险 + 反作弊扣分 ──
+    // 聚合 Team 下所有 Registration 的风险
     const antiCheatPenalty = archive?.antiCheatPenalty ?? 0;
-    const ingestionFailed =
-      registration?.raceProject?.aggregateIngestionStatus === "FAILED" ||
-      (registration?.raceProject?.caConnections ?? []).some(
-        (connection) => connection.ingestionStatus === "FAILED",
-      );
+    const ingestionFailed = teamRegistrations.some(
+      (reg) =>
+        reg.raceProject?.aggregateIngestionStatus === "FAILED" ||
+        (reg.raceProject?.caConnections ?? []).some(
+          (connection) => connection.ingestionStatus === "FAILED",
+        ),
+    );
     const sessionRiskLevel = latestSession?.riskLevel?.toLowerCase();
     const sessionRiskReason =
       latestSession?.riskReason && latestSession.riskReason !== "none"
@@ -388,10 +412,15 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
     }
     const riskReason = riskReasons.length > 0 ? riskReasons.join("；") : undefined;
 
+    // 判断 Team 是否有 ACTIVE 状态的 RaceProject（任一成员）
+    const hasActiveIngestion = teamRegistrations.some(
+      (reg) => reg.raceProject?.aggregateIngestionStatus === "ACTIVE",
+    );
+
     return {
       entryId: team.id,
-      riderName: team.captain.username,
-      projectName: registration?.work?.title ?? team.name,
+      riderName: team.name,
+      projectName: team.name,
       cockpitId: undefined,
       caProvider: mapCAType(primaryConnection?.caType) ?? mapAgentType(archive?.agentType),
       rank: projected?.rank ?? (rank >= 0 ? rank + 1 : undefined),
@@ -409,7 +438,7 @@ export function mapToRacingEntries(race: AryRaceData): RacingEntrySnapshot[] {
       violationCount,
       riskReason,
       status:
-        registration?.raceProject?.aggregateIngestionStatus === "ACTIVE"
+        hasActiveIngestion
           ? "running"
           : status,
       laneId: undefined,            // 由 track-runtime lane-manager 分配
@@ -456,22 +485,39 @@ export function generateMessages(race: AryRaceData): RidingMessageSnapshot[] {
 
   const messages: RidingMessageSnapshot[] = [];
   const now = new Date();
-  const sessionMessages = (race.registrations ?? []).flatMap((registration) =>
-    registration.raceProject?.caConnections?.flatMap((connection) =>
-      (connection.sessions ?? [])
-        .filter((session) => session.latestActivity)
-        .map((session, index) => ({
-          messageId: `session-${registration.id}-${index}`,
-          entryId: registration.id,
-          source: "session",
-          type: "progress_update" as const,
-          severity: "info" as const,
-          summary: session.latestActivity!,
-          createdAt: now.toISOString(),
-          displayMode: "ticker" as const,
-        })),
-    ) ?? [],
-  );
+
+  // 构建 teamId → registrations 映射
+  const registrationsByTeamId = new Map<string, Array<typeof race.registrations extends Array<infer T> ? T : never>>();
+  for (const registration of race.registrations ?? []) {
+    const leaderboardEntry = race.leaderboardEntries.find(
+      (entry) => entry.registrationId === registration.id || entry.teamId === registration.id,
+    );
+    const teamId = leaderboardEntry?.teamId ?? registration.id;
+    if (!registrationsByTeamId.has(teamId)) {
+      registrationsByTeamId.set(teamId, []);
+    }
+    registrationsByTeamId.get(teamId)!.push(registration);
+  }
+
+  const sessionMessages = (race.teams ?? []).flatMap((team) => {
+    const teamRegs = registrationsByTeamId.get(team.id) ?? [];
+    return teamRegs.flatMap((registration) =>
+      registration.raceProject?.caConnections?.flatMap((connection) =>
+        (connection.sessions ?? [])
+          .filter((session) => session.latestActivity)
+          .map((session, index) => ({
+            messageId: `session-${team.id}-${index}`,
+            entryId: team.id,
+            source: "session",
+            type: "progress_update" as const,
+            severity: "info" as const,
+            summary: session.latestActivity!,
+            createdAt: now.toISOString(),
+            displayMode: "ticker" as const,
+          })),
+      ) ?? [],
+    );
+  });
 
   if (sessionMessages.length > 0) {
     return sessionMessages;
@@ -502,27 +548,48 @@ export function generateMessages(race: AryRaceData): RidingMessageSnapshot[] {
 export function generateAttentionItems(race: AryRaceData): AttentionItem[] {
   const items: AttentionItem[] = [];
 
+  // 构建 teamId → registrations 映射
+  const registrationsByTeamId = new Map<string, Array<typeof race.registrations extends Array<infer T> ? T : never>>();
   for (const registration of race.registrations ?? []) {
-    const raceProject = registration.raceProject;
+    const leaderboardEntry = race.leaderboardEntries.find(
+      (entry) => entry.registrationId === registration.id || entry.teamId === registration.id,
+    );
+    const teamId = leaderboardEntry?.teamId ?? registration.id;
+    if (!registrationsByTeamId.has(teamId)) {
+      registrationsByTeamId.set(teamId, []);
+    }
+    registrationsByTeamId.get(teamId)!.push(registration);
+  }
+
+  // 按 Team 维度聚合 Attention Items
+  for (const team of race.teams ?? []) {
+    const teamRegs = registrationsByTeamId.get(team.id) ?? [];
+    const allConnections = teamRegs.flatMap(
+      (reg) => reg.raceProject?.caConnections ?? [],
+    );
+
     const ingestionFailed =
-      raceProject?.aggregateIngestionStatus === "FAILED" ||
-      (raceProject?.caConnections ?? []).some(
-        (connection) => connection.ingestionStatus === "FAILED",
+      teamRegs.some(
+        (reg) =>
+          reg.raceProject?.aggregateIngestionStatus === "FAILED" ||
+          (reg.raceProject?.caConnections ?? []).some(
+            (connection) => connection.ingestionStatus === "FAILED",
+          ),
       );
     if (ingestionFailed) {
       items.push({
-        itemId: `risk-ca-${registration.id}`,
-        entryId: registration.id,
+        itemId: `risk-ca-${team.id}`,
+        entryId: team.id,
         category: "risk",
         severity: "medium",
-        summary: `${registration.user.username}: CA 接入失败，实况数据中断`,
+        summary: `${team.name}: CA 接入失败，实况数据中断`,
         status: "active",
         createdAt: new Date().toISOString(),
       });
     }
 
     // 会话级风险（中/高）
-    const riskySession = (raceProject?.caConnections ?? [])
+    const riskySession = allConnections
       .flatMap((connection) => connection.sessions ?? [])
       .find((session) => {
         const level = session.riskLevel?.toLowerCase();
@@ -534,12 +601,12 @@ export function generateAttentionItems(race: AryRaceData): AttentionItem[] {
           ? riskySession.riskReason
           : "会话风险等级偏高";
       items.push({
-        itemId: `risk-session-${registration.id}`,
-        entryId: registration.id,
+        itemId: `risk-session-${team.id}`,
+        entryId: team.id,
         category: "risk",
         severity:
           riskySession.riskLevel?.toLowerCase() === "high" ? "high" : "medium",
-        summary: `${registration.user.username}: ${reason}`,
+        summary: `${team.name}: ${reason}`,
         status: "active",
         createdAt: new Date().toISOString(),
       });
@@ -548,12 +615,9 @@ export function generateAttentionItems(race: AryRaceData): AttentionItem[] {
 
   for (const archive of race.teamArchives) {
     if ((archive.antiCheatPenalty ?? 0) > 0) {
-      const registration = archive.registrationId
-        ? (race.registrations ?? []).find((item) => item.id === archive.registrationId)
-        : null;
       const team = race.teams.find((t) => t.id === archive.teamId);
-      const entryId = archive.registrationId ?? archive.teamId;
-      const label = registration?.user.username ?? team?.name ?? archive.teamId;
+      const entryId = archive.teamId;
+      const label = team?.name ?? archive.teamId;
       items.push({
         itemId: `risk-${entryId}`,
         entryId,
@@ -573,20 +637,41 @@ export function generateAttentionItems(race: AryRaceData): AttentionItem[] {
  * 计算 Competition KPI
  */
 export function calculateKPIs(race: AryRaceData): CompetitionKPI {
-  const registrationCount = race.registrations?.length ?? 0;
-  const totalTeams = registrationCount > 0 ? registrationCount : race.teams.length;
-  const scoredTeams = race.leaderboardEntries.length;
-  const activeRaceProjects =
-    registrationCount > 0
-      ? (race.registrations ?? []).filter((registration) => registration.raceProject).length
-      : scoredTeams;
-  const activeRegistrations =
-    registrationCount > 0
-      ? (race.registrations ?? []).filter(
-          (registration) =>
-            registration.raceProject?.aggregateIngestionStatus === "ACTIVE",
-        ).length
-      : scoredTeams;
+  const totalTeams = race.teams.length > 0 ? race.teams.length : (race.registrations?.length ?? 0);
+
+  // 构建 teamId → registrations 映射
+  const registrationsByTeamId = new Map<string, Array<typeof race.registrations extends Array<infer T> ? T : never>>();
+  for (const registration of race.registrations ?? []) {
+    const leaderboardEntry = race.leaderboardEntries.find(
+      (entry) => entry.registrationId === registration.id || entry.teamId === registration.id,
+    );
+    const teamId = leaderboardEntry?.teamId ?? registration.id;
+    if (!registrationsByTeamId.has(teamId)) {
+      registrationsByTeamId.set(teamId, []);
+    }
+    registrationsByTeamId.get(teamId)!.push(registration);
+  }
+
+  // 有至少一个 RaceProject 的 Team 数
+  const activeRaceProjects = race.teams.length > 0
+    ? race.teams.filter((team) => {
+        const regs = registrationsByTeamId.get(team.id) ?? [];
+        return regs.some((reg) => reg.raceProject != null);
+      }).length
+    : (race.registrations ?? []).filter((reg) => reg.raceProject).length;
+
+  // 有 ACTIVE ingestion 的 Team 数
+  const activeRegistrations = race.teams.length > 0
+    ? race.teams.filter((team) => {
+        const regs = registrationsByTeamId.get(team.id) ?? [];
+        return regs.some(
+          (reg) => reg.raceProject?.aggregateIngestionStatus === "ACTIVE",
+        );
+      }).length
+    : (race.registrations ?? []).filter(
+        (reg) => reg.raceProject?.aggregateIngestionStatus === "ACTIVE",
+      ).length;
+
   const sessionTokenCosts = (race.registrations ?? []).flatMap((registration) =>
     registration.raceProject?.caConnections?.flatMap((connection) =>
       connection.sessions?.map((session) => session.tokenCost ?? 0) ?? [],
@@ -606,12 +691,22 @@ export function calculateKPIs(race: AryRaceData): CompetitionKPI {
         .filter((a) => a.agentType === "CLAUDE")
         .reduce((sum, a) => sum + a.tokenUsed, 0);
   const totalTokensWithCA = codexTokens + claudeTokens || 1;
-  const riskCount =
-    (race.registrations ?? []).filter(
-      (registration) =>
-        registration.raceProject?.aggregateIngestionStatus === "FAILED",
-    ).length ||
-    race.teamArchives.filter((a) => (a.antiCheatPenalty ?? 0) > 0).length;
+
+  // 有 FAILED ingestion 或反作弊扣分的 Team 数
+  const riskCount = race.teams.length > 0
+    ? race.teams.filter((team) => {
+        const regs = registrationsByTeamId.get(team.id) ?? [];
+        const hasFailed = regs.some(
+          (reg) => reg.raceProject?.aggregateIngestionStatus === "FAILED",
+        );
+        const hasPenalty = race.teamArchives.some(
+          (a) => a.teamId === team.id && (a.antiCheatPenalty ?? 0) > 0,
+        );
+        return hasFailed || hasPenalty;
+      }).length
+    : (race.registrations ?? []).filter(
+        (reg) => reg.raceProject?.aggregateIngestionStatus === "FAILED",
+      ).length || race.teamArchives.filter((a) => (a.antiCheatPenalty ?? 0) > 0).length;
 
   return {
     completionRate: totalTeams > 0 ? Math.round((activeRaceProjects / totalTeams) * 100) : 0,

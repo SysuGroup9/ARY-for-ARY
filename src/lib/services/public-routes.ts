@@ -118,7 +118,6 @@ export async function listPublicRaces() {
               },
             },
           },
-          work: true,
           user: true,
         },
         orderBy: {
@@ -169,7 +168,7 @@ export async function listPublicRaces() {
       registrations: await Promise.all(
         race.registrations.map(async (registration) => ({
           ...registration,
-          work: await sanitizePublicWork(registration.work),
+          work: null, // GRS004: Work → Team 迁移后，Registration 不再直接关联 Work
         })),
       ),
     })),
@@ -199,33 +198,49 @@ export async function getRaceBySlug(raceSlug: string) {
 
 export async function getWorkBySlug(workSlug: string) {
   const { raceId, workId } = getWorkPartsFromSlug(workSlug);
-  const work =
+  const sanitized =
     (await getWorkForPublicSlug({ raceId, workId })) ??
     (await getWorkForLegacyTeamSlug({ raceId, teamId: workId }));
 
-  if (!work) {
+  if (!sanitized) {
     return null;
   }
 
+  const work = sanitized as any;
+  const teamRegs = work.team?.registrations ?? [];
+  const leaderMember = work.team?.members?.find(
+    (m: any) => m.role === "LEADER",
+  );
+  const raceInfo = teamRegs[0]?.race;
+  const allEvidences = teamRegs.flatMap((r: any) => r.evidences ?? []);
+
   return {
     awards: work.awards,
-    author: work.registration.user.username,
+    author:
+      leaderMember?.user?.username ??
+      work.registration?.user?.username ??
+      teamRegs[0]?.user?.username ??
+      "",
     demoUrl: work.demoUrl,
-    evidenceSummaries: filterPublicEvidences(work.registration.evidences).map(
-      (evidence) => evidence.summary,
+    evidenceSummaries: filterPublicEvidences(allEvidences).map(
+      (evidence: any) => evidence.summary,
     ),
     excerpt: work.summary,
     id: workSlug,
-    judgeComments: work.judgeAssignments
-      .filter((assignment) => assignment.judgingRecord?.comments)
-      .map((assignment) => ({
+    judgeComments: (work.judgeAssignments ?? [])
+      .filter((assignment: any) => assignment.judgingRecord?.comments)
+      .map((assignment: any) => ({
         judgeName: assignment.judge.username,
         summary: assignment.judgingRecord!.comments,
       })),
-    raceSlug: buildRaceSlug(work.registration.race.id, work.registration.race.title),
-    raceTitle: work.registration.race.title,
+    raceSlug:
+      raceInfo
+        ? buildRaceSlug(raceInfo.id, raceInfo.title)
+        : buildRaceSlug(raceId, work.registration?.race?.title ?? ""),
+    raceTitle:
+      raceInfo?.title ?? work.registration?.race?.title ?? "",
     repoUrl: work.repoUrl,
-    score: work.awards[0] ? 100 - work.awards[0].rank + 1 : 0,
+    score: work.awards?.[0] ? 100 - work.awards[0].rank + 1 : 0,
     techNotes: work.techNotes,
     title: work.title,
     videoUrl: work.videoUrl,
@@ -249,33 +264,20 @@ export async function getRiderBySlug(riderSlug: string) {
     return null;
   }
 
+  // GRS004: 以 Team 维度查询（通过 user 的 registrations 找到所属 teams）
   const registrations = await prisma.registration.findMany({
-    where: {
-      userId: riderId,
-    },
+    where: { userId: riderId },
     include: {
-      awards: {
-        where: {
-          publishedAt: {
-            not: null,
-          },
-        },
-      },
-      evidences: {
-        where: {
-          visibility: "PUBLIC",
-        },
-      },
-      race: {
+      team: {
         include: {
-          projections: true,
+          awards: { where: { publishedAt: { not: null } } },
+          works: true,
         },
       },
-      work: true,
+      evidences: { where: { visibility: "PUBLIC" } },
+      race: { include: { projections: true } },
     },
-    orderBy: {
-      createdAt: "asc",
-    },
+    orderBy: { createdAt: "asc" },
   });
 
   if (registrations.length === 0) {
@@ -283,62 +285,50 @@ export async function getRiderBySlug(riderSlug: string) {
   }
 
   const sanitizedRegistrations = await Promise.all(
-    registrations.map(async (registration) => ({
-      ...registration,
-      work: await sanitizePublicWork(registration.work),
+    registrations.map(async (reg) => ({
+      ...reg,
+      work: reg.team?.works[0] ? await sanitizePublicWork(reg.team.works[0]) : null,
     })),
   );
 
   const reviewReports = await Promise.all(
-    sanitizedRegistrations.map((registration) =>
-      getPublishedReviewSummaryForRace(registration.raceId),
+    sanitizedRegistrations.map((reg) =>
+      getPublishedReviewSummaryForRace(reg.raceId),
     ),
   );
-  const rawWorks = await prisma.work.findMany({
-    where: {
-      registration: {
-        userId: riderId,
-      },
-    },
-    include: {
-      judgeAssignments: {
-        where: {
-          judgingRecord: {
-            submittedAt: {
-              not: null,
-            },
+
+  // 通过 Team 查询 Work（不再依赖 Work→Registration 关系链）
+  const teamIds = [...new Set(registrations.map((r) => r.teamId).filter(Boolean) as string[])];
+  const rawWorks = teamIds.length > 0
+    ? await prisma.work.findMany({
+        where: { teamId: { in: teamIds } },
+        include: {
+          judgeAssignments: {
+            where: { judgingRecord: { submittedAt: { not: null } } },
+            include: { judge: true, judgingRecord: true },
           },
+          team: { include: { registrations: { include: { race: true } } } },
         },
-        include: {
-          judge: true,
-          judgingRecord: true,
-        },
-      },
-      registration: {
-        include: {
-          race: true,
-        },
-      },
-    },
-  });
+      })
+    : [];
   const works = (
     await Promise.all(
       rawWorks.map((work) => sanitizePublicWork(work)),
     )
   ).filter((work): work is (typeof rawWorks)[number] => !!work);
 
-  const raceRecords = sanitizedRegistrations.map((registration) => ({
-    awardNames: registration.awards.map((award) => award.awardName),
-    awardScore: registration.awards[0]?.rank ?? null,
+  const raceRecords = sanitizedRegistrations.map((reg) => ({
+    awardNames: (reg.team?.awards ?? []).map((a) => a.awardName),
+    awardScore: reg.team?.awards[0]?.rank ?? null,
     comment:
-      reviewReports.find((report) => report?.raceId === registration.raceId)
+      reviewReports.find((report) => report?.raceId === reg.raceId)
         ?.summary ?? null,
-    evidenceCount: registration.evidences.length,
-    phase: registration.race.raceEnd < new Date() ? "finished" : "active",
-    raceId: registration.race.id,
-    raceSlug: buildRaceSlug(registration.race.id, registration.race.title),
-    raceTitle: registration.race.title,
-    workTitle: registration.work?.title ?? null,
+    evidenceCount: reg.evidences.length,
+    phase: reg.race.raceEnd < new Date() ? "finished" : "active",
+    raceId: reg.race.id,
+    raceSlug: buildRaceSlug(reg.race.id, reg.race.title),
+    raceTitle: reg.race.title,
+    workTitle: reg.team?.works[0]?.title ?? null,
   }));
   const performanceSummary = buildPublicRiderPerformanceSummary(
     sanitizedRegistrations,
@@ -347,7 +337,7 @@ export async function getRiderBySlug(riderSlug: string) {
     work.judgeAssignments
       .filter((assignment) => assignment.judgingRecord?.comments)
       .map((assignment) => ({
-        raceTitle: work.registration.race.title,
+        raceTitle: work.team?.registrations[0]?.race.title ?? "",
         summary: assignment.judgingRecord!.comments,
       })),
   );
@@ -395,6 +385,7 @@ export async function getRiderBySlug(riderSlug: string) {
 function buildPublicRiderPerformanceSummary(
   registrations: Array<{
     id: string;
+    teamId: string | null;
     race: {
       projections: Array<{
         payloadJson: string;
@@ -406,7 +397,7 @@ function buildPublicRiderPerformanceSummary(
   const progressSamples = registrations
     .map((registration) =>
       parseCurrentLeaderboardProjection(registration.race.projections).find(
-        (entry) => entry.entryId === registration.id,
+        (entry) => entry.entryId === registration.teamId,
       )?.progressPercent,
     )
     .filter((value): value is number => typeof value === "number");

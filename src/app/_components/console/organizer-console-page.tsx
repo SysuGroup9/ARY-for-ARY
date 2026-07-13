@@ -241,6 +241,21 @@ function getRegistrationStatusLabel(status: string) {
   }
 }
 
+function getMemberStatusLabel(status: string) {
+  switch (String(status).trim().toUpperCase()) {
+    case "APPROVED":
+      return "已加入";
+    case "PENDING":
+      return "待审批";
+    case "REJECTED":
+      return "已拒绝";
+    case "REMOVED":
+      return "已移出";
+    default:
+      return status;
+  }
+}
+
 function getAggregateIngestionStatusLabel(status: string) {
   switch (String(status).trim().toUpperCase()) {
     case "ACTIVE":
@@ -740,17 +755,78 @@ function renderOrganizerSection({
       );
     case "riders":
       return (
-        <Panel title="骑手" eyebrow="主办方视图">
-          <div className="stack">
-            {race.teams.map((team) => (
-              <div className="public-link-card" key={`${team.id}-rider`}>
-                <strong>{team.captain.username}</strong>
-                <span>队伍：{team.name}</span>
-                <span>赛事：{race.title}</span>
-              </div>
-            ))}
-          </div>
-        </Panel>
+        <section className="grid">
+          <Panel title="团队列表" eyebrow="主办方视图">
+            <div className="stack">
+              {race.teams.length === 0 ? (
+                <p className="muted">暂无队伍报名。</p>
+              ) : (
+                race.teams.map((team) => (
+                  <div className="public-link-card" key={`${team.id}-team`}>
+                    <strong>{team.name}</strong>
+                    <span>队长：{team.captain?.username ?? team.leader?.username ?? "—"}</span>
+                    <span>
+                      {/* 仅统计已正式加入的成员（APPROVED），与 Rider 视角保持一致 */}
+                      成员数：{team.members?.filter((m) => m.status === "APPROVED").length ?? 0}
+                    </span>
+                    {team.members && team.members.length > 0 ? (
+                      <div className="stack">
+                        <span className="muted">成员详情：</span>
+                        {team.members.map((member) => (
+                          <div key={member.id} className="public-link-card">
+                            <strong>{member.user?.username ?? "—"}</strong>
+                            <span>
+                              角色：{member.role === "LEADER" ? "队长" : "队员"}
+                              {" · "}状态：{getMemberStatusLabel(member.status)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ))
+              )}
+            </div>
+          </Panel>
+
+          <Panel title="报名审批" eyebrow="主办方视图">
+            <div className="stack">
+              {race.registrations.length === 0 ? (
+                <p className="muted">暂无报名记录。</p>
+              ) : (
+                race.registrations
+                  .filter((r) => r.status === "SUBMITTED" || r.status === "APPROVED")
+                  .map((registration) => (
+                    <div className="public-link-card" key={`${registration.id}-reg`}>
+                      <strong>{registration.user?.username ?? "—"}</strong>
+                      <span>队伍：{registration.team?.name ?? "个人"}</span>
+                      <span>状态：{getRegistrationStatusLabel(registration.status)}</span>
+                      {registration.status === "SUBMITTED" ? (
+                        <div className="inline-actions">
+                          <form action={approveRegistrationAction}>
+                            <input name="raceId" type="hidden" value={race.id} />
+                            <input name="raceSlug" type="hidden" value={raceSlug} />
+                            <input name="registrationId" type="hidden" value={registration.id} />
+                            <input name="returnTo" type="hidden" value={`/console/races/${raceSlug}/organizer/riders`} />
+                            <input name="feedbackReturnTo" type="hidden" value={`/console/races/${raceSlug}/organizer/riders`} />
+                            <button type="submit">批准报名</button>
+                          </form>
+                          <form action={rejectRegistrationAction}>
+                            <input name="raceId" type="hidden" value={race.id} />
+                            <input name="raceSlug" type="hidden" value={raceSlug} />
+                            <input name="registrationId" type="hidden" value={registration.id} />
+                            <input name="returnTo" type="hidden" value={`/console/races/${raceSlug}/organizer/riders`} />
+                            <input name="feedbackReturnTo" type="hidden" value={`/console/races/${raceSlug}/organizer/riders`} />
+                            <button type="submit">拒绝报名</button>
+                          </form>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))
+              )}
+            </div>
+          </Panel>
+        </section>
       );
     case "ca-status":
       return (

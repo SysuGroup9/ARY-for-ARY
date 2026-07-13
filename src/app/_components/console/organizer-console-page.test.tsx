@@ -717,6 +717,58 @@ test("organizer awards section exposes a formal publish entry alongside compatib
   assert.match(html, /Award \/ Leaderboard/);
 });
 
+test("organizer riders team list member count only counts APPROVED members (not PENDING/REJECTED/REMOVED)", () => {
+  const html = renderToStaticMarkup(
+    <OrganizerConsolePageView
+      judgeAssignments={[]}
+      judges={[]}
+      race={buildRace({
+        teams: [
+          {
+            id: "team_1",
+            name: "Graph Explorers",
+            captain: { id: "u_diana", username: "rider_diana" },
+            members: [
+              { id: "m1", role: "LEADER", status: "APPROVED", user: { id: "u_diana", username: "rider_diana" } },
+              { id: "m2", role: "MATE", status: "PENDING", user: { id: "u_eve", username: "rider_eve" } },
+              { id: "m3", role: "MATE", status: "APPROVED", user: { id: "u_frank", username: "rider_frank" } },
+            ],
+            works: [],
+          },
+          {
+            id: "team_2",
+            name: "Solo Rider",
+            captain: { id: "u_solo", username: "rider_solo" },
+            members: [
+              { id: "m4", role: "LEADER", status: "APPROVED", user: { id: "u_solo", username: "rider_solo" } },
+              { id: "m5", role: "MATE", status: "REJECTED", user: { id: "u_ghost", username: "rider_ghost" } },
+              { id: "m6", role: "MATE", status: "REMOVED", user: { id: "u_gone", username: "rider_gone" } },
+            ],
+            works: [],
+          },
+        ],
+      })}
+      raceSlug="race_active--sorting-challenge"
+      section="riders"
+    />,
+  );
+
+  // Graph Explorers: diana + frank = 2 APPROVED, eve PENDING not counted
+  assert.match(html, /成员数：2/);
+  // Solo Rider: only solo APPROVED = 1, rejected + removed not counted
+  assert.match(html, /成员数：1/);
+  // Should NOT show 3 or 4
+  assert.doesNotMatch(html, /成员数：3/);
+  assert.doesNotMatch(html, /成员数：4/);
+  // Member detail cards still show all statuses
+  assert.match(html, /待审批/);
+  assert.match(html, /已加入/);
+  assert.match(html, /已拒绝/);
+  // Team names are visible
+  assert.match(html, /Graph Explorers/);
+  assert.match(html, /Solo Rider/);
+});
+
 test("organizer reports section exposes report generation and publication controls", () => {
   const html = renderToStaticMarkup(
     <OrganizerConsolePageView

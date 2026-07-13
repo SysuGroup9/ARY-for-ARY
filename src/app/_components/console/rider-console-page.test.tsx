@@ -380,6 +380,76 @@ test("rider console surfaces connector rotation and disabled state in ca-setup",
   );
 });
 
+test("rider knowledge base shows download link when team has submissions", () => {
+  const html = renderToStaticMarkup(
+    <RiderConsolePageView
+      race={buildRace({ phase: "active" })}
+      registration={
+        {
+          id: "reg_1",
+          status: "APPROVED",
+          userId: "u_leader",
+          user: { username: "rider_alice" },
+        } as never
+      }
+      reviewSummary={null}
+      riderReports={[]}
+      riderTeam={
+        {
+          id: "team_1",
+          name: "Alpha Team",
+          leaderId: "u_leader",
+          leader: { id: "u_leader", username: "rider_alice" },
+          members: [
+            { id: "m1", role: "LEADER", status: "APPROVED", userId: "u_leader", user: { id: "u_leader", username: "rider_alice" } },
+          ],
+          submissions: [{ id: "sub_1" }],
+        } as never
+      }
+      section="collaboration"
+    />,
+  );
+
+  assert.match(html, /知识库/);
+  assert.match(html, /<a[^>]*>下载最新代码<\/a>/);
+  assert.doesNotMatch(html, /暂无代码提交记录/);
+});
+
+test("rider knowledge base shows prompt when team has no submissions", () => {
+  const html = renderToStaticMarkup(
+    <RiderConsolePageView
+      race={buildRace({ phase: "active" })}
+      registration={
+        {
+          id: "reg_1",
+          status: "APPROVED",
+          userId: "u_leader",
+          user: { username: "rider_alice" },
+        } as never
+      }
+      reviewSummary={null}
+      riderReports={[]}
+      riderTeam={
+        {
+          id: "team_1",
+          name: "Empty Team",
+          leaderId: "u_leader",
+          leader: { id: "u_leader", username: "rider_alice" },
+          members: [
+            { id: "m1", role: "LEADER", status: "APPROVED", userId: "u_leader", user: { id: "u_leader", username: "rider_alice" } },
+          ],
+          submissions: [],
+        } as never
+      }
+      section="collaboration"
+    />,
+  );
+
+  assert.match(html, /暂无代码提交记录/);
+  assert.match(html, /知识库/);
+  assert.doesNotMatch(html, /<a[^>]*>下载最新代码<\/a>/);
+});
+
 test("rider console can render a friendly inline action error notice", () => {
   const html = renderToStaticMarkup(
     <RiderConsolePageView

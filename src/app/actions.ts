@@ -90,7 +90,9 @@ import {
   updateScreenDisplayModeForRace,
   updateScreenDisplayThemeForRace,
 } from "@/lib/services/screen-display";
-import { updateTeamComment } from "@/lib/services/teams";
+import { updateTeamComment, createTeam, joinTeam, approveMember, removeMember } from "@/lib/services/teams";
+import { createTask, completeTask } from "@/lib/services/team-tasks";
+import { sendMessage } from "@/lib/services/collaboration";
 import {
   approveRegistrationForRace,
   registerForRace,
@@ -2233,4 +2235,133 @@ export async function rejectCooperationRequestAction(formData: FormData) {
   }
   revalidatePath("/console/admin/race-requests");
   redirect(returnTo);
+}
+
+// ============================================================
+// GRS004 协作功能 Server Actions
+// ============================================================
+
+export async function createTeamAction(formData: FormData) {
+  const user = await requireRole("RIDER");
+  const raceId = String(formData.get("raceId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "");
+  const feedbackReturnTo = String(formData.get("feedbackReturnTo") ?? "") || returnTo || "/";
+  try {
+    await createTeam(user.id, {
+      raceId,
+      name: String(formData.get("teamName") ?? ""),
+    });
+  } catch (error) {
+    if (shouldRethrowActionFeedback(error)) throw error;
+    redirect(buildActionFeedbackHref({ error, returnTo: feedbackReturnTo, scope: "rider_registration" }));
+  }
+  await rebuildRaceProcessProjections(raceId);
+  revalidatePath("/");
+  revalidatePath("/console/races");
+  redirect(returnTo || "/console/races");
+}
+
+export async function joinTeamAction(formData: FormData) {
+  const user = await requireRole("RIDER");
+  const raceId = String(formData.get("raceId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "");
+  const feedbackReturnTo = String(formData.get("feedbackReturnTo") ?? "") || returnTo || "/";
+  try {
+    // GRS004: joinTeam 内部已创建 Registration 关联，无需再调用 registerForRace
+    await joinTeam(user.id, { teamId });
+  } catch (error) {
+    if (shouldRethrowActionFeedback(error)) throw error;
+    redirect(buildActionFeedbackHref({ error, returnTo: feedbackReturnTo, scope: "rider_registration" }));
+  }
+  await rebuildRaceProcessProjections(raceId);
+  revalidatePath("/");
+  revalidatePath("/console/races");
+  redirect(returnTo || "/console/races");
+}
+
+export async function approveMemberAction(formData: FormData) {
+  const user = await requireRole("RIDER");
+  const teamId = String(formData.get("teamId") ?? "");
+  const memberId = String(formData.get("memberId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "");
+  const feedbackReturnTo = String(formData.get("feedbackReturnTo") ?? "") || returnTo || "/console/races";
+  try {
+    await approveMember(user.id, { teamId, memberId });
+  } catch (error) {
+    if (shouldRethrowActionFeedback(error)) throw error;
+    redirect(buildActionFeedbackHref({ error, returnTo: feedbackReturnTo, scope: "rider_console" }));
+  }
+  revalidatePath("/console/races");
+  redirect(returnTo || "/console/races");
+}
+
+export async function removeMemberAction(formData: FormData) {
+  const user = await requireRole("RIDER");
+  const teamId = String(formData.get("teamId") ?? "");
+  const memberId = String(formData.get("memberId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "");
+  const feedbackReturnTo = String(formData.get("feedbackReturnTo") ?? "") || returnTo || "/console/races";
+  try {
+    await removeMember(user.id, { teamId, memberId });
+  } catch (error) {
+    if (shouldRethrowActionFeedback(error)) throw error;
+    redirect(buildActionFeedbackHref({ error, returnTo: feedbackReturnTo, scope: "rider_console" }));
+  }
+  revalidatePath("/console/races");
+  redirect(returnTo || "/console/races");
+}
+
+export async function createTaskAction(formData: FormData) {
+  const user = await requireRole("RIDER");
+  const teamId = String(formData.get("teamId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "");
+  const feedbackReturnTo = String(formData.get("feedbackReturnTo") ?? "") || returnTo || "/console/races";
+  try {
+    await createTask(user.id, {
+      teamId,
+      title: String(formData.get("title") ?? ""),
+      description: String(formData.get("description") ?? ""),
+      assigneeId: String(formData.get("assigneeId") ?? ""),
+    });
+  } catch (error) {
+    if (shouldRethrowActionFeedback(error)) throw error;
+    redirect(buildActionFeedbackHref({ error, returnTo: feedbackReturnTo, scope: "rider_console" }));
+  }
+  revalidatePath("/console/races");
+  redirect(returnTo || "/console/races");
+}
+
+export async function completeTaskAction(formData: FormData) {
+  const user = await requireRole("RIDER");
+  const taskId = String(formData.get("taskId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "");
+  const feedbackReturnTo = String(formData.get("feedbackReturnTo") ?? "") || returnTo || "/console/races";
+  try {
+    await completeTask(user.id, { taskId });
+  } catch (error) {
+    if (shouldRethrowActionFeedback(error)) throw error;
+    redirect(buildActionFeedbackHref({ error, returnTo: feedbackReturnTo, scope: "rider_console" }));
+  }
+  revalidatePath("/console/races");
+  redirect(returnTo || "/console/races");
+}
+
+export async function sendMessageAction(formData: FormData) {
+  const user = await requireRole("RIDER");
+  const teamId = String(formData.get("teamId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "");
+  const feedbackReturnTo = String(formData.get("feedbackReturnTo") ?? "") || returnTo || "/console/races";
+  try {
+    await sendMessage(user.id, {
+      teamId,
+      receiverId: String(formData.get("receiverId") ?? ""),
+      content: String(formData.get("content") ?? ""),
+    });
+  } catch (error) {
+    if (shouldRethrowActionFeedback(error)) throw error;
+    redirect(buildActionFeedbackHref({ error, returnTo: feedbackReturnTo, scope: "rider_console" }));
+  }
+  revalidatePath("/console/races");
+  redirect(returnTo || "/console/races");
 }

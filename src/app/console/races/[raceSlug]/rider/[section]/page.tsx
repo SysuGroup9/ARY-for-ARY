@@ -2,12 +2,15 @@ import { ConsoleShell, buildConsoleSectionNavItems, riderConsoleSections } from 
 import { RiderConsolePageView } from "@/app/_components/console/rider-console-page";
 import { getActionFeedbackContent } from "@/lib/action-feedback";
 import { requireConsoleUser } from "@/lib/auth";
+import { listMessagesForTeam } from "@/lib/services/collaboration";
 import {
   getConsoleRaceBySlugForAccess,
   getConsoleRiderTeamContext,
 } from "@/lib/services/console-routes";
 import { getRegistrationForUser } from "@/lib/services/registrations";
 import { buildRiderConsoleReportModel } from "@/lib/services/rider-console";
+import { listTasksForTeam } from "@/lib/services/team-tasks";
+import { listTeamsForRace } from "@/lib/services/teams";
 import { notFound, redirect } from "next/navigation";
 
 const riderSectionLabels: Record<string, string> = {
@@ -16,6 +19,7 @@ const riderSectionLabels: Record<string, string> = {
   riding: "骑行状态",
   submission: "作品提交",
   review: "评审结果",
+  collaboration: "团队协作",
   report: "骑手报告",
 };
 
@@ -66,6 +70,17 @@ export default async function RiderConsoleSectionPage({
     scope: resolvedSearchParams?.feedbackScope,
   });
 
+  const teamTasks = riderTeam
+    ? await listTasksForTeam(riderTeam.id, sessionUser.id)
+    : [];
+  const teamMessages = riderTeam
+    ? await listMessagesForTeam(riderTeam.id, sessionUser.id)
+    : [];
+  const availableTeams = riderTeam
+    ? []
+    : await listTeamsForRace(context.race.id);
+
+
   return (
     <ConsoleShell
       breadcrumbs={[
@@ -84,6 +99,7 @@ export default async function RiderConsoleSectionPage({
       user={{ username: sessionUser.username, roles: sessionUser.roles }}
     >
       <RiderConsolePageView
+        availableTeams={availableTeams}
         feedback={feedback}
         race={context.race}
         registration={registration}
@@ -95,6 +111,8 @@ export default async function RiderConsoleSectionPage({
         }))}
         riderTeam={riderTeam}
         section={section as (typeof riderConsoleSections)[number]}
+        teamMessages={teamMessages}
+        teamTasks={teamTasks}
       />
     </ConsoleShell>
   );

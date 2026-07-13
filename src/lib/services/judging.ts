@@ -1,3 +1,9 @@
+/**
+ * GRS004 协作功能 - Judging 服务（Team 维度适配）
+ *
+ * 将所有 work.registration 引用改为 work.team。
+ */
+
 import { buildPayloadDigest } from "@/lib/ca-integrity-helpers";
 import { prisma } from "@/lib/prisma";
 import { buildJudgingScoreJson } from "@/lib/judging-helpers";
@@ -8,9 +14,7 @@ export async function listJudgeAssignmentsForRace(raceId: string) {
   return prisma.judgeAssignment.findMany({
     where: {
       work: {
-        registration: {
-          raceId,
-        },
+        team: { raceId },
       },
     },
     include: {
@@ -19,17 +23,18 @@ export async function listJudgeAssignmentsForRace(raceId: string) {
       judgingRecord: true,
       work: {
         include: {
-          registration: {
+          team: {
             include: {
-              user: true,
+              members: {
+                where: { status: { not: "REMOVED" } },
+                include: { user: true },
+              },
             },
           },
         },
       },
     },
-    orderBy: {
-      assignedAt: "asc",
-    },
+    orderBy: { assignedAt: "asc" },
   });
 }
 
@@ -41,9 +46,7 @@ export async function listJudgeAssignmentsForUserInRace(input: {
     where: {
       judgeId: input.userId,
       work: {
-        registration: {
-          raceId: input.raceId,
-        },
+        team: { raceId: input.raceId },
       },
     },
     include: {
@@ -53,19 +56,24 @@ export async function listJudgeAssignmentsForUserInRace(input: {
       work: {
         include: {
           awards: true,
-          registration: {
+          team: {
             include: {
-              evidences: true,
-              raceProject: true,
-              user: true,
+              members: {
+                where: { status: { not: "REMOVED" } },
+                include: { user: true },
+              },
+              registrations: {
+                include: {
+                  evidences: true,
+                  raceProject: true,
+                },
+              },
             },
           },
         },
       },
     },
-    orderBy: {
-      assignedAt: "asc",
-    },
+    orderBy: { assignedAt: "asc" },
   });
 }
 
@@ -77,23 +85,13 @@ export async function assignJudgeToWork(input: {
 }) {
   const [assignedByUser, work] = await Promise.all([
     prisma.user.findUnique({
-      where: {
-        id: input.assignedByUserId,
-      },
-      select: {
-        rolesJson: true,
-      },
+      where: { id: input.assignedByUserId },
+      select: { rolesJson: true },
     }),
     prisma.work.findUnique({
-      where: {
-        id: input.workId,
-      },
+      where: { id: input.workId },
       include: {
-        registration: {
-          include: {
-            race: true,
-          },
-        },
+        team: { include: { race: true } },
       },
     }),
   ]);
@@ -107,8 +105,8 @@ export async function assignJudgeToWork(input: {
   }
 
   if (
-    !work ||
-    (work.registration.race.organizerId !== input.assignedByUserId &&
+    !work?.team ||
+    (work.team.race.organizerId !== input.assignedByUserId &&
       !(input.allowSystem && isAdmin))
   ) {
     throw new Error("Judge assignment not allowed for current actor");
@@ -116,10 +114,7 @@ export async function assignJudgeToWork(input: {
 
   return prisma.judgeAssignment.upsert({
     where: {
-      workId_judgeId: {
-        judgeId: input.judgeId,
-        workId: input.workId,
-      },
+      workId_judgeId: { judgeId: input.judgeId, workId: input.workId },
     },
     update: {
       assignedAt: new Date(),
@@ -140,26 +135,14 @@ export async function removeJudgeAssignment(input: {
 }) {
   const [assignedByUser, assignment] = await Promise.all([
     prisma.user.findUnique({
-      where: {
-        id: input.assignedByUserId,
-      },
-      select: {
-        rolesJson: true,
-      },
+      where: { id: input.assignedByUserId },
+      select: { rolesJson: true },
     }),
     prisma.judgeAssignment.findUnique({
-      where: {
-        id: input.assignmentId,
-      },
+      where: { id: input.assignmentId },
       include: {
         work: {
-          include: {
-            registration: {
-              include: {
-                race: true,
-              },
-            },
-          },
+          include: { team: { include: { race: true } } },
         },
       },
     }),
@@ -174,17 +157,15 @@ export async function removeJudgeAssignment(input: {
   }
 
   if (
-    !assignment ||
-    (assignment.work.registration.race.organizerId !== input.assignedByUserId &&
+    !assignment?.work?.team ||
+    (assignment.work.team.race.organizerId !== input.assignedByUserId &&
       !(input.allowSystem && isAdmin))
   ) {
     throw new Error("Judge assignment not allowed for current actor");
   }
 
   return prisma.judgeAssignment.delete({
-    where: {
-      id: input.assignmentId,
-    },
+    where: { id: input.assignmentId },
   });
 }
 
@@ -197,20 +178,18 @@ export async function upsertJudgingRecord(input: {
   submit: boolean;
 }) {
   const assignment = await prisma.judgeAssignment.findUnique({
-    where: {
-      id: input.assignmentId,
-    },
+    where: { id: input.assignmentId },
     include: {
       work: {
         include: {
-          registration: {
+          team: {
             include: {
-              evidences: {
-                orderBy: {
-                  createdAt: "asc",
+              registrations: {
+                include: {
+                  evidences: { orderBy: { createdAt: "asc" } },
+                  user: true,
                 },
               },
-              user: true,
             },
           },
         },
@@ -222,17 +201,23 @@ export async function upsertJudgingRecord(input: {
     throw new Error("Judge assignment not found for current user");
   }
 
-  const sourceRef = buildJudgingRecordSourceRef({
-    evidences: assignment.work.registration.evidences.map((evidence) => ({
-      id: evidence.id,
-      integrityStatus: evidence.integrityStatus,
-      sourceDigest: evidence.sourceDigest,
-      title: evidence.title,
-      type: evidence.type,
+  const team = assignment.work.team;
+  const allEvidences = team?.registrations.flatMap((reg) =>
+    reg.evidences.map((e) => ({
+      id: e.id,
+      integrityStatus: e.integrityStatus,
+      sourceDigest: e.sourceDigest,
+      title: e.title,
+      type: e.type,
     })),
+  ) ?? [];
+
+  const firstMember = team?.members?.[0];
+  const sourceRef = buildJudgingRecordSourceRef({
+    evidences: allEvidences,
     registration: {
-      id: assignment.work.registration.id,
-      userId: assignment.work.registration.userId,
+      id: team?.id ?? assignment.work.id,
+      userId: firstMember?.userId ?? "",
     },
     work: {
       contentHash: assignment.work.contentHash,
@@ -244,9 +229,7 @@ export async function upsertJudgingRecord(input: {
   const sourceDigest = buildPayloadDigest(sourceRef);
 
   return prisma.judgingRecord.upsert({
-    where: {
-      judgeAssignmentId: input.assignmentId,
-    },
+    where: { judgeAssignmentId: input.assignmentId },
     update: {
       comments: input.comments.trim(),
       scoreResultJson: JSON.stringify(buildJudgingScoreJson(input.scoreResultTotal)),
@@ -269,26 +252,16 @@ export async function upsertJudgingRecord(input: {
 
 export async function listJudgingRecordsForRace(
   raceId: string,
-  options?: {
-    submittedOnly?: boolean;
-  },
+  options?: { submittedOnly?: boolean },
 ) {
   return prisma.judgingRecord.findMany({
     where: {
       judgeAssignment: {
         work: {
-          registration: {
-            raceId,
-          },
+          team: { raceId },
         },
       },
-      ...(options?.submittedOnly
-        ? {
-            submittedAt: {
-              not: null,
-            },
-          }
-        : {}),
+      ...(options?.submittedOnly ? { submittedAt: { not: null } } : {}),
     },
     include: {
       judgeAssignment: {
@@ -296,9 +269,12 @@ export async function listJudgingRecordsForRace(
           judge: true,
           work: {
             include: {
-              registration: {
+              team: {
                 include: {
-                  user: true,
+                  members: {
+                    where: { status: { not: "REMOVED" } },
+                    include: { user: true },
+                  },
                 },
               },
             },
@@ -306,8 +282,6 @@ export async function listJudgingRecordsForRace(
         },
       },
     },
-    orderBy: {
-      createdAt: "asc",
-    },
+    orderBy: { createdAt: "asc" },
   });
 }

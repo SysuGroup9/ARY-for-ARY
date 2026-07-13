@@ -2,7 +2,6 @@ import { buildRaceSlug, getRaceIdFromSlug } from "@/lib/public-site";
 import { prisma } from "@/lib/prisma";
 import type { RaceListItem } from "@/lib/services/races";
 import { listRaces } from "@/lib/services/races";
-import { getCompatibilityContainerForRegistration } from "@/lib/services/rider-bridge";
 import type { AppRole } from "@/lib/user-roles";
 import { hasRole, normalizeRoles } from "@/lib/user-roles";
 
@@ -71,7 +70,7 @@ export async function listConsoleRacesForUser(input: {
       select: {
         work: {
           select: {
-            registration: {
+            team: {
               select: {
                 raceId: true,
               },
@@ -81,10 +80,12 @@ export async function listConsoleRacesForUser(input: {
       },
     });
     const assignedRaceIds = new Set(
-      assignments.map(
-        (assignment: { work: { registration: { raceId: string } } }) =>
-          assignment.work.registration.raceId,
-      ),
+      assignments
+        .filter((a) => a.work?.team?.raceId != null)
+        .map(
+          (assignment: { work: { team: { raceId: string } } }) =>
+            assignment.work.team.raceId,
+        ),
     );
 
     items.push(
@@ -225,8 +226,25 @@ export async function getConsoleRiderTeamContext(input: {
   raceId: string;
   userId: string;
 }) {
-  return getCompatibilityContainerForRegistration({
-    raceId: input.raceId,
-    userId: input.userId,
+  // GRS004: 通过 Registration.teamId 查找队伍，而非 captainId。
+  // 这样无论是 Leader 还是 Mate（只要 Registration 关联了 Team）都能获取团队上下文。
+  const registration = await prisma.registration.findUnique({
+    where: { raceId_userId: { raceId: input.raceId, userId: input.userId } },
+    select: { teamId: true },
+  });
+
+  if (!registration?.teamId) return null;
+
+  return prisma.team.findUnique({
+    where: { id: registration.teamId },
+    include: {
+      members: {
+        where: { status: { not: "REMOVED" } },
+        include: { user: true },
+      },
+      leader: true,
+      works: { orderBy: { updatedAt: "desc" }, take: 1 },
+      submissions: { take: 1 },
+    },
   });
 }

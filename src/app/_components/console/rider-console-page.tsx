@@ -9,6 +9,13 @@ import {
   submitEntryAction,
   submitFinalEntryAction,
   withdrawRegistrationAction,
+  createTaskAction,
+  completeTaskAction,
+  sendMessageAction,
+  removeMemberAction,
+  approveMemberAction,
+  createTeamAction,
+  joinTeamAction,
 } from "@/app/actions";
 import { ErrorNotice, Panel } from "@/app/_components/ary-shared";
 import { ReviewReadinessCard } from "@/app/_components/console/review-readiness-card";
@@ -24,6 +31,7 @@ type RiderTeam = Awaited<ReturnType<typeof getTeamForCaptain>>;
 type RiderRegistration = Awaited<ReturnType<typeof getRegistrationForUser>>;
 
 export function RiderConsolePageView({
+  availableTeams,
   feedback,
   race,
   registration,
@@ -32,7 +40,10 @@ export function RiderConsolePageView({
   riderTeam,
   raceSlug,
   section,
+  teamMessages,
+  teamTasks,
 }: {
+  availableTeams?: Awaited<ReturnType<typeof import("@/lib/services/teams").listTeamsForRace>>;
   feedback?: { message: string; title: string } | null;
   race: RaceListItem;
   registration: RiderRegistration;
@@ -46,7 +57,10 @@ export function RiderConsolePageView({
     | "report"
     | "review"
     | "riding"
-    | "submission";
+    | "submission"
+    | "collaboration";
+  teamMessages?: Awaited<ReturnType<typeof import("@/lib/services/collaboration").listMessagesForTeam>>;
+  teamTasks?: Awaited<ReturnType<typeof import("@/lib/services/team-tasks").listTasksForTeam>>;
 }) {
   const resolvedRaceSlug = raceSlug ?? race.id;
 
@@ -59,6 +73,7 @@ export function RiderConsolePageView({
         </p>
       </Panel>
       {renderRiderSection({
+        availableTeams,
         race,
         raceSlug: resolvedRaceSlug,
         registration,
@@ -66,6 +81,8 @@ export function RiderConsolePageView({
         riderReports,
         riderTeam,
         section,
+        teamMessages,
+        teamTasks,
       })}
     </>
   );
@@ -78,6 +95,7 @@ const riderSectionTitle = {
   review: "评审结果",
   riding: "骑行状态",
   submission: "作品提交",
+  collaboration: "团队协作",
 } as const;
 
 const riderEyebrow = "骑手视图";
@@ -121,6 +139,7 @@ function getAggregateIngestionStatusLabel(status: string) {
 }
 
 function renderRiderSection({
+  availableTeams,
   race,
   raceSlug,
   registration,
@@ -128,7 +147,10 @@ function renderRiderSection({
   riderReports,
   riderTeam,
   section,
+  teamMessages,
+  teamTasks,
 }: {
+  availableTeams?: Awaited<ReturnType<typeof import("@/lib/services/teams").listTeamsForRace>>;
   race: RaceListItem;
   raceSlug: string;
   registration: RiderRegistration;
@@ -136,12 +158,14 @@ function renderRiderSection({
   riderReports: Array<{ summary: string; title: string }>;
   riderTeam: RiderTeam;
   section: keyof typeof riderSectionTitle;
+  teamMessages?: Awaited<ReturnType<typeof import("@/lib/services/collaboration").listMessagesForTeam>>;
+  teamTasks?: Awaited<ReturnType<typeof import("@/lib/services/team-tasks").listTasksForTeam>>;
 }) {
   const riderRegistrationHref = `/console/races/${raceSlug}/rider/registration`;
   const riderCASetupHref = `/console/races/${raceSlug}/rider/ca-setup`;
   const riderSubmissionHref = `/console/races/${raceSlug}/rider/submission`;
   const registrationStatus = String(registration?.status ?? "").toUpperCase();
-  const currentWork = registration?.work;
+  const currentWork = riderTeam?.works?.[0] ?? null;
   const workDefaults = {
     demoUrl: currentWork?.demoUrl ?? "",
     repoUrl: currentWork?.repoUrl ?? registration?.raceProject?.githubRepoUrl ?? "",
@@ -602,6 +626,304 @@ function renderRiderSection({
               ) : null}
             </div>
           </Panel>
+        </section>
+      );
+    }
+
+    case "collaboration": {
+      if (!riderTeam) {
+        const riderCollaborationHref = `/console/races/${raceSlug}/rider/collaboration`;
+        const teams = availableTeams ?? [];
+        return (
+          <section className="grid">
+            <Panel title="创建队伍" eyebrow={riderEyebrow}>
+              <p className="muted">
+                {registration
+                  ? "报名成功！现在可以创建自己的队伍（你将自动成为队长），或加入已有队伍。"
+                  : "请先在「报名」标签页完成赛事报名，然后再创建或加入队伍。"}
+              </p>
+              {registration ? (
+                <form action={createTeamAction} className="form-grid">
+                  <input name="raceId" type="hidden" value={race.id} />
+                  <input name="returnTo" type="hidden" value={riderCollaborationHref} />
+                  <input name="feedbackReturnTo" type="hidden" value={riderCollaborationHref} />
+                  <label className="full">
+                    队伍名称
+                    <input name="teamName" placeholder="输入队伍名称" required />
+                  </label>
+                  <button type="submit">创建队伍</button>
+                </form>
+              ) : null}
+            </Panel>
+            <Panel title="加入队伍" eyebrow={riderEyebrow}>
+              {teams.length === 0 ? (
+                <p className="muted">当前赛事暂无开放队伍。你可以创建一支新队伍。</p>
+              ) : (
+                <div className="stack">
+                  <p className="muted">选择一个已有队伍加入（需队长审批）：</p>
+                  {teams.map((team) => (
+                    <div className="public-link-card" key={team.id}>
+                      <strong>{team.name}</strong>
+                      <span>
+                        队长：{team.leader?.username ?? "—"}
+                        {" · "}
+                        {team.members.filter((m) => m.status === "APPROVED").length} 人
+                      </span>
+                      {registration ? (
+                        <form action={joinTeamAction}>
+                          <input name="raceId" type="hidden" value={race.id} />
+                          <input name="teamId" type="hidden" value={team.id} />
+                          <input name="returnTo" type="hidden" value={riderCollaborationHref} />
+                          <input name="feedbackReturnTo" type="hidden" value={riderCollaborationHref} />
+                          <button type="submit">申请加入</button>
+                        </form>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Panel>
+          </section>
+        );
+      }
+
+      const isLeader = riderTeam.leaderId === registration?.userId;
+      const members = riderTeam.members ?? [];
+      const approvedMembers = members.filter((m) => m.status === "APPROVED");
+      const currentMember = members.find((m) => m.userId === registration?.userId);
+      const isApprovedMember = currentMember?.status === "APPROVED" || isLeader;
+
+      // GRS004: 非 APPROVED 成员（PENDING/REJECTED TeamMember）只能看到队伍基本信息
+      // 不能发送消息、不能查看任务详情
+      const tasks = teamTasks ?? [];
+      const messages = teamMessages ?? [];
+      const riderCollaborationHref = `/console/races/${raceSlug}/rider/collaboration`;
+
+      return (
+        <section className="grid">
+          {/* Team Info */}
+          <Panel title="队伍信息" eyebrow={riderEyebrow}>
+            <div className="stack">
+              <div className="detail-grid">
+                <div>
+                  <dt>队伍名称</dt>
+                  <dd>{riderTeam.name}</dd>
+                </div>
+                <div>
+                  <dt>队长</dt>
+                  <dd>{riderTeam.leader?.username ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt>人数</dt>
+                  <dd>{approvedMembers.length}</dd>
+                </div>
+              </div>
+              <div className="stack">
+                <strong>成员列表</strong>
+                {members.length === 0 ? (
+                  <p className="muted">暂无成员</p>
+                ) : (
+                  members.map((member) => (
+                    <div className="public-link-card" key={member.id}>
+                      <strong>
+                        {member.user?.username ?? "—"}
+                        {member.role === "LEADER" ? " · 队长" : " · 队员"}
+                      </strong>
+                      <span>
+                        状态：{member.status === "APPROVED" ? "已加入" : member.status === "PENDING" ? "待审批" : member.status === "REJECTED" ? "已拒绝" : member.status}
+                      </span>
+                      {isLeader && member.role !== "LEADER" && member.status === "PENDING" ? (
+                        <div className="inline-actions">
+                          <form action={approveMemberAction}>
+                            <input name="teamId" type="hidden" value={riderTeam.id} />
+                            <input name="memberId" type="hidden" value={member.id} />
+                            <input name="returnTo" type="hidden" value={riderCollaborationHref} />
+                            <button type="submit">批准入队</button>
+                          </form>
+                        </div>
+                      ) : null}
+                      {isLeader && member.role !== "LEADER" && member.status === "APPROVED" ? (
+                        <div className="inline-actions">
+                          <form action={removeMemberAction}>
+                            <input name="teamId" type="hidden" value={riderTeam.id} />
+                            <input name="memberId" type="hidden" value={member.id} />
+                            <input name="returnTo" type="hidden" value={riderCollaborationHref} />
+                            <input name="feedbackReturnTo" type="hidden" value={riderCollaborationHref} />
+                            <button type="submit">移出队伍</button>
+                          </form>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </Panel>
+
+          {/* Tasks */}
+          {isApprovedMember ? (
+            <Panel title="任务看板" eyebrow={riderEyebrow}>
+              <div className="stack">
+                {tasks.length === 0 ? (
+                  <p className="muted">暂无任务。队长可以发布任务给队员。</p>
+                ) : (
+                  tasks.map((task) => (
+                    <div className="public-link-card" key={task.id}>
+                      <strong>
+                        {task.status === "DONE" ? "✓ " : "○ "}
+                        {task.title}
+                      </strong>
+                      <span>
+                        分配给：{task.assignee?.username ?? "—"}
+                         · 发布于 {new Date(task.createdAt).toLocaleString("zh-CN")}
+                        {task.status === "DONE" && task.completedAt
+                          ? ` · 已完成于 ${new Date(task.completedAt).toLocaleString("zh-CN")}`
+                          : ""}
+                      </span>
+                    {task.description ? <span className="muted">{task.description}</span> : null}
+                    {task.status === "TODO" ? (
+                      <form action={completeTaskAction}>
+                        <input name="taskId" type="hidden" value={task.id} />
+                        <input name="returnTo" type="hidden" value={riderCollaborationHref} />
+                        <input name="feedbackReturnTo" type="hidden" value={riderCollaborationHref} />
+                        <button type="submit">标记完成</button>
+                      </form>
+                    ) : null}
+                  </div>
+                ))
+              )}
+              {isLeader ? (
+                <form action={createTaskAction} className="form-grid">
+                  <input name="teamId" type="hidden" value={riderTeam.id} />
+                  <input name="returnTo" type="hidden" value={riderCollaborationHref} />
+                  <input name="feedbackReturnTo" type="hidden" value={riderCollaborationHref} />
+                  <label className="full">
+                    任务标题
+                    <input name="title" placeholder="例如：优化模型参数" required />
+                  </label>
+                  <label className="full">
+                    任务描述
+                    <textarea name="description" rows={2} />
+                  </label>
+                  <label className="full">
+                    分配给
+                    <select name="assigneeId" required>
+                      <option value="">选择队员...</option>
+                      {members
+                        .filter((m) => m.status === "APPROVED")
+                        .map((m) => (
+                          <option key={m.userId} value={m.userId}>
+                            {m.user?.username ?? "—"}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                  <button type="submit">发布任务</button>
+                </form>
+              ) : null}
+            </div>
+          </Panel>
+          ) : (
+            <Panel title="任务看板" eyebrow={riderEyebrow}>
+              <p className="muted">
+                你的入队申请尚未通过队长审批，通过后可查看任务看板。
+              </p>
+            </Panel>
+          )}
+
+          {/* Messages */}
+          {isApprovedMember ? (
+            <Panel title="协作消息" eyebrow={riderEyebrow}>
+              <div className="stack">
+                <form action={sendMessageAction} className="form-grid">
+                  <input name="teamId" type="hidden" value={riderTeam.id} />
+                  <input name="returnTo" type="hidden" value={riderCollaborationHref} />
+                  <input name="feedbackReturnTo" type="hidden" value={riderCollaborationHref} />
+                  <label className="full">
+                    发送给
+                    <select name="receiverId" required>
+                      <option value="">选择队员...</option>
+                      {members
+                        .filter((m) => m.userId !== registration?.userId && m.status === "APPROVED")
+                        .map((m) => (
+                          <option key={m.userId} value={m.userId}>
+                            {m.user?.username ?? "—"}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                  <label className="full">
+                    消息内容
+                    <textarea name="content" placeholder="输入消息..." required rows={2} />
+                  </label>
+                  <button type="submit">发送消息</button>
+                </form>
+                {messages.length === 0 ? (
+                  <p className="muted">暂无消息记录。</p>
+                ) : (
+                  <div className="stack">
+                    <strong>最近消息</strong>
+                    {messages.slice(0, 10).map((msg) => (
+                      <div className="public-link-card" key={msg.id}>
+                        <strong>
+                          {msg.sender?.username ?? "—"} → {msg.receiver?.username ?? "—"}
+                        </strong>
+                        <span>{msg.content}</span>
+                        <span className="muted">
+                          {new Date(msg.createdAt).toLocaleString("zh-CN")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Panel>
+          ) : (
+            <Panel title="协作消息" eyebrow={riderEyebrow}>
+              <p className="muted">
+                你的入队申请尚未通过队长审批，通过后可查看和发送协作消息。
+              </p>
+            </Panel>
+          )}
+
+          {/* Knowledge Base Downloads */}
+          {isApprovedMember ? (
+            <Panel title="知识库" eyebrow={riderEyebrow}>
+              <div className="stack">
+                <p className="muted">
+                  聚合队伍的所有作品、提交历史、任务看板和协作消息。比赛结束后可导出完整 ZIP，赛中可以下载最新代码。
+                </p>
+                <div className="inline-actions">
+                  {riderTeam.submissions && riderTeam.submissions.length > 0 ? (
+                    <a
+                      className="button"
+                      href={`/api/knowledge-base/${riderTeam.id}/code`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      下载最新代码
+                    </a>
+                  ) : (
+                    <p className="muted">暂无代码提交记录</p>
+                  )}
+                  <a
+                    className="button"
+                    href={`/api/knowledge-base/${riderTeam.id}/export`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    导出知识库 ZIP
+                  </a>
+                </div>
+              </div>
+            </Panel>
+          ) : (
+            <Panel title="知识库" eyebrow={riderEyebrow}>
+              <p className="muted">
+                你的入队申请尚未通过队长审批，通过后可查看知识库。
+              </p>
+            </Panel>
+          )}
         </section>
       );
     }

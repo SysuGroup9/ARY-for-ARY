@@ -656,11 +656,12 @@ test("buildWorkSourceRef tracks current public asset references", () => {
   });
 });
 
-test("buildSubmissionBindingJson ties material to race, registration, and user", () => {
+test("buildSubmissionBindingJson ties material to race, registration, team, and user", () => {
   const binding = buildSubmissionBindingJson({
     raceId: "race_1",
     registrationId: "reg_1",
     submittedAt: new Date("2026-07-10T10:00:00.000Z"),
+    teamId: "team_1",
     userId: "user_1",
   });
 
@@ -670,6 +671,7 @@ test("buildSubmissionBindingJson ties material to race, registration, and user",
       raceId: "race_1",
       registrationId: "reg_1",
       submittedAt: "2026-07-10T10:00:00.000Z",
+      teamId: "team_1",
       userId: "user_1",
     }),
   );
