@@ -143,7 +143,7 @@ main {
   width: min(1200px, calc(100vw - 40px));
   margin: 0 auto;
   padding: 32px 20px 80px;
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
 }
 .stack { display: grid; gap: var(--space-5); }
@@ -460,3 +460,21 @@ textarea { resize: vertical; }
   .card { padding: var(--space-4); }
   .panel { padding: var(--space-4); }
 }
+
+/* ── Horizontal Scroll Strip ── */
+.h-scroll {
+  display: flex; gap: var(--space-4); overflow-x: auto;
+  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px; cursor: grab;
+  scroll-behavior: smooth;
+}
+.h-scroll::-webkit-scrollbar { height: 6px; }
+.h-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.h-scroll::-webkit-scrollbar-track { background: transparent; }
+.h-scroll > *,
+.h-scroll > div > * {
+  flex: 0 0 auto; min-width: 320px; max-width: 380px;
+}
+
+.rider-row { transition: background 0.15s; }
+.rider-row:hover { background: var(--muted); }

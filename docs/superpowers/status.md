@@ -1,6 +1,44 @@
 # ARY 状态
 
-本文记录当前工作区已完成与待完成的任务状态，以 `docs/superpowers/plans/` 和 `docs/superpowers/specs/` 为权威来源。本文档统一使用 UTF-8 编码和中文维护。
+本文记录当前工作区已完成与待完成的任务状态。本文档统一使用 UTF-8 编码和中文维护。
+
+---
+
+## GRS003 收口与 UI 翻新（2026-07-13 ~ 2026-07-15，Hrm-cell）
+
+### 环境修复与结构收口
+- `prisma db push` 同步数据库结构；删除断裂的 `backfill-registration-refs.ts`
+- Race 状态机 5→8：显式 `Race.status` 字段 + `race-phase.ts` 重写，保留旧状态兼容
+- Runner 路径降级：提交不再自动入 Runner 队列，CA→JudgingRecord 成为主路径
+- Console 权限验证：确认 Organizer/Rider/Judge 按 ID 过滤
+- GitHub OAuth 链路修复：缺 env 时友好降级，代理支持 + SSL 信任链
+
+### UI 全面翻新
+- **设计令牌**：`globals.css` 重写为 Minimalist Modern（蓝 accent #0052FF + Inter/Noto Serif SC/JetBrains Mono）
+- **导航栏全局化**：`layout.tsx` 注入 HeaderWrapper，`/screen/*` 和 `/jumbotron/*` 自动隐藏
+- **首页 Hero**：Georgia 斜体大字 + 双层旋转环 + 浮动几何动画
+- **赛事画廊**：Hero Carousel（主卡+侧卡+自动轮播+暂停）
+- **赛事列表**：Tabs 切换 + 搜索框 + 自适应卡片网格
+- **骑手列表**：拍立得墙（随机旋转 + hover 回正）
+- **骑手档案**：Masonry 三列杂志排版
+- **合作页面**：三列 icon 卡片 + dark section CTA
+- **合作表单**：三步骤向导（企业信息→赛事信息→赛程设置）
+- 屏幕展示页（`/screen/*` `/jumbotron/*`）：粒子背景 + 导航栏自动隐藏，纯展示
+- **背景粒子**：右键点击弹出随机骑手卡片
+- **横向滚动**：AutoScroll 组件（CSS transform 动画，hover 暂停）
+
+### Bug 修复与美化
+- 中文 slug→ASCII slug 修复 URL redirect 500
+- 全量链接审计（40+ 处，仅 1 处修复）
+- 字体一致性审计（5 处修复）
+- 屏幕展示字体统一为 `var(--font-body)`
+- 合作表单 label 字号对齐
+- Screen Console 卡片单列化
+
+### 验证
+- `npx tsc --noEmit` 零错误
+- `npm run build` 通过
+- `npm run db:seed` 通过
 
 ---
 

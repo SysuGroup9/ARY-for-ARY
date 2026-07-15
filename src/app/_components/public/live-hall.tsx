@@ -247,10 +247,10 @@ export function LiveHallView({
         <div className="card">
           <p className="eyebrow">骑手动态</p>
           <h2>报名状态</h2>
-          <div className="stack">
+          <div className="h-scroll">
             {riderActivity.length ? (
               riderActivity.slice(0, 8).map((item) => (
-                <div className="public-link-card" key={item.registrationId}>
+                <div className="public-link-card" key={item.registrationId} style={{minWidth:200}}>
                   <strong>{item.username}</strong>
                   <span className="muted text-sm">
                     {item.aggregateIngestionStatus} / {item.sessionCount} 次会话

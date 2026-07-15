@@ -123,7 +123,7 @@ export function ScreenConsolePageView({
         <p className="muted">当前阶段：{getRacePhaseLabel(race.phase)}</p>
       </Panel>
 
-      <section className="grid">
+      <section className="stack">
         <Panel title="当前 ScreenDisplay" eyebrow="控制状态">
           <div className="stack">
             <div className="detail-grid">
@@ -143,7 +143,6 @@ export function ScreenConsolePageView({
             <a className="button-secondary" href={currentPublicHref}>
               全屏展示当前输出
             </a>
-            <span className="muted">当前公开播放入口：{currentPublicHref}</span>
             <div className="button-row-inline">
               {displayModeActions.map((item) => (
                 <form action={updateScreenDisplayModeAction} key={item.mode}>
@@ -155,134 +154,80 @@ export function ScreenConsolePageView({
                 </form>
               ))}
             </div>
-            <form action={updateScreenDisplayThemeAction} className="form-grid">
-              <input name="raceId" type="hidden" value={race.id} />
-              <input name="raceSlug" type="hidden" value={raceSlug ?? ""} />
-              <input name="returnTo" type="hidden" value={currentModeHref} />
-              <label className="full">
-                Theme
-                <input
-                  defaultValue={activeScreenDisplay.theme}
-                  name="theme"
-                  type="text"
-                />
-              </label>
-              <button type="submit">保存 Theme</button>
-            </form>
             <div className="button-row-inline">
               <form action={fallbackScreenDisplayToStableAction}>
                 <input name="raceId" type="hidden" value={race.id} />
                 <input name="raceSlug" type="hidden" value={raceSlug ?? ""} />
                 <input name="returnTo" type="hidden" value={currentModeHref} />
-                <button type="submit">切到稳定 Projection fallback</button>
+                <button type="submit">切到稳定 Projection</button>
               </form>
               <form action={fallbackScreenDisplayToStaticAction}>
                 <input name="raceId" type="hidden" value={race.id} />
                 <input name="raceSlug" type="hidden" value={raceSlug ?? ""} />
                 <input name="returnTo" type="hidden" value={currentModeHref} />
-                <button type="submit">切到静态公告 fallback</button>
+                <button type="submit">切到静态公告</button>
               </form>
             </div>
           </div>
         </Panel>
 
-        <Panel title="输出目标" eyebrow="大屏控制台">
-          <div className="button-row-inline">
-            <a className="button-secondary" href={`/jumbotron/${race.id}`}>
-              打开大屏
-            </a>
-            <a className="button-secondary" href="/calibrator">
-              打开独立校准器
-            </a>
-            {resolvedMode === "announcement" ? (
-              <a
-                className="button-secondary"
-                href={`/screen/${raceSlug ?? ""}/announcement`}
-              >
-                打开公告大屏
-              </a>
+        {resolvedMode !== "calibration" ? (
+          <Panel title="当前输出预览" eyebrow="Screen Display">
+            {resolvedMode === "jumbotron" && jumbotronPreview?.source === "stable" ? (
+              <p className="muted" style={{ marginTop: 12 }}>
+                当前预览已回退到最近一次稳定快照。
+              </p>
             ) : null}
-            <a className="button-secondary" href={`/races/${raceSlug ?? ""}`}>
-              打开公开赛事页
-            </a>
-          </div>
-          <div className="stack" style={{ marginTop: 12 }}>
-            <strong>当前输出预览</strong>
-            <span className="muted">
-              预览当前公开播放入口，控制按钮仍保留在 Screen Console，不进入观众大屏。
-            </span>
-          </div>
 
-          {resolvedMode === "jumbotron" && jumbotronPreview?.source === "stable" ? (
-            <p className="muted" style={{ marginTop: 12 }}>
-              当前预览已回退到最近一次稳定快照。
-            </p>
-          ) : null}
+            {resolvedMode === "jumbotron" && jumbotronPreview?.source === "static" ? (
+              <>
+                <StaticDisplayFallback
+                  compact
+                  race={race}
+                  raceSlug={raceSlug}
+                  reason={jumbotronPreview.fallbackReason}
+                />
+                <div className="button-row-inline" style={{ marginTop: 12 }}>
+                  <a className="button-secondary" href={`/console/screen/${raceSlug ?? ""}/announcement`}>
+                    切到公告模式
+                  </a>
+                  <a className="button-secondary" href={`/console/screen/${raceSlug ?? ""}/leaderboard`}>
+                    切到榜单模式
+                  </a>
+                </div>
+              </>
+            ) : null}
 
-          {resolvedMode === "jumbotron" && jumbotronPreview?.source === "static" ? (
-            <>
-              <StaticDisplayFallback
-                compact
-                race={race}
-                raceSlug={raceSlug}
-                reason={jumbotronPreview.fallbackReason}
+            {resolvedMode === "jumbotron" && jumbotronPreview && jumbotronPreview.source !== "static" ? (
+              <JumbotronInline
+                raceId={race.id}
+                snapshot={jumbotronPreview.snapshot}
+                trackProfile={jumbotronPreview.trackProfile}
               />
-              <div className="button-row-inline" style={{ marginTop: 12 }}>
-                <a
-                  className="button-secondary"
-                  href={`/console/screen/${raceSlug ?? ""}/announcement`}
-                >
-                  切到公告模式
-                </a>
-                <a
-                  className="button-secondary"
-                  href={`/console/screen/${raceSlug ?? ""}/leaderboard`}
-                >
-                  切到榜单模式
-                </a>
-              </div>
-            </>
-          ) : null}
+            ) : null}
 
-          {resolvedMode === "jumbotron" &&
-          jumbotronPreview &&
-          jumbotronPreview.source !== "static" ? (
-            <JumbotronInline
-              raceId={race.id}
-              snapshot={jumbotronPreview.snapshot}
-              trackProfile={jumbotronPreview.trackProfile}
-            />
+            {resolvedMode !== "jumbotron" ? (
+              <iframe
+                src={currentPublicHref}
+                title="当前输出预览"
+                style={{
+                  marginTop: 12, width: "100%", minHeight: 560,
+                  border: "1px solid rgba(128, 128, 128, 0.18)", borderRadius: 16, background: "#ffffff",
+                }}
+              />
           ) : null}
-
-          {resolvedMode !== "jumbotron" ? (
-            <iframe
-              src={currentPublicHref}
-              title="当前输出预览"
-              style={{
-                marginTop: 12,
-                width: "100%",
-                minHeight: 560,
-                border: "1px solid rgba(128, 128, 128, 0.18)",
-                borderRadius: 16,
-                background: "#ffffff",
-              }}
-            />
-          ) : null}
-        </Panel>
+          </Panel>
+        ) : null}
 
         {resolvedMode === "calibration" ? (
           <Panel title="校准工作区" eyebrow="Theme / Calibration">
             <div className="stack">
               <p className="muted">
-                当前校准模式直接复用现有校准器，便于在 Screen Console 内完成底图导入、路径校验和 Profile 导出。
+                赛道校准建议使用独立校准器，操作空间更大且不受大屏上下文限制。
               </p>
-              <CalibratorClient
-                embedded
-                initialProfile={calibrationProfile}
-                raceId={race.id}
-                raceSlug={raceSlug}
-                saveAction={saveRaceTrackCalibrationAction}
-              />
+              <a className="button" href="/calibrator" style={{ alignSelf: "start" }}>
+                打开独立校准器 →
+              </a>
             </div>
           </Panel>
         ) : null}

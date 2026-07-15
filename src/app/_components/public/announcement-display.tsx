@@ -67,7 +67,7 @@ const screenStyles: React.CSSProperties = {
   background:
     "linear-gradient(155deg, rgba(22,28,43,1) 0%, rgba(38,63,95,1) 45%, rgba(194,99,55,1) 100%)",
   color: "#fff6ec",
-  fontFamily: '"Segoe UI", "Microsoft YaHei", sans-serif',
+  fontFamily: 'var(--font-body)',
 };
 
 function resolveAnnouncementThemeStyles(theme: string): {

@@ -176,7 +176,7 @@ const fullscreenStyles: React.CSSProperties = {
   background:
     "linear-gradient(160deg, rgba(24,30,54,1) 0%, rgba(31,53,86,1) 48%, rgba(185,77,56,1) 100%)",
   color: "#fff6eb",
-  fontFamily: '"Segoe UI", "Microsoft YaHei", sans-serif',
+  fontFamily: 'var(--font-body)',
 };
 
 const compactStyles: React.CSSProperties = {

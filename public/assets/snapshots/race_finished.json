@@ -11,11 +11,11 @@
     "currentRound": 1,
     "nextPhase": "已结束",
     "elapsedTime": 0,
-    "systemTime": "2026-07-13T18:04:10.227Z"
+    "systemTime": "2026-07-15T11:54:25.565Z"
   },
   "entries": [
     {
-      "entryId": "cmrjj7crj002k8cfvomdjbl84",
+      "entryId": "cmrm0vmot002ku8w37dinyn6t",
       "riderName": "Memory Tuner",
       "projectName": "Memory Tuner",
       "caProvider": "claude",
@@ -33,19 +33,19 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-cmrjj7crj002k8cfvomdjbl84-session",
-        "entryId": "cmrjj7crj002k8cfvomdjbl84",
+        "messageId": "msg-cmrm0vmot002ku8w37dinyn6t-session",
+        "entryId": "cmrm0vmot002ku8w37dinyn6t",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "Memory Tuner finished the performance run and captured the final summary.",
-        "createdAt": "2026-07-13T18:04:10.227Z",
+        "createdAt": "2026-07-15T11:54:25.565Z",
         "displayMode": "ticker"
       },
       "updatedAt": "2026-06-17T09:30:00.000Z"
     },
     {
-      "entryId": "cmrjj7cgs001y8cfvszgrlzmv",
+      "entryId": "cmrm0vmmu001yu8w3dmqk7c4g",
       "riderName": "Render Rocket",
       "projectName": "Render Rocket",
       "caProvider": "codex",
@@ -63,19 +63,19 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-cmrjj7cgs001y8cfvszgrlzmv-session",
-        "entryId": "cmrjj7cgs001y8cfvszgrlzmv",
+        "messageId": "msg-cmrm0vmmu001yu8w3dmqk7c4g-session",
+        "entryId": "cmrm0vmmu001yu8w3dmqk7c4g",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "Render Rocket finished the performance run and captured the final summary.",
-        "createdAt": "2026-07-13T18:04:10.227Z",
+        "createdAt": "2026-07-15T11:54:25.565Z",
         "displayMode": "ticker"
       },
       "updatedAt": "2026-06-17T09:30:00.000Z"
     }
   ],
-  "generatedAt": "2026-07-13T18:04:10.227Z",
+  "generatedAt": "2026-07-15T11:54:25.565Z",
   "kpis": {
     "completionRate": 100,
     "totalTokens": 5500,
@@ -93,22 +93,22 @@
   "messages": [
     {
       "messageId": "screen-feed-0",
-      "entryId": "cmrjj7crj002k8cfvomdjbl84",
+      "entryId": "cmrm0vmot002ku8w37dinyn6t",
       "source": "projection",
       "type": "progress_update",
       "severity": "info",
       "summary": "Performance Marathon has finished and results are published.",
-      "createdAt": "2026-07-13T18:04:10.227Z",
+      "createdAt": "2026-07-15T11:54:25.565Z",
       "displayMode": "ticker"
     },
     {
       "messageId": "screen-feed-1",
-      "entryId": "cmrjj7cgs001y8cfvszgrlzmv",
+      "entryId": "cmrm0vmmu001yu8w3dmqk7c4g",
       "source": "projection",
       "type": "milestone",
       "severity": "info",
       "summary": "Published final leaderboard is available.",
-      "createdAt": "2026-07-13T18:04:10.227Z",
+      "createdAt": "2026-07-15T11:54:25.565Z",
       "displayMode": "ticker"
     },
     {
@@ -118,7 +118,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "2 public works are available for showcase.",
-      "createdAt": "2026-07-13T18:04:10.227Z",
+      "createdAt": "2026-07-15T11:54:25.565Z",
       "displayMode": "ticker"
     },
     {
@@ -128,7 +128,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "Memory Tuner finished the performance run and captured the final summary.",
-      "createdAt": "2026-07-13T18:04:10.227Z",
+      "createdAt": "2026-07-15T11:54:25.565Z",
       "displayMode": "ticker"
     },
     {
@@ -138,7 +138,7 @@
       "type": "progress_update",
       "severity": "info",
       "summary": "Render Rocket finished the performance run and captured the final summary.",
-      "createdAt": "2026-07-13T18:04:10.227Z",
+      "createdAt": "2026-07-15T11:54:25.565Z",
       "displayMode": "ticker"
     },
     {
@@ -148,7 +148,7 @@
       "type": "milestone",
       "severity": "info",
       "summary": "Current process leaderboard is available.",
-      "createdAt": "2026-07-13T18:04:10.227Z",
+      "createdAt": "2026-07-15T11:54:25.565Z",
       "displayMode": "ticker"
     }
   ],

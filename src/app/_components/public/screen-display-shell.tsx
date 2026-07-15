@@ -62,7 +62,7 @@ const shellStyles: React.CSSProperties = {
   flexDirection: "column",
   gap: 20,
   padding: "28px",
-  fontFamily: '"Segoe UI", "Microsoft YaHei", sans-serif',
+  fontFamily: 'var(--font-body)',
 };
 
 const headerStyles: React.CSSProperties = {

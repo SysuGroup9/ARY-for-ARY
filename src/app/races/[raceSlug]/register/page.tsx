@@ -1,5 +1,4 @@
 import { aryStyles } from "@/app/_components/ary-shared";
-import { PublicHeader } from "@/app/_components/public/public-header";
 import { RaceRegisterPageView } from "@/app/_components/public/race-register-page";
 import { getActionFeedbackContent } from "@/lib/action-feedback";
 import { loadDatabaseUser } from "@/lib/auth";
@@ -37,7 +36,6 @@ export default async function RaceRegisterPage({ params, searchParams }: Props) 
 
   return (
     <main>
-      <PublicHeader roles={sessionUser?.roles ?? null} />
       <section className="shell shell--public-only">
         <section className="content content--public">
           <RaceRegisterPageView

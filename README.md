@@ -11,7 +11,7 @@ GRS004 协作功能已全部完成，仓库具备完整可运行的核心业务�
 - 公共大屏展示路由与大屏控制台路由（已迁移至 Team 维度）
 - 面向用户可见失败场景的页内友好报错
 
-最近更新：`2026-07-13`
+最近更新：`2026-07-15` — GRS003 收口完成，UI 全面翻新（Minimalist Modern 设计系统），Race 8 状态机，骑手画廊拍立得墙，首页 Hero 重设计，导航栏全局化，大屏展示独立化，全站链接审计+字体一致性修复
 
 ---
 
@@ -103,13 +103,12 @@ GRS004 将参赛主体从单人升级为 **Team（队伍）模型**，支持 1 L
 - 与协作消息联动，可在讨论中引用知识条目
 - 支持赛事期间队伍知识的积累与沉淀
 
-
-
 ---
 
 ## 各角色能看到什么
 
 ### Admin
+
 - `/console/races` 和 `/console/races/new` 可用
 - 能创建赛事并把赛事分配给指定 Organizer
 - 能进入赛事 Organizer workspace 做系统级管理
@@ -117,6 +116,7 @@ GRS004 将参赛主体从单人升级为 **Team（队伍）模型**，支持 1 L
 - 可审批企业合作申请（`cooperationRequest`）
 
 ### Organizer
+
 - settings 区能看到发布、归档和显示设置动作
 - registrations 区能看到 `submitted / approved / rejected / withdrawn` 正式审核状态，**按队伍维度聚合展示报名**
 - teams 区可查看所有队伍及其成员审批状态（Leader / Mate / PENDING / APPROVED）
@@ -126,12 +126,14 @@ GRS004 将参赛主体从单人升级为 **Team（队伍）模型**，支持 1 L
 - screen console 区能调大屏模式、主题、校准和回退显示
 
 ### Rider
+
 - 登录页明确告知 GitHub 登录是否可用
 - 报名后先进入待审核状态，审核通过后解锁后续流程
 - CA 接入和作品提交在队伍身份生效后放开
 - 可先保存草稿再正式提交
 
 ### Leader（队长）— Rider 在 Team 内的管理身份
+
 - **创建队伍**：通过 Organizer 审批后，可创建 Team（自动成为 Leader），队伍规模 1-5 人
 - **审批 Mate 入队**：管理其他 Rider 的入队申请，`approve` / `reject`。只有通过后该成员才正式成为 Mate
 - **任务看板**：可创建任务（`TODO`）并指派给特定 Mate，追踪完成状态（`DONE`）
@@ -139,17 +141,20 @@ GRS004 将参赛主体从单人升级为 **Team（队伍）模型**，支持 1 L
 - **知识库**：队伍共享知识条目，可在讨论中引用
 
 ### Mate（队员）— Rider 在 Team 内的协作身份
+
 - **加入队伍**：向已有 Team 提交入队申请，等待 Leader 审批
 - **任务看板**：查看被分配的任务，完成后标记为 `DONE`
 - **协作交流**：可向队内指定成员（Leader 或其他 Mate）发送私聊消息，关联知识资产
 - **知识库**：队伍共享知识条目，可在讨论中引用
 
 ### Judge
+
 - 能进入分配到的评审任务视图，看到作品摘要和骑行证据
 - 评审对象为 **Team 作品**（非单人作品）
 - 提交失败会留在当前视图并显示友好提示
 
 ### 公共访客 / 大屏观众
+
 - `draft` 赛事不会出现在公开站点
 - 已归档赛事仍可作为历史赛事查看
 - 未公开作品不会泄漏到公开作品页
@@ -235,14 +240,14 @@ npm run vercel-build
 
 执行 `npm run db:seed` 后可直接使用：
 
-| 账号 | 密码 | 角色 |
-|---|---|---|
-| `organizer_demo` | `organizer123` | Organizer |
-| `admin_demo` | `organizer123` | Admin |
-| `judge_demo` | `rider123` | Judge |
-| `rider_alice` | `rider123` | Rider |
-| `rider_bob` | `rider123` | Rider |
-| `rider_charlie ~ rider_kate` | `rider123` | Rider |
+| 账号                           | 密码             | 角色      |
+| ------------------------------ | ---------------- | --------- |
+| `organizer_demo`             | `organizer123` | Organizer |
+| `admin_demo`                 | `organizer123` | Admin     |
+| `judge_demo`                 | `rider123`     | Judge     |
+| `rider_alice`                | `rider123`     | Rider     |
+| `rider_bob`                  | `rider123`     | Rider     |
+| `rider_charlie ~ rider_kate` | `rider123`     | Rider     |
 
 **GRS004 多人队伍种子**：部分赛事已预置多人队伍数据，包含混合 PENDING/APPROVED 状态成员。例如 `race_active--sorting-challenge` 包含 3 支队伍（Fast Sort Squad 3人、Milk Tea Coder 2人、Bug Crusher 1人），可用于直接体验双审批流程和队内协作功能。
 

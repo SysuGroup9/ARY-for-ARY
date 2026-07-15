@@ -108,9 +108,10 @@ function clampPercent(value: number): number {
 function slugify(label: string): string {
   return label
     .toLowerCase()
-    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-")
+    .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .replace(/-+/g, "-");
+    .replace(/-+/g, "-")
+    .slice(0, 80) || "race";
 }
 
 export function buildRaceSlug(raceId: string, title: string): string {

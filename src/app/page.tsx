@@ -1,7 +1,7 @@
 import { aryStyles } from "@/app/_components/ary-shared";
 import { HomeGallery } from "@/app/_components/public/home-gallery";
 import { PublicHomeHero } from "@/app/_components/public/public-home-hero";
-import { PublicHeader } from "@/app/_components/public/public-header";
+
 import { loadDatabaseUser } from "@/lib/auth";
 import { buildPublicSiteModel } from "@/lib/public-site";
 import { listPublicRaces } from "@/lib/services/public-routes";
@@ -19,8 +19,7 @@ export default async function HomePage() {
 
   return (
     <main>
-      <PublicHeader roles={sessionUser?.roles ?? null} />
-      <PublicHomeHero model={publicModel} />
+      <PublicHomeHero />
 
       <section className="shell shell--public-only">
         <section className="content content--public">

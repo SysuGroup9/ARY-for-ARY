@@ -1,104 +1,91 @@
-import { formatDateTime } from "@/lib/format";
-import { getRacePrimaryCta } from "@/lib/public-site";
+import HeroCarousel from "@/app/_components/hero-carousel";
 import type { ReturnTypeOfBuildPublicSiteModel } from "@/lib/public-site-types";
-import { getRacePhaseLabel } from "@/lib/race-phase";
 type M = ReturnTypeOfBuildPublicSiteModel;
 
 export function HomeGallery({ model, canManage, canRide }: { model: M; canManage: boolean; canRide: boolean }) {
   return (
     <div className="stack" style={{ gap: "var(--space-8)" }}>
-      {/* 赛事画廊 */}
+      {/* 赛事画廊 — 双排反向自动滚动 */}
       <section>
-        <div className="section-label"><span className="section-label__dot" />赛事画廊</div>
-        <div className="grid-3">
-          {model.featuredRaces.map((race) => (
-            <article className="card card-accent" key={race.id}>
-              {(() => {
-                const primaryCta = getRacePrimaryCta(race);
-                const raceHref = `/races/${race.slug}`;
-
-                return (
-                  <>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                <strong style={{ fontSize: "1rem", lineHeight: 1.3 }}>{race.title}</strong>
-                <span className="badge badge-accent" style={{ flexShrink: 0 }}>{getRacePhaseLabel(race.phase)}</span>
-              </div>
-              <p className="muted text-sm" style={{ marginBottom: 12, lineHeight: 1.6 }}>{race.summary}</p>
-              <small className="muted" style={{ fontSize: "0.8rem" }}>{formatDateTime(race.raceStart)} - {formatDateTime(race.raceEnd)}</small>
-              <div className="flex-row" style={{ marginTop: 16 }}>
-                <a className="button-secondary" href={raceHref} style={{ fontSize: 13, minHeight: 36 }}>
-                  进入赛事页
-                </a>
-                {primaryCta.href !== raceHref ? (
-                  <a className="button-secondary" href={primaryCta.href} style={{ fontSize: 13, minHeight: 36 }}>
-                    {primaryCta.label}
-                  </a>
-                ) : null}
-              </div>
-                  </>
-                );
-              })()}
-            </article>
-          ))}
-        </div>
+        <div className="section-label"><span className="section-label__dot section-label__dot--live" />赛事画廊</div>
+        <HeroCarousel races={model.featuredRaces} />
       </section>
 
-      {/* 赛果 + 作品 */}
-      <div className="grid-2">
-        <div className="card">
-          <div className="section-label"><span className="section-label__dot" />最新赛果</div>
-          <div className="stack">
-            {model.latestResults.length === 0 ? <p className="muted text-sm">暂无已结束赛事。</p>
-              : model.latestResults.map((race) => (
-                <a className="public-link-card" href={`/races/${race.slug}/results`} key={race.id}>
-                  <strong style={{fontSize:"0.9375rem"}}>{race.title}</strong>
-                  <span className="muted text-sm">{race.summary}</span>
-                </a>
-              ))}
-          </div>
-        </div>
-        <div className="card">
-          <div className="section-label"><span className="section-label__dot" />精选作品</div>
-          <div className="stack">
-            {model.featuredWorks.length === 0 ? <p className="muted text-sm">暂无公开作品。</p>
-              : model.featuredWorks.map((work) => (
-                <a className="public-link-card" href={`/works/${work.id}`} key={work.id}>
-                  <strong style={{fontSize:"0.9375rem"}}>{work.title}</strong>
-                  <span className="muted text-sm">作者：{work.author}</span>
-                </a>
-              ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 骑手 + 合作 */}
-      <div className="grid-2" style={{alignItems:"start"}}>
-        <div className="card">
-          <div className="section-label"><span className="section-label__dot" />优秀骑手</div>
-          <div className="stack">
-            {model.featuredRiders.slice(0, 4).map((rider) => (
-              <a className="public-link-card" href={`/riders/${rider.riderSlug}`} key={rider.id}>
-                <strong style={{fontSize:"0.9375rem"}}>{rider.username}</strong>
-                <span className="muted text-sm">{rider.orgLabel} · {rider.raceCount} 场赛事 / {rider.workCount} 个作品</span>
-              </a>
-            ))}
-            {model.featuredRiders.length > 4 && (
-              <a className="public-link-card" href="/riders" style={{textAlign:"center"}}>
-                <span className="muted text-sm">查看全部 {model.featuredRiders.length} 位骑手 →</span>
-              </a>
+      {/* 赛果 + 作品 — 双卡并排 */}
+      {model.latestResults.length > 0 && (
+        <section>
+          <div className={model.featuredWorks.length > 0 ? "grid-2" : ""} style={{alignItems:"start"}}>
+            <div className="card">
+              <div className="section-label"><span className="section-label__dot" />🏆 最新赛果</div>
+              <div className="stack" style={{marginTop:12}}>
+                {model.latestResults.slice(0, 3).map((race) => (
+                  <a className="public-link-card" href={`/races/${race.slug}/results`} key={race.id}>
+                    <strong style={{fontSize:"0.9375rem"}}>{race.title}</strong>
+                    <span className="muted text-sm">{race.summary}</span>
+                  </a>
+                ))}
+                {model.latestResults.length > 3 && (
+                  <a className="public-link-card" href="/races" style={{textAlign:"center"}}>
+                    <span className="muted text-sm">查看全部 {model.latestResults.length} 场赛果 →</span>
+                  </a>
+                )}
+              </div>
+            </div>
+            {model.featuredWorks.length > 0 && (
+              <div className="card">
+                <div className="section-label"><span className="section-label__dot" />⭐ 精选作品</div>
+                <div className="stack" style={{marginTop:12}}>
+                  {model.featuredWorks.slice(0, 3).map((work) => (
+                    <a className="public-link-card" href={`/works/${work.id}`} key={work.id}>
+                      <strong style={{fontSize:"0.9375rem"}}>{work.title}</strong>
+                      <span className="muted text-sm">作者：{work.author}</span>
+                    </a>
+                  ))}
+                  {model.featuredWorks.length > 3 && (
+                    <a className="public-link-card" href="/works" style={{textAlign:"center"}}>
+                      <span className="muted text-sm">查看全部 {model.featuredWorks.length} 件作品 →</span>
+                    </a>
+                  )}
+                </div>
+              </div>
             )}
           </div>
-        </div>
-        <div className="card" style={{display:"flex",flexDirection:"column",justifyContent:"space-between",minHeight:200}}>
-          <div>
-            <div className="section-label"><span className="section-label__dot" />合作入口</div>
-            <p className="muted text-sm" style={{lineHeight:1.7}}>
-              合作入口独立存在，不埋在赛事面板或后台说明中。无论你是想办赛、赞助还是技术合作，我们都欢迎你加入。
-            </p>
+        </section>
+      )}
+
+      {/* 优秀骑手 */}
+      {model.featuredRiders.length > 0 && (
+        <section>
+          <div className="card">
+            <div className="section-label"><span className="section-label__dot" />优秀骑手</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12,marginTop:12}}>
+              {model.featuredRiders.slice(0, 6).map((rider) => (
+                <a
+                  href={`/riders/${rider.riderSlug}`} key={rider.id}
+                  style={{
+                    display:"flex", alignItems:"center", gap:12, padding:12,
+                    borderRadius:"var(--radius-md)", textDecoration:"none", color:"inherit",
+                  }}
+                  className="rider-row"
+                >
+                  <div style={{
+                    width:40, height:40, borderRadius:"var(--radius-full)",
+                    background:"linear-gradient(135deg,var(--accent),var(--accent-secondary))",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    color:"#fff", fontWeight:700, fontSize:16, flexShrink:0,
+                  }}>
+                    {rider.username.charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{minWidth:0}}>
+                    <strong style={{fontSize:"0.9375rem",display:"block"}}>{rider.username}</strong>
+                    <span className="muted text-xs">{rider.raceCount} 赛事 · {rider.workCount} 作品</span>
+                  </div>
+                </a>
+              ))}
+            </div>
           </div>
-          <a className="button" href="/cooperation" style={{marginTop:16}}>进入合作页面 →</a>
-        </div>
-      </div>
+        </section>
+      )}
 
       {/* 往届赛事 */}
       {model.pastRaces.length > 0 && (

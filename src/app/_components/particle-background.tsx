@@ -19,7 +19,7 @@ interface Particle {
 
 type Mode = "constellation" | "drift";
 
-interface Props { mode?: Mode; }
+interface Props { mode?: Mode; onParticleClick?: (e: MouseEvent) => void; }
 
 /* ── 真空区 ── */
 function inSafeZone(x: number, y: number, w: number, h: number): boolean {
@@ -164,12 +164,13 @@ function ConstellationCanvas() {
    方案二：Data Drift — 方形碎片从底部上升 + 点击波纹
    30 颗小方块（4-7px）从底部边缘区域漂起
    ═══════════════════════════════════════════════════════════════ */
-function DriftCanvas() {
+function DriftCanvas({ onParticleClick }: { onParticleClick?: (e: MouseEvent) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ x: -999, y: -999 });
   const particlesRef = useRef<Particle[]>([]);
   const poolRef = useRef<Particle[]>([]);
   const rafRef = useRef(0);
+  const hoverRef = useRef<Particle | null>(null); // for visual feedback
 
   const acquire = useCallback((): Particle => {
     const p = poolRef.current.pop();
@@ -205,8 +206,19 @@ function DriftCanvas() {
     resize();
     window.addEventListener("resize", resize);
 
-    const onMouse = (e: MouseEvent) => { mouseRef.current = { x: e.clientX, y: e.clientY }; };
+    const onMouse = (e: MouseEvent) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY };
+      // Hit test: is mouse near a particle?
+      const ps = particlesRef.current;
+      let hit: Particle | null = null;
+      for (const p of ps) {
+        const dx = e.clientX - p.x, dy = e.clientY - p.y;
+        if (Math.sqrt(dx * dx + dy * dy) < 24) { hit = p; break; }
+      }
+      hoverRef.current = hit;
+    };
     const onClick = (e: MouseEvent) => {
+      // Normal click → ripple only, no rider card
       const burst: typeof clickRipples[0] = { x: e.clientX, y: e.clientY, age: 0, ps: [] };
       for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2;
@@ -215,8 +227,22 @@ function DriftCanvas() {
       }
       clickRipples.push(burst);
     };
+    const onContextMenu = (e: MouseEvent) => {
+      // Right-click on or near a particle → show rider card
+      const ps = particlesRef.current;
+      let hit = false;
+      for (const p of ps) {
+        const dx = e.clientX - p.x, dy = e.clientY - p.y;
+        if (Math.sqrt(dx * dx + dy * dy) < 32) { hit = true; break; }
+      }
+      if (hit) {
+        e.preventDefault();
+        onParticleClick?.(e);
+      }
+    };
     window.addEventListener("mousemove", onMouse);
     window.addEventListener("click", onClick);
+    window.addEventListener("contextmenu", onContextMenu);
 
     let spawnTick = 0;
 
@@ -250,10 +276,21 @@ function DriftCanvas() {
           continue;
         }
 
-        // 画小方块 — 可见度高
-        const alpha = 0.25 + p.hue * 0.2;
+        // 画小方块 — 可见度高。若已充电则放大+发光
+        const isCharged = hoverRef.current === p;
+        const alpha = isCharged ? 0.65 : (0.25 + p.hue * 0.2);
+        const sz = isCharged ? p.radius * 3 : p.radius;
+        // Glow halo for charged
+        if (isCharged) {
+          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, sz * 2);
+          g.addColorStop(0, `rgba(35,98,255,0.5)`);
+          g.addColorStop(0.5, `rgba(35,98,255,0.15)`);
+          g.addColorStop(1, "rgba(35,98,255,0)");
+          ctx.fillStyle = g;
+          ctx.fillRect(p.x - sz * 2, p.y - sz * 2, sz * 4, sz * 4);
+        }
         ctx.fillStyle = `rgba(35,98,255,${alpha.toFixed(2)})`;
-        ctx.fillRect(p.x - p.radius / 2, p.y - p.radius / 2, p.radius, p.radius);
+        ctx.fillRect(p.x - sz / 2, p.y - sz / 2, sz, sz);
       }
 
       // 点击波纹
@@ -280,6 +317,7 @@ function DriftCanvas() {
       window.removeEventListener("resize", resize);
       window.removeEventListener("mousemove", onMouse);
       window.removeEventListener("click", onClick);
+      window.removeEventListener("contextmenu", onContextMenu);
       cancelAnimationFrame(rafRef.current);
     };
   }, [acquire]);
@@ -288,14 +326,14 @@ function DriftCanvas() {
     <canvas ref={canvasRef} style={{
       position: "fixed", top: 0, left: 0,
       width: "100vw", height: "100vh",
-      zIndex: 0, pointerEvents: "none",
+      zIndex: 0, pointerEvents: "auto",
     }} />
   );
 }
 
 /* ── 导出 ── */
-export default function ParticleBackground({ mode = "constellation" }: Props) {
+export default function ParticleBackground({ mode = "constellation", onParticleClick }: Props) {
   if (mode === "constellation") return <ConstellationCanvas />;
-  if (mode === "drift") return <DriftCanvas />;
+  if (mode === "drift") return <DriftCanvas onParticleClick={onParticleClick} />;
   return null;
 }

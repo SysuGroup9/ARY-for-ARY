@@ -1,5 +1,5 @@
 import { Panel, aryStyles } from "@/app/_components/ary-shared";
-import { PublicHeader } from "@/app/_components/public/public-header";
+
 import { loadDatabaseUser } from "@/lib/auth";
 import { buildPublicSiteModel, sortFeaturedWorks } from "@/lib/public-site";
 import { listPublicRaces } from "@/lib/services/public-routes";
@@ -14,7 +14,7 @@ export default async function WorksIndexPage() {
 
   return (
     <main>
-      <PublicHeader roles={sessionUser?.roles ?? null} />
+
       <section className="shell shell--public-only">
         <section className="content content--public">
           <Panel title="作品" eyebrow="公开作品">

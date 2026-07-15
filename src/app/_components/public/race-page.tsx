@@ -1,4 +1,5 @@
 import { formatDateTime } from "@/lib/format";
+import { buildRiderSlug } from "@/lib/public-site";
 import { getRacePhaseLabel } from "@/lib/race-phase";
 import type { PublicRaceListItem } from "@/lib/services/public-routes";
 
@@ -89,9 +90,9 @@ export function RacePageView({ race, raceSlug }: { race: PublicRaceListItem; rac
       {race.teams.length > 0 && (
         <div className="card">
           <div className="section-label"><span className="section-label__dot" />参赛骑手</div>
-          <div className="grid-3" style={{ marginTop: 8 }}>
+          <div className="h-scroll" style={{ marginTop: 8 }}>
             {race.teams.map((team) => (
-              <a className="public-link-card" key={team.id} href={`/riders/${team.captain.username}`}>
+              <a className="public-link-card" key={team.id} href={`/riders/${buildRiderSlug(team.captain.id, team.captain.username)}`} style={{minWidth:200}}>
                 <strong>{team.name}</strong>
                 <span className="muted text-sm">{team.captain.username}</span>
               </a>
