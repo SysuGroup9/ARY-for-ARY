@@ -40,6 +40,11 @@ describe("GRS004 Phase 2 - Core Service Refactor", () => {
         { id: TEST_ORG_ID, username: "collab_s2_org", passwordHash: "hash", rolesJson: '["ORGANIZER"]', profileCompleted: true },
         { id: TEST_LEADER_ID, username: "collab_s2_leader", passwordHash: "hash", rolesJson: '["RIDER"]', profileCompleted: true },
         { id: TEST_MATE_ID, username: "collab_s2_mate", passwordHash: "hash", rolesJson: '["RIDER"]', profileCompleted: true },
+        // 为 Team 上限边界测试预置 4 个额外用户
+        { id: "collab_s2_extra1", username: "collab_s2_extra1", passwordHash: "hash", rolesJson: '["RIDER"]', profileCompleted: true },
+        { id: "collab_s2_extra2", username: "collab_s2_extra2", passwordHash: "hash", rolesJson: '["RIDER"]', profileCompleted: true },
+        { id: "collab_s2_extra3", username: "collab_s2_extra3", passwordHash: "hash", rolesJson: '["RIDER"]', profileCompleted: true },
+        { id: "collab_s2_extra4", username: "collab_s2_extra4", passwordHash: "hash", rolesJson: '["RIDER"]', profileCompleted: true },
       ],
     });
 
@@ -185,8 +190,8 @@ describe("GRS004 Phase 2 - Core Service Refactor", () => {
     assert.ok(detail);
     assert.equal(detail.name, "Phase 2 Team");
     // 只有 Leader（被踢出的 Mate 不算活跃）
-    const activeMembers = detail.members.filter(m => m.status !== "REMOVED");
-    assert.ok(activeMembers.every(m => m.role === "LEADER"));
+    const activeMembers = detail.members.filter((m: { status: string; role: string }) => m.status !== "REMOVED");
+    assert.ok(activeMembers.every((m: { role: string }) => m.role === "LEADER"));
   });
 
   // ---- Registration 服务测试 ----
@@ -266,5 +271,162 @@ describe("GRS004 Phase 2 - Core Service Refactor", () => {
     // 由于兼容层的 team 可能尚未创建，这里只验证字段存在
     // 实际测试由阶段五 UI 集成完成
     assert.ok(true);
+  });
+
+  // ---- 边界场景测试 ----
+
+  it("12. Team 达到 maxTeamSize 后拒绝新成员加入", async () => {
+    // test 11 把赛事改成了 running（raceStart/raceEnd 也被改了），
+    // getRacePhase 用时间窗口推导，需重置 status=null + raceStart/raceEnd 为未来
+    await prisma.race.update({
+      where: { id: TEST_RACE_ID },
+      data: {
+        status: null,
+        signupStart: new Date("2026-01-01"),
+        signupEnd: new Date("2030-12-31"),
+        raceStart: new Date("2031-01-15"),
+        raceEnd: new Date("2031-12-31"),
+      },
+    });
+
+    // 清理 Leader 之前的 registration
+    await prisma.registration.deleteMany({
+      where: { raceId: TEST_RACE_ID, userId: TEST_LEADER_ID },
+    });
+
+    // 创建新 Team，Leader 自带 1 个 APPROVED 成员
+    const fullTeam = await createTeam(TEST_LEADER_ID, {
+      raceId: TEST_RACE_ID,
+      name: "Full Team Test",
+    });
+
+    // 审批 Leader
+    const leaderReg = await prisma.registration.findUnique({
+      where: { raceId_userId: { raceId: TEST_RACE_ID, userId: TEST_LEADER_ID } },
+    });
+    await approveRegistrationForRace({
+      organizerId: TEST_ORG_ID,
+      registrationId: leaderReg!.id,
+    });
+
+    // 加入 4 个 Mate（Leader + 4 Mate = 5，达到默认 maxTeamSize）
+    const extraIds = [
+      "collab_s2_extra1",
+      "collab_s2_extra2",
+      "collab_s2_extra3",
+      "collab_s2_extra4",
+    ];
+    for (const extraId of extraIds) {
+      await joinTeam(extraId, { teamId: fullTeam!.id });
+    }
+
+    // 验证 Team 有 5 个成员（1 Leader + 4 Mate）
+    const memberCount = await prisma.teamMember.count({
+      where: { teamId: fullTeam!.id, status: { not: "REMOVED" } },
+    });
+    assert.equal(memberCount, 5);
+
+    // 再次加入应被拒绝（TEST_MATE_ID 之前被踢出，无现有队伍）
+    await prisma.registration.deleteMany({
+      where: { raceId: TEST_RACE_ID, userId: TEST_MATE_ID },
+    });
+    await assert.rejects(
+      () => joinTeam(TEST_MATE_ID, { teamId: fullTeam!.id }),
+      /队伍人数已满/,
+    );
+  });
+
+  it("13. 未审批的 Team 不能被 Mate 加入", async () => {
+    // 确保赛事处于报名阶段（时间窗口内）
+    await prisma.race.update({
+      where: { id: TEST_RACE_ID },
+      data: {
+        status: null,
+        signupStart: new Date("2026-01-01"),
+        signupEnd: new Date("2030-12-31"),
+        raceStart: new Date("2031-01-15"),
+        raceEnd: new Date("2031-12-31"),
+      },
+    });
+
+    // 清理并创建一个新 Team，但不审批 Leader
+    await prisma.registration.deleteMany({
+      where: { raceId: TEST_RACE_ID, userId: TEST_LEADER_ID },
+    });
+    await prisma.registration.deleteMany({
+      where: { raceId: TEST_RACE_ID, userId: TEST_MATE_ID },
+    });
+
+    const unapprovedTeam = await createTeam(TEST_LEADER_ID, {
+      raceId: TEST_RACE_ID,
+      name: "Unapproved Team",
+    });
+
+    // Leader 报名状态是 SUBMITTED（未审批），Mate 加入应被拒绝
+    await assert.rejects(
+      () => joinTeam(TEST_MATE_ID, { teamId: unapprovedTeam!.id }),
+      /尚未通过审核/,
+    );
+  });
+
+  it("14. 已有队伍的 Mate 不能加入其他队伍", async () => {
+    // 确保赛事处于报名阶段（时间窗口内）
+    await prisma.race.update({
+      where: { id: TEST_RACE_ID },
+      data: {
+        status: null,
+        signupStart: new Date("2026-01-01"),
+        signupEnd: new Date("2030-12-31"),
+        raceStart: new Date("2031-01-15"),
+        raceEnd: new Date("2031-12-31"),
+      },
+    });
+
+    // TEST_MATE_ID 已在 test 12 中尝试加入 Full Team（被拒绝），
+    // 但需要重建一个独立场景：先让 Mate 成功加入 Team A，再尝试加入 Team B
+    await prisma.registration.deleteMany({
+      where: { raceId: TEST_RACE_ID, userId: TEST_LEADER_ID },
+    });
+    await prisma.registration.deleteMany({
+      where: { raceId: TEST_RACE_ID, userId: TEST_MATE_ID },
+    });
+
+    // 创建 Team A 并审批 Leader
+    const teamA = await createTeam(TEST_LEADER_ID, {
+      raceId: TEST_RACE_ID,
+      name: "Team A Boundary",
+    });
+    const leaderReg = await prisma.registration.findUnique({
+      where: { raceId_userId: { raceId: TEST_RACE_ID, userId: TEST_LEADER_ID } },
+    });
+    await approveRegistrationForRace({
+      organizerId: TEST_ORG_ID,
+      registrationId: leaderReg!.id,
+    });
+
+    // Mate 加入 Team A
+    await joinTeam(TEST_MATE_ID, { teamId: teamA!.id });
+
+    // 创建 Team B（用 extra1 作为 Leader）
+    await prisma.registration.deleteMany({
+      where: { raceId: TEST_RACE_ID, userId: "collab_s2_extra1" },
+    });
+    const teamB = await createTeam("collab_s2_extra1", {
+      raceId: TEST_RACE_ID,
+      name: "Team B Boundary",
+    });
+    const extra1Reg = await prisma.registration.findUnique({
+      where: { raceId_userId: { raceId: TEST_RACE_ID, userId: "collab_s2_extra1" } },
+    });
+    await approveRegistrationForRace({
+      organizerId: TEST_ORG_ID,
+      registrationId: extra1Reg!.id,
+    });
+
+    // Mate 已有队伍，加入 Team B 应被拒绝
+    await assert.rejects(
+      () => joinTeam(TEST_MATE_ID, { teamId: teamB!.id }),
+      /你已有队伍/,
+    );
   });
 });

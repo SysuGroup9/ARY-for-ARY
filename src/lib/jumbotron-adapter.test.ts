@@ -698,3 +698,185 @@ test("prefers registration and race-project presence over scored leaderboard row
   assert.equal(kpis.activeRiders, 1);
   assert.equal(kpis.activeCockpits, 2);
 });
+
+// ── 回归测试：generateAttentionItems 去重与多源风险 ──
+
+test("does not duplicate CA ingestion failure attention items when multiple team members have failed connections", () => {
+  // 回归场景：一个 Team 下 2 个 Registration 都有 FAILED connection，
+  // 只应生成一条 CA 接入失败 attention item（按 team 维度，不按 registration 维度）
+  const items = generateAttentionItems(
+    buildRaceData({
+      teams: [
+        { id: "team_1", name: "Alpha", captain: { id: "r1", username: "alice" } },
+      ],
+      registrations: [
+        {
+          id: "reg_1",
+          userId: "r1",
+          user: { id: "r1", username: "alice" },
+          raceProject: {
+            id: "project_1",
+            aggregateIngestionStatus: "ACTIVE",
+            caConnections: [
+              { id: "ca_1", ingestionStatus: "FAILED", sessions: [] },
+            ],
+          },
+          work: null,
+        },
+        {
+          id: "reg_2",
+          userId: "r2",
+          user: { id: "r2", username: "bob" },
+          raceProject: {
+            id: "project_2",
+            aggregateIngestionStatus: "ACTIVE",
+            caConnections: [
+              { id: "ca_2", ingestionStatus: "FAILED", sessions: [] },
+            ],
+          },
+          work: null,
+        },
+      ],
+      teamArchives: [],
+    }),
+  );
+
+  const caFailItems = items.filter((item) =>
+    item.itemId.startsWith("risk-ca-team_1"),
+  );
+  assert.equal(
+    caFailItems.length,
+    1,
+    `expected 1 CA failure item for team, got ${caFailItems.length}`,
+  );
+});
+
+test("generates separate attention items for CA failure and session risk on the same team", () => {
+  // 回归场景：同一个 Team 同时有 CA 接入失败和会话风险，
+  // 应生成两条 attention item（不同 itemId），而非合并为一条
+  const items = generateAttentionItems(
+    buildRaceData({
+      teams: [
+        { id: "team_1", name: "Alpha", captain: { id: "r1", username: "alice" } },
+      ],
+      registrations: [
+        {
+          id: "reg_1",
+          userId: "r1",
+          user: { id: "r1", username: "alice" },
+          raceProject: {
+            id: "project_1",
+            aggregateIngestionStatus: "FAILED",
+            caConnections: [
+              {
+                id: "ca_1",
+                ingestionStatus: "FAILED",
+                sessions: [
+                  {
+                    id: "sess_1",
+                    riskLevel: "medium",
+                    riskReason: "接近 token 上限",
+                    startedAt: new Date("2026-06-18T10:00:00.000Z"),
+                    lastActiveAt: new Date("2026-06-18T11:00:00.000Z"),
+                  },
+                ],
+              },
+            ],
+          },
+          work: null,
+        },
+      ],
+      teamArchives: [],
+    }),
+  );
+
+  const caItem = items.find((item) => item.itemId === "risk-ca-team_1");
+  const sessionItem = items.find((item) => item.itemId === "risk-session-team_1");
+
+  assert.ok(caItem, "CA failure attention item should exist");
+  assert.ok(sessionItem, "session risk attention item should exist");
+  assert.equal(caItem!.category, "risk");
+  assert.equal(sessionItem!.category, "risk");
+});
+
+test("does not generate session risk attention items when session riskLevel is low or none", () => {
+  // 边界：riskLevel 为 "low" 或 "none" 时不应生成会话风险条目
+  const items = generateAttentionItems(
+    buildRaceData({
+      teams: [
+        { id: "team_1", name: "Alpha", captain: { id: "r1", username: "alice" } },
+      ],
+      registrations: [
+        {
+          id: "reg_1",
+          userId: "r1",
+          user: { id: "r1", username: "alice" },
+          raceProject: {
+            id: "project_1",
+            aggregateIngestionStatus: "ACTIVE",
+            caConnections: [
+              {
+                id: "ca_1",
+                ingestionStatus: "CONNECTED",
+                sessions: [
+                  {
+                    id: "sess_low",
+                    riskLevel: "low",
+                    riskReason: "all good",
+                    startedAt: new Date("2026-06-18T10:00:00.000Z"),
+                    lastActiveAt: new Date("2026-06-18T11:00:00.000Z"),
+                  },
+                  {
+                    id: "sess_none",
+                    riskLevel: "none",
+                    riskReason: "",
+                    startedAt: new Date("2026-06-18T10:00:00.000Z"),
+                    lastActiveAt: new Date("2026-06-18T11:00:00.000Z"),
+                  },
+                ],
+              },
+            ],
+          },
+          work: null,
+        },
+      ],
+      teamArchives: [],
+    }),
+  );
+
+  const sessionItems = items.filter((item) =>
+    item.itemId.startsWith("risk-session-"),
+  );
+  assert.equal(
+    sessionItems.length,
+    0,
+    "low/none risk sessions should not generate attention items",
+  );
+});
+
+test("generates violation attention item with correct penalty text when antiCheatPenalty is set", () => {
+  // 边界：反作弊扣分生成 violation 类别条目，文案含扣分数值
+  const items = generateAttentionItems(
+    buildRaceData({
+      teams: [
+        { id: "team_1", name: "Alpha", captain: { id: "r1", username: "alice" } },
+      ],
+      registrations: [],
+      teamArchives: [
+        {
+          registrationId: "reg_1",
+          teamId: "team_1",
+          agentType: "CLAUDE",
+          tokenUsed: 1000,
+          totalScore: 70,
+          antiCheatPenalty: 15,
+        },
+      ],
+    }),
+  );
+
+  const violationItems = items.filter((item) => item.category === "violation");
+  assert.equal(violationItems.length, 1);
+  assert.match(violationItems[0]!.summary, /扣 15 分/);
+  assert.equal(violationItems[0]!.severity, "medium");
+});

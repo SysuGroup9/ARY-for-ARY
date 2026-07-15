@@ -12,6 +12,7 @@
 | `ary-permission-matrix.md` | 资源动作级权限、角色范围和接口鉴权输入。 |
 | `ary.plan.md` | 研发任务定义、工作域编号、任务产出、任务验收和 Demo 节奏。 |
 | `ary-qa-plan.md` | 测试覆盖、回归要求和质量门。 |
+| `TEST-CHECKLIST.md` | GRS004 完整测试文档：自动化测试执行说明 + 手工浏览器验收清单 + 测试覆盖矩阵。 |
 | `ary-release-ops-plan.md` | 发布、监控、备份、值守和回滚要求。 |
 | `ary-ca-integration-spec.md` | CA 接入契约草案，定义参赛过程中 CAConnection 登记与握手、多 CAConnection、push / fetch 边界、骑行状态消息、Projection 输入和评审前风险提示。 |
 | `ux-hifi.taskbook.md` | UX-1 高保真原型任务书，定义视觉为主、体验为先的原型工作方式。 |
@@ -25,3 +26,4 @@
 * 页面和体验问题：读 `ary-mvp.ia.md` 与 `ux-hifi.taskbook.md`，必要时参考 `design-prototype/`。
 * 项目推进问题：读 `ary.plan.md`，再看 `PLAN.md`。
 * 验收和上线问题：读 `ary-qa-plan.md` 与 `ary-release-ops-plan.md`。
+* 测试执行和手工验收：读 `TEST-CHECKLIST.md`，含自动化测试命令、手工浏览器验收清单和测试覆盖矩阵。
