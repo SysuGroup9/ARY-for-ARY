@@ -61,6 +61,15 @@ export async function listRaces() {
               },
             },
           },
+          team: {
+            include: {
+              members: {
+                where: { status: { not: "REMOVED" } },
+                include: { user: true },
+              },
+              works: true,
+            },
+          },
           user: true,
         },
         orderBy: {
@@ -72,8 +81,10 @@ export async function listRaces() {
           registration: {
             include: {
               user: true,
+              team: true,
             },
           },
+          team: true,
           work: true,
         },
         orderBy: [

@@ -3,18 +3,19 @@ import type { PublicRaceListItem } from "@/lib/services/public-routes";
 
 export function WorksPageView({ race }: { race: PublicRaceListItem }) {
   const publicWorks = race.registrations
-    .filter((registration) => registration.work)
+    .filter((registration) => registration.team?.works?.[0])
     .map((registration) => {
+      const work = registration.team!.works![0]!;
       return {
         author: registration.user.username,
-        excerpt: registration.work!.summary,
+        excerpt: work.summary,
         href: `/works/${buildWorkSlug(
           race.id,
-          registration.work!.id,
-          registration.work!.title,
+          work.id,
+          work.title,
         )}`,
         registrationId: registration.id,
-        title: registration.work!.title,
+        title: work.title,
       };
     });
 

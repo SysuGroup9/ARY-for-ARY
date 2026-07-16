@@ -19,7 +19,7 @@ export async function GET(
 
   try {
     const { buffer, filename, contentType } = await exportKnowledgeBaseZip(teamId);
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,

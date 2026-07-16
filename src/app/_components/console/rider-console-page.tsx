@@ -812,7 +812,7 @@ function renderRiderSection({
                       {members
                         .filter((m) => m.status === "APPROVED")
                         .map((m) => (
-                          <option key={m.userId} value={m.userId}>
+                          <option key={m.userId ?? m.id} value={m.userId ?? ""}>
                             {m.user?.username ?? "—"}
                           </option>
                         ))}
@@ -846,7 +846,7 @@ function renderRiderSection({
                       {members
                         .filter((m) => m.userId !== registration?.userId && m.status === "APPROVED")
                         .map((m) => (
-                          <option key={m.userId} value={m.userId}>
+                          <option key={m.userId ?? m.id} value={m.userId ?? ""}>
                             {m.user?.username ?? "—"}
                           </option>
                         ))}

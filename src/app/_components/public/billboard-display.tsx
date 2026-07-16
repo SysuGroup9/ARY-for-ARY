@@ -20,7 +20,7 @@ export function BillboardDisplayView({
   };
   race: {
     phase: string;
-    registrations: Array<{ id: string; work: null | { id: string } }>;
+    registrations: Array<{ id: string; team?: { works?: Array<{ id: string }> } | null }>;
     title: string;
   };
   screenFeedItems: Array<{
@@ -38,7 +38,7 @@ export function BillboardDisplayView({
   }>;
   riskCount: number;
 }) {
-  const publicWorkCount = race.registrations.filter((registration) => registration.work).length;
+  const publicWorkCount = race.registrations.filter((registration) => registration.team?.works?.[0]).length;
   const topAwards = awards.slice(0, 4);
   const topHighlights = ridingSkillHighlights.slice(0, 4);
   const topFeedItems = screenFeedItems.slice(0, 5);

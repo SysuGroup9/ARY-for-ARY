@@ -17,8 +17,9 @@ type DisplayWork = {
 
 export function WorksDisplayView({ race }: { race: PublicRaceListItem }) {
   const publicWorks = race.registrations
-    .filter((registration) => registration.work)
+    .filter((registration) => registration.team?.works?.[0])
     .map((registration) => {
+      const work = registration.team!.works![0]!;
       const primaryAward = [...registration.awards].sort((left, right) => {
         if (left.rank !== right.rank) {
           return left.rank - right.rank;
@@ -31,14 +32,14 @@ export function WorksDisplayView({ race }: { race: PublicRaceListItem }) {
         awardLabel: primaryAward?.awardName ?? null,
         decisionReason: primaryAward?.decisionReason ?? null,
         demoStatus:
-          registration.work!.demoUrl || registration.work!.videoUrl
+          work.demoUrl || work.videoUrl
             ? "已提供公开 Demo"
             : "当前未公开 Demo",
-        excerpt: registration.work!.summary,
+        excerpt: work.summary,
         href: `/works/${buildWorkSlug(
           race.id,
-          registration.work!.id,
-          registration.work!.title,
+          work.id,
+          work.title,
         )}`,
         isAwarded: registration.awards.length > 0,
         registrationId: registration.id,
@@ -47,7 +48,7 @@ export function WorksDisplayView({ race }: { race: PublicRaceListItem }) {
           racePhase: race.phase,
         }),
         submittedAt: registration.createdAt.getTime(),
-        title: registration.work!.title,
+        title: work.title,
       } satisfies DisplayWork;
     })
     .sort((left, right) => {

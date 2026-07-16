@@ -118,6 +118,11 @@ export async function listPublicRaces() {
               },
             },
           },
+          team: {
+            include: {
+              works: true,
+            },
+          },
           user: true,
         },
         orderBy: {

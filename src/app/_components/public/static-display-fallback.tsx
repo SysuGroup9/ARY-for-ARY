@@ -16,11 +16,11 @@ export function StaticDisplayFallback({
   const registrations = race.registrations ?? [];
   const leaderboardRows = buildFallbackLeaderboardRows(race).slice(0, 5);
   const featuredWorks = registrations
-    .filter((registration) => registration.work)
+    .filter((registration) => registration.team?.works?.[0])
     .slice(0, 3)
     .map((registration) => ({
       id: registration.id,
-      title: registration.work!.title,
+      title: registration.team!.works![0]!.title,
       username: registration.user.username,
     }));
   const latestAnnouncement = [...(race.announcements ?? [])]
@@ -124,7 +124,7 @@ function buildFallbackLeaderboardRows(
       return {
         key: entry.id,
         label:
-          registration?.work?.title ||
+          registration?.team?.works?.[0]?.title ||
           registration?.user.username ||
           entry.team?.name ||
           entry.id,

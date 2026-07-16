@@ -19,6 +19,7 @@ export type ActionFeedbackScope =
   | "organizer_works"
   | "public_register"
   | "rider_ca_setup"
+  | "rider_console"
   | "rider_review"
   | "rider_registration"
   | "rider_submission"
@@ -77,6 +78,7 @@ function normalizeActionFeedbackScope(scope: string | undefined) {
     scope === "organizer_works" ||
     scope === "public_register" ||
     scope === "rider_ca_setup" ||
+    scope === "rider_console" ||
     scope === "rider_review" ||
     scope === "rider_registration" ||
     scope === "rider_submission" ||
@@ -127,6 +129,8 @@ function getActionFeedbackTitle(scope: ActionFeedbackScope) {
       return "报名未完成";
     case "rider_ca_setup":
       return "CA 接入未完成";
+    case "rider_console":
+      return "骑手操作未完成";
     case "rider_review":
       return "结果反馈未完成";
     case "rider_submission":

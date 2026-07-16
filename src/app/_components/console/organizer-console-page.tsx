@@ -41,6 +41,17 @@ import { buildReviewReadinessSummary } from "@/lib/review-readiness-helpers";
 import { getAgentLabel } from "@/lib/services/submissions";
 import type { RaceListItem } from "@/lib/services/races";
 
+// GRS004: Work 已迁移到 Team 维度，registration.work 不再存在，
+// 通过 team.works[0] 获取队伍作品。
+// 详见 schema.prisma Work.teamId 关系。
+type WorkFields = { id: string; title: string; summary: string; status: string; visibility: string };
+
+// 用 any 入参 + 类型断言避免与 Prisma 生成类型的结构兼容冲突
+function getRegistrationWork(registration: unknown): WorkFields | null {
+  const reg = registration as { team?: { works?: WorkFields[] } | null };
+  return reg.team?.works?.[0] ?? null;
+}
+
 export function OrganizerConsolePageView({
   feedback,
   judgeAssignments,
@@ -741,10 +752,10 @@ function renderOrganizerSection({
                         registration.raceProject?.aggregateIngestionStatus ??
                         "NOT_CONFIGURED",
                       evidences: registration.evidences,
-                      hasWork: Boolean(registration.work),
+                      hasWork: Boolean(getRegistrationWork(registration)),
                       phase: race.phase,
-                      workSummary: registration.work?.summary,
-                      workTitle: registration.work?.title,
+                      workSummary: getRegistrationWork(registration)?.summary,
+                      workTitle: getRegistrationWork(registration)?.title,
                     })}
                   />
                 </div>
@@ -764,7 +775,7 @@ function renderOrganizerSection({
                 race.teams.map((team) => (
                   <div className="public-link-card" key={`${team.id}-team`}>
                     <strong>{team.name}</strong>
-                    <span>队长：{team.captain?.username ?? team.leader?.username ?? "—"}</span>
+                    <span>队长：{team.captain?.username ?? "—"}</span>
                     <span>
                       {/* 仅统计已正式加入的成员（APPROVED），与 Rider 视角保持一致 */}
                       成员数：{team.members?.filter((m) => m.status === "APPROVED").length ?? 0}
@@ -991,7 +1002,7 @@ function renderOrganizerSection({
         <section className="grid">
           <Panel title="作品资产" eyebrow="作品">
             <div className="stack">
-              {race.registrations.filter((registration) => registration.work).length ===
+              {race.registrations.filter((registration) => getRegistrationWork(registration)).length ===
               0 ? (
                 race.submissions.length === 0 ? (
                   <p className="muted">暂时还没有提交或作品资产。</p>
@@ -1016,21 +1027,23 @@ function renderOrganizerSection({
                 )
               ) : (
                 race.registrations
-                  .filter((registration) => registration.work)
-                  .map((registration) => (
-                    <div className="public-link-card" key={registration.work!.id}>
-                      <strong>{registration.work!.title}</strong>
+                  .filter((registration) => getRegistrationWork(registration))
+                  .map((registration) => {
+                    const work = getRegistrationWork(registration);
+                    return (
+                    <div className="public-link-card" key={work!.id}>
+                      <strong>{work!.title}</strong>
                       <span>骑手：{registration.user.username}</span>
-                      <span>状态：{registration.work!.status}</span>
-                      <span>可见性：{registration.work!.visibility}</span>
+                      <span>状态：{work!.status}</span>
+                      <span>可见性：{work!.visibility}</span>
                       <div className="button-row-inline">
-                        {String(registration.work!.visibility).toUpperCase() === "PUBLIC" &&
-                        String(registration.work!.status).toUpperCase() !== "HIDDEN" ? (
+                        {String(work!.visibility).toUpperCase() === "PUBLIC" &&
+                        String(work!.status).toUpperCase() !== "HIDDEN" ? (
                           <form action={hideWorkAction}>
                             <input
                               name="workId"
                               type="hidden"
-                              value={registration.work!.id}
+                              value={work!.id}
                             />
                             <input
                               name="returnTo"
@@ -1045,7 +1058,7 @@ function renderOrganizerSection({
                             <input
                               name="workId"
                               type="hidden"
-                              value={registration.work!.id}
+                              value={work!.id}
                             />
                             <input
                               name="returnTo"
@@ -1056,12 +1069,12 @@ function renderOrganizerSection({
                             <button type="submit">公开作品</button>
                           </form>
                         )}
-                        {String(registration.work!.status).toUpperCase() !== "LOCKED" ? (
+                        {String(work!.status).toUpperCase() !== "LOCKED" ? (
                           <form action={lockWorkAction}>
                             <input
                               name="workId"
                               type="hidden"
-                              value={registration.work!.id}
+                              value={work!.id}
                             />
                             <input
                               name="returnTo"
@@ -1074,7 +1087,8 @@ function renderOrganizerSection({
                         ) : null}
                       </div>
                     </div>
-                  ))
+                    );
+                  })
               )}
             </div>
           </Panel>
@@ -1118,15 +1132,17 @@ function renderOrganizerSection({
       return (
         <section className="stack">
           {race.registrations
-            .filter((registration) => registration.work)
-            .map((registration) => (
+            .filter((registration) => getRegistrationWork(registration))
+            .map((registration) => {
+              const work = getRegistrationWork(registration);
+              return (
               <Panel
                 key={registration.id}
-                title={registration.work!.title}
+                title={work!.title}
                 eyebrow={`骑手 ${registration.user.username}`}
               >
                 <form action={assignJudgeToWorkAction} className="form-grid">
-                  <input name="workId" type="hidden" value={registration.work!.id} />
+                  <input name="workId" type="hidden" value={work!.id} />
                   <input name="raceSlug" type="hidden" value={raceSlug} />
                   <input
                     name="returnTo"
@@ -1139,14 +1155,14 @@ function renderOrganizerSection({
                       defaultValue={
                         judgeAssignments.find(
                           (assignment) =>
-                            assignment.work.id === registration.work!.id,
+                            assignment.work.id === work!.id,
                         )?.judge.username
                           ? judges.find(
                               (judge) =>
                                 judge.username ===
                                 judgeAssignments.find(
                                   (assignment) =>
-                                    assignment.work.id === registration.work!.id,
+                                    assignment.work.id === work!.id,
                                 )?.judge.username,
                             )?.id
                           : ""
@@ -1166,7 +1182,7 @@ function renderOrganizerSection({
                   <button type="submit">保存分配</button>
                 </form>
                 {judgeAssignments.find(
-                  (assignment) => assignment.work.id === registration.work!.id,
+                  (assignment) => assignment.work.id === work!.id,
                 ) ? (
                   <form action={removeJudgeAssignmentAction} className="button-row-inline">
                     <input
@@ -1174,7 +1190,7 @@ function renderOrganizerSection({
                       type="hidden"
                       value={
                         judgeAssignments.find(
-                          (assignment) => assignment.work.id === registration.work!.id,
+                          (assignment) => assignment.work.id === work!.id,
                         )!.id
                       }
                     />
@@ -1188,7 +1204,8 @@ function renderOrganizerSection({
                   </form>
                 ) : null}
               </Panel>
-            ))}
+              );
+            })}
         </section>
       );
     case "judging":
@@ -1419,7 +1436,7 @@ function renderOrganizerSection({
                     <div className="public-link-card" key={`draft-${award.id}`}>
                       <strong>{award.awardName}</strong>
                       <span>排名：{award.rank}</span>
-                      <span>骑手：{award.registration.user.username}</span>
+                      <span>骑手：{award.registration?.user?.username ?? award.team?.name ?? "—"}</span>
                       <span>{award.work?.title ?? "未关联作品"}</span>
                       <span>{award.decisionReason}</span>
                       <form action={updateAwardDraftAction} className="form-grid">
@@ -1491,7 +1508,7 @@ function renderOrganizerSection({
                     <div className="public-link-card" key={`published-${award.id}`}>
                       <strong>{award.awardName}</strong>
                       <span>排名：{award.rank}</span>
-                      <span>骑手：{award.registration.user.username}</span>
+                      <span>骑手：{award.registration?.user?.username ?? award.team?.name ?? "—"}</span>
                       <span>{award.work?.title ?? "未关联作品"}</span>
                       <span>{award.decisionReason}</span>
                     </div>
