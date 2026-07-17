@@ -58,7 +58,7 @@ test("registration submit creates SUBMITTED first and approval provisions RacePr
     }),
     prisma.user.findFirstOrThrow({
       where: {
-        username: "rider_alice",
+        username: "rider_kate",
       },
     }),
     prisma.user.findFirstOrThrow({
