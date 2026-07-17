@@ -132,19 +132,20 @@ test("registration submit creates SUBMITTED first and approval provisions RacePr
       assert.notEqual(approvedRegistration?.raceProject ?? null, null);
   
       const raceProjectCount = await prisma.raceProject.count({
-      where: {
-        registrationId: submittedRegistration!.id,
-      },
-    });
-    const compatibilityTeamCount = await prisma.team.count({
-      where: {
-        captainId: rider.id,
-        raceId: race.id,
-      },
-    });
-
-    assert.equal(raceProjectCount, 1);
-    assert.equal(compatibilityTeamCount, 1);
+        where: {
+          registrationId: submittedRegistration!.id,
+        },
+      });
+      const compatibilityTeamCount = await prisma.team.count({
+        where: {
+          captainId: rider.id,
+          raceId: race.id,
+        },
+      });
+  
+      assert.equal(raceProjectCount, 1);
+      // GRS004: 不再自动创建兼容队伍，由 createTeam/joinTeam 显式控制
+      assert.equal(compatibilityTeamCount, 0);
 
     await registrationsService.approveRegistrationForRace({
       allowSystem: true,
@@ -165,7 +166,8 @@ test("registration submit creates SUBMITTED first and approval provisions RacePr
     });
 
     assert.equal(idempotentRaceProjectCount, 1);
-    assert.equal(idempotentCompatibilityTeamCount, 1);
+    // GRS004: 不再自动创建兼容队伍，由 createTeam/joinTeam 显式控制
+    assert.equal(idempotentCompatibilityTeamCount, 0);
   } finally {
     await prisma.race.delete({
       where: {

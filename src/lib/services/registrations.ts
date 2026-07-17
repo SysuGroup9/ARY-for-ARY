@@ -105,16 +105,10 @@ export async function ensureRaceProjectForRegistration(input: {
   if (existing) {
     return existing;
   }
-  const newRp = await prisma.raceProject.create({
-    data: {
-      aggregateIngestionStatus: getRaceProjectInitialStatus(),
-    },
-  });
-  // Prisma 7.8 + db push bug: nullable unique field not persisted on create.
-  return prisma.raceProject.update({
-    where: { id: newRp.id },
-    data: { registrationId: input.registrationId },
-  });
+  const newRpId = `rp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  // Prisma 7.8 + better-sqlite3 bug: nullable @unique field not persisted via ORM.
+  await prisma.$executeRaw`INSERT INTO RaceProject (id, registrationId, aggregateIngestionStatus, githubRepoUrl, createdAt, updatedAt) VALUES (${newRpId}, ${input.registrationId}, 'NOT_CONFIGURED', '', datetime('now'), datetime('now'))`;
+  return prisma.raceProject.findUniqueOrThrow({ where: { id: newRpId } });
 }
 
 async function getManagedRegistrationForAction(input: {
@@ -274,16 +268,9 @@ export async function registerForRace(userId: string, raceId: string, teamId?: s
         where: { registrationId: registration.id },
       });
       if (!existingRp) {
-        const newRp = await tx.raceProject.create({
-          data: {
-            aggregateIngestionStatus: getRaceProjectInitialStatus(),
-          },
-        });
-        // Prisma 7.8 + db push bug: nullable unique field not persisted on create.
-        await tx.raceProject.update({
-          where: { id: newRp.id },
-          data: { registrationId: registration.id },
-        });
+        const newRpId = `rp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        // Prisma 7.8 + better-sqlite3 bug: nullable @unique field not persisted via ORM.
+        await tx.$executeRaw`INSERT INTO RaceProject (id, registrationId, aggregateIngestionStatus, githubRepoUrl, createdAt, updatedAt) VALUES (${newRpId}, ${registration.id}, 'NOT_CONFIGURED', '', datetime('now'), datetime('now'))`;
       }
     }
 
@@ -316,7 +303,7 @@ export async function approveRegistrationForRace(input: {
     throw new Error("已撤回的报名不能直接批准");
   }
 
-  return prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx) => {
     await tx.registration.update({
       where: {
         id: registration.id,
@@ -327,65 +314,38 @@ export async function approveRegistrationForRace(input: {
         status: "APPROVED",
       },
     });
+  });
 
-    // GRS004: 如果 Registration 关联了 Team，RaceProject 改为关联 Team
-    if (registration.teamId) {
-      // 检查是否已有该 Team 的 RaceProject（Leader 审批时已创建）
-      const existingTeamRp = await tx.raceProject.findFirst({
-        where: { teamId: registration.teamId },
-      });
-      const existingRegRp = await tx.raceProject.findUnique({
-        where: { registrationId: registration.id },
-      });
-      if (!existingRegRp) {
-        const newRp = await tx.raceProject.create({
-          data: {
-            aggregateIngestionStatus: getRaceProjectInitialStatus(),
-            // 如果已有 team 级别的 RaceProject，不重复设置 teamId
-            ...(existingTeamRp ? {} : { teamId: registration.teamId ?? undefined }),
-          },
-        });
-        // Prisma 7.8 + db push bug: nullable unique field not persisted on create.
-        await tx.raceProject.update({
-          where: { id: newRp.id },
-          data: { registrationId: registration.id },
-        });
-      } else {
-        await tx.raceProject.update({
-          where: { id: existingRegRp.id },
-          data: { teamId: registration.teamId },
-        });
-      }
-    } else {
-      const existingRp = await tx.raceProject.findUnique({
-        where: { registrationId: registration.id },
-      });
-      if (!existingRp) {
-        const newRp = await tx.raceProject.create({
-          data: {
-            aggregateIngestionStatus: getRaceProjectInitialStatus(),
-          },
-        });
-        // Prisma 7.8 + db push bug: nullable unique field not persisted on create.
-        // Explicitly update to set the relation.
-        await tx.raceProject.update({
-          where: { id: newRp.id },
-          data: { registrationId: registration.id },
-        });
-      }
-    }
-
-    // GRS004: 不再自动创建兼容队伍，由 createTeam/joinTeam 显式控制。
-
-    return tx.registration.findUnique({
-      where: {
-        id: registration.id,
-      },
-      include: {
-        raceProject: true,
-        user: true,
-      },
+  // Prisma 7.8 + better-sqlite3 bug: nullable @unique field (registrationId)
+  // is silently dropped on ORM create/update AND tx.$executeRaw in interactive
+  // transactions. Use prisma.$executeRaw outside the transaction.
+  // This is safe because the registration is already APPROVED at this point.
+  if (registration.teamId) {
+    const existingRegRp = await prisma.raceProject.findUnique({
+      where: { registrationId: registration.id },
     });
+    if (!existingRegRp) {
+      const newRpId = `rp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      await prisma.$executeRaw`INSERT INTO RaceProject (id, registrationId, teamId, aggregateIngestionStatus, githubRepoUrl, createdAt, updatedAt) VALUES (${newRpId}, ${registration.id}, ${registration.teamId}, 'NOT_CONFIGURED', '', datetime('now'), datetime('now'))`;
+    }
+  } else {
+    const existingRp = await prisma.raceProject.findUnique({
+      where: { registrationId: registration.id },
+    });
+    if (!existingRp) {
+      const newRpId = `rp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      await prisma.$executeRaw`INSERT INTO RaceProject (id, registrationId, aggregateIngestionStatus, githubRepoUrl, createdAt, updatedAt) VALUES (${newRpId}, ${registration.id}, 'NOT_CONFIGURED', '', datetime('now'), datetime('now'))`;
+    }
+  }
+
+  return prisma.registration.findUnique({
+    where: {
+      id: registration.id,
+    },
+    include: {
+      raceProject: true,
+      user: true,
+    },
   });
 }
 
