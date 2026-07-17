@@ -27,6 +27,6 @@ test("archiveRaceAction allows admin/system callers and no longer uses organizer
   );
   assert.match(
     functionSource,
-    /await archiveRace\(\{[\s\S]*?allowSystem: hasRole\(user\.roles, "ADMIN"\)[\s\S]*?organizerId: user\.id[\s\S]*?raceId:/,
+    /await archiveRace\(\{[\s\S]*?allowSystem: hasRole\(user\.roles, "ADMIN"\)[\s\S]*?organizerId: user\.id[\s\S]*?raceId/,
   );
 });

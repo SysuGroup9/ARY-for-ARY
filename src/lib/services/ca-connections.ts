@@ -239,6 +239,7 @@ async function getManagedCAConnectionForAction(tx: Prisma.TransactionClient, inp
 
   if (
     !connection ||
+    !connection.raceProject?.registration?.race ||
     (connection.raceProject.registration.race.organizerId !== input.organizerId &&
       !canUseSystem)
   ) {
