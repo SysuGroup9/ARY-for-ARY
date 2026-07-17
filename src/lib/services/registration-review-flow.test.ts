@@ -126,12 +126,12 @@ test("registration submit creates SUBMITTED first and approval provisions RacePr
         organizerId: adminUser.id,
         registrationId: submittedRegistration!.id,
       });
-
-    assert.equal(approvedRegistration?.status, "APPROVED");
-    assert.notEqual(approvedRegistration?.approvedAt ?? null, null);
-    assert.notEqual(approvedRegistration?.raceProject ?? null, null);
-
-    const raceProjectCount = await prisma.raceProject.count({
+  
+      assert.equal(approvedRegistration?.status, "APPROVED");
+      assert.notEqual(approvedRegistration?.approvedAt ?? null, null);
+      assert.notEqual(approvedRegistration?.raceProject ?? null, null);
+  
+      const raceProjectCount = await prisma.raceProject.count({
       where: {
         registrationId: submittedRegistration!.id,
       },

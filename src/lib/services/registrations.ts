@@ -99,15 +99,21 @@ export async function getRegistrationForUser(raceId: string, userId: string) {
 export async function ensureRaceProjectForRegistration(input: {
   registrationId: string;
 }) {
-  return prisma.raceProject.upsert({
-    where: {
-      registrationId: input.registrationId,
-    },
-    update: {},
-    create: {
+  const existing = await prisma.raceProject.findUnique({
+    where: { registrationId: input.registrationId },
+  });
+  if (existing) {
+    return existing;
+  }
+  const newRp = await prisma.raceProject.create({
+    data: {
       aggregateIngestionStatus: getRaceProjectInitialStatus(),
-      registrationId: input.registrationId,
     },
+  });
+  // Prisma 7.8 + db push bug: nullable unique field not persisted on create.
+  return prisma.raceProject.update({
+    where: { id: newRp.id },
+    data: { registrationId: input.registrationId },
   });
 }
 
@@ -264,16 +270,21 @@ export async function registerForRace(userId: string, raceId: string, teamId?: s
     }
 
     if (flow.ensureRaceProject) {
-      await tx.raceProject.upsert({
-        where: {
-          registrationId: registration.id,
-        },
-        update: {},
-        create: {
-          aggregateIngestionStatus: getRaceProjectInitialStatus(),
-          registrationId: registration.id,
-        },
+      const existingRp = await tx.raceProject.findUnique({
+        where: { registrationId: registration.id },
       });
+      if (!existingRp) {
+        const newRp = await tx.raceProject.create({
+          data: {
+            aggregateIngestionStatus: getRaceProjectInitialStatus(),
+          },
+        });
+        // Prisma 7.8 + db push bug: nullable unique field not persisted on create.
+        await tx.raceProject.update({
+          where: { id: newRp.id },
+          data: { registrationId: registration.id },
+        });
+      }
     }
 
     // GRS004: 不再自动创建兼容队伍。队伍由 createTeam/joinTeam 显式创建。
@@ -323,29 +334,45 @@ export async function approveRegistrationForRace(input: {
       const existingTeamRp = await tx.raceProject.findFirst({
         where: { teamId: registration.teamId },
       });
-      await tx.raceProject.upsert({
-        where: {
-          registrationId: registration.id,
-        },
-        update: { teamId: registration.teamId },
-        create: {
-          aggregateIngestionStatus: getRaceProjectInitialStatus(),
-          registrationId: registration.id,
-          // 如果已有 team 级别的 RaceProject，不重复设置 teamId
-          ...(existingTeamRp ? {} : { teamId: registration.teamId }),
-        },
+      const existingRegRp = await tx.raceProject.findUnique({
+        where: { registrationId: registration.id },
       });
+      if (!existingRegRp) {
+        const newRp = await tx.raceProject.create({
+          data: {
+            aggregateIngestionStatus: getRaceProjectInitialStatus(),
+            // 如果已有 team 级别的 RaceProject，不重复设置 teamId
+            ...(existingTeamRp ? {} : { teamId: registration.teamId ?? undefined }),
+          },
+        });
+        // Prisma 7.8 + db push bug: nullable unique field not persisted on create.
+        await tx.raceProject.update({
+          where: { id: newRp.id },
+          data: { registrationId: registration.id },
+        });
+      } else {
+        await tx.raceProject.update({
+          where: { id: existingRegRp.id },
+          data: { teamId: registration.teamId },
+        });
+      }
     } else {
-      await tx.raceProject.upsert({
-        where: {
-          registrationId: registration.id,
-        },
-        update: {},
-        create: {
-          aggregateIngestionStatus: getRaceProjectInitialStatus(),
-          registrationId: registration.id,
-        },
+      const existingRp = await tx.raceProject.findUnique({
+        where: { registrationId: registration.id },
       });
+      if (!existingRp) {
+        const newRp = await tx.raceProject.create({
+          data: {
+            aggregateIngestionStatus: getRaceProjectInitialStatus(),
+          },
+        });
+        // Prisma 7.8 + db push bug: nullable unique field not persisted on create.
+        // Explicitly update to set the relation.
+        await tx.raceProject.update({
+          where: { id: newRp.id },
+          data: { registrationId: registration.id },
+        });
+      }
     }
 
     // GRS004: 不再自动创建兼容队伍，由 createTeam/joinTeam 显式控制。
