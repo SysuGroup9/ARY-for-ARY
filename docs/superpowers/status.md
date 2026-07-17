@@ -4,6 +4,27 @@
 
 ---
 
+## ⚠️ 协作规范（pull 代码后必做）
+
+为避免"环境未同步"导致的运行/构建失败，pull 代码后请固定执行：
+
+```
+npm install && npm run db:generate && npm run db:deploy && npm run db:seed
+```
+
+两条硬规范（均由实际踩坑总结）：
+
+1. **改了 `prisma/schema.prisma` 必须生成 migration。**
+   - 只改 schema 不生成 migration，其他人 `prisma migrate deploy` 不会更新表结构，运行时会报 `P2022 ColumnNotFound`（如队友新增 `Team.leaderId`、`TeamMember.role/status`、`TeamTask`、`CollaborationMessage` 时未生成 migration，导致 seed 失败）。
+   - 正确做法：改完 schema 跑 `npx prisma migrate dev -n <描述>` 生成并提交 migration 文件。
+   - 注意 `prisma migrate status` 显示 "up to date" 有迷惑性——它只检查已有 migration 是否应用，不检测"schema 改了但没生成 migration"的漂移。
+
+2. **改了 `package.json` 依赖必须 `npm install` 并提交 lockfile。**
+   - 只在 `package.json` 声明依赖但不 install，其他人 build 时会 `Module not found`，且会中断整个 Turbopack build，导致所有页面无法渲染（如队友加知识库导出用的 `archiver`，声明了却没 install，导致实况大厅等页面全部空白）。
+   - 正确做法：加依赖后本地 `npm install`，确认 `node_modules` 和 `package-lock.json` 都更新后再提交。
+
+---
+
 ## GRS003 收口与 UI 翻新（2026-07-13 ~ 2026-07-15，Hrm-cell）
 
 ### 环境修复与结构收口

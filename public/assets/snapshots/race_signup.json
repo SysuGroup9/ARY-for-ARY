@@ -11,7 +11,7 @@
     "currentRound": 1,
     "nextPhase": "已结束",
     "elapsedTime": 0,
-    "systemTime": "2026-07-15T11:54:25.550Z"
+    "systemTime": "2026-07-17T15:21:15.490Z"
   },
   "entries": [
     {
@@ -30,7 +30,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "updatedAt": "2026-07-15T11:54:25.550Z"
+      "updatedAt": "2026-07-17T15:21:15.490Z"
     },
     {
       "entryId": "team_signup_0",
@@ -48,7 +48,7 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "updatedAt": "2026-07-15T11:54:25.550Z"
+      "updatedAt": "2026-07-17T15:21:15.490Z"
     },
     {
       "entryId": "team_signup_1",
@@ -66,10 +66,10 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "updatedAt": "2026-07-15T11:54:25.550Z"
+      "updatedAt": "2026-07-17T15:21:15.490Z"
     }
   ],
-  "generatedAt": "2026-07-15T11:54:25.550Z",
+  "generatedAt": "2026-07-17T15:21:15.490Z",
   "kpis": {
     "completionRate": 0,
     "totalTokens": 0,

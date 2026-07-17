@@ -4,7 +4,6 @@
 
 ## Contents
 
-- [xiaoyi](./xiaoyi.md) — 肖懿的 GRS003 Co-riding、测试审查与功能验证记录。
 - [肖懿's riding_record](./肖懿's%20riding_record.md) — 肖懿的 GRS004 测试审查、E2E 补充、缺口分析与 AI 驾驭能力记录。
 - [陈怀容's riding_record](./陈怀容's%20riding_record.md) — 陈怀容的 GRS004 UI 修改、文档整理与体验优化记录。
 - [陈诗翰's riding_record](./陈诗翰's%20riding_record.md) — 陈诗翰的 GRS004 核心代码实现、异常场景友好错误 UI 与主要功能补全记录。
@@ -17,7 +16,6 @@
 ```text
 riding_record_grs004/
 ├── README.md
-├── xiaoyi.md
 ├── 肖懿's riding_record.md
 ├── 陈怀容's riding_record.md
 ├── 陈诗翰's riding_record.md

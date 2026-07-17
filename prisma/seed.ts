@@ -155,7 +155,6 @@ async function main() {
     const team = await prisma.team.create({
       data: {
         captainId: leader.user.id,
-        leaderId: leader.user.id,
         name: input.teamName,
         raceId: input.raceId,
       },
@@ -219,7 +218,6 @@ async function main() {
     const team = await prisma.team.create({
       data: {
         captainId: input.user.id,
-        leaderId: input.user.id,
         members: {
           create: memberCreates,
         },

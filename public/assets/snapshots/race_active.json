@@ -1,13 +1,13 @@
 {
   "attentionItems": [
     {
-      "itemId": "risk-cmrm0vmjv0017u8w359rw766q",
-      "entryId": "cmrm0vmjv0017u8w359rw766q",
+      "itemId": "risk-cmrp35b8800173os3d8uwyoa1",
+      "entryId": "cmrp35b8800173os3d8uwyoa1",
       "category": "violation",
       "severity": "medium",
       "summary": "Milk Tea Coder: 检测到诱导词，扣 10 分",
       "status": "active",
-      "createdAt": "2026-07-15T11:54:25.500Z"
+      "createdAt": "2026-07-17T15:21:15.400Z"
     }
   ],
   "competition": {
@@ -21,11 +21,11 @@
     "currentRound": 1,
     "nextPhase": "已结束",
     "elapsedTime": 0,
-    "systemTime": "2026-07-15T11:54:25.499Z"
+    "systemTime": "2026-07-17T15:21:15.397Z"
   },
   "entries": [
     {
-      "entryId": "cmrm0vml2001ju8w3cu1yohpc",
+      "entryId": "cmrp35b9p001j3os3klno75nk",
       "riderName": "Bug Crusher",
       "projectName": "Bug Crusher",
       "caProvider": "codex",
@@ -42,10 +42,10 @@
       "obstacleCount": 0,
       "violationCount": 0,
       "status": "finished",
-      "updatedAt": "2026-07-15T11:54:24.687Z"
+      "updatedAt": "2026-07-17T15:21:14.354Z"
     },
     {
-      "entryId": "cmrm0vmih000su8w31rggmov3",
+      "entryId": "cmrp35b68000s3os3qxshc2by",
       "riderName": "Fast Sort Squad",
       "projectName": "Fast Sort Squad",
       "caProvider": "codex",
@@ -63,19 +63,19 @@
       "violationCount": 0,
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-cmrm0vmih000su8w31rggmov3-session",
-        "entryId": "cmrm0vmih000su8w31rggmov3",
+        "messageId": "msg-cmrp35b68000s3os3qxshc2by-session",
+        "entryId": "cmrp35b68000s3os3qxshc2by",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "rider_alice is pushing the active race implementation forward.",
-        "createdAt": "2026-07-15T11:54:25.500Z",
+        "createdAt": "2026-07-17T15:21:15.399Z",
         "displayMode": "ticker"
       },
       "updatedAt": "2026-06-19T02:00:00.000Z"
     },
     {
-      "entryId": "cmrm0vmjv0017u8w359rw766q",
+      "entryId": "cmrp35b8800173os3d8uwyoa1",
       "riderName": "Milk Tea Coder",
       "projectName": "Milk Tea Coder",
       "caProvider": "codex",
@@ -94,19 +94,19 @@
       "riskReason": "检测到诱导词，扣 10 分",
       "status": "running",
       "lastMessage": {
-        "messageId": "msg-cmrm0vmjv0017u8w359rw766q-session",
-        "entryId": "cmrm0vmjv0017u8w359rw766q",
+        "messageId": "msg-cmrp35b8800173os3d8uwyoa1-session",
+        "entryId": "cmrp35b8800173os3d8uwyoa1",
         "source": "session",
         "type": "progress_update",
         "severity": "info",
         "summary": "rider_diana is pushing the active race implementation forward.",
-        "createdAt": "2026-07-15T11:54:25.500Z",
+        "createdAt": "2026-07-17T15:21:15.399Z",
         "displayMode": "ticker"
       },
       "updatedAt": "2026-06-19T02:00:00.000Z"
     }
   ],
-  "generatedAt": "2026-07-15T11:54:25.499Z",
+  "generatedAt": "2026-07-17T15:21:15.397Z",
   "kpis": {
     "completionRate": 100,
     "totalTokens": 3470,
@@ -124,32 +124,32 @@
   "messages": [
     {
       "messageId": "screen-feed-0",
-      "entryId": "cmrm0vml2001ju8w3cu1yohpc",
+      "entryId": "cmrp35b9p001j3os3klno75nk",
       "source": "projection",
       "type": "progress_update",
       "severity": "info",
       "summary": "Sorting Challenge is live. Teams should submit current progress for evaluation.",
-      "createdAt": "2026-07-15T11:54:25.500Z",
+      "createdAt": "2026-07-17T15:21:15.400Z",
       "displayMode": "ticker"
     },
     {
       "messageId": "screen-feed-1",
-      "entryId": "cmrm0vmih000su8w31rggmov3",
+      "entryId": "cmrp35b68000s3os3qxshc2by",
       "source": "projection",
       "type": "progress_update",
       "severity": "info",
       "summary": "rider_alice is pushing the active race implementation forward.",
-      "createdAt": "2026-07-15T11:54:25.500Z",
+      "createdAt": "2026-07-17T15:21:15.400Z",
       "displayMode": "ticker"
     },
     {
       "messageId": "screen-feed-2",
-      "entryId": "cmrm0vmjv0017u8w359rw766q",
+      "entryId": "cmrp35b8800173os3d8uwyoa1",
       "source": "projection",
       "type": "progress_update",
       "severity": "info",
       "summary": "rider_diana is pushing the active race implementation forward.",
-      "createdAt": "2026-07-15T11:54:25.500Z",
+      "createdAt": "2026-07-17T15:21:15.400Z",
       "displayMode": "ticker"
     },
     {
@@ -159,7 +159,7 @@
       "type": "milestone",
       "severity": "info",
       "summary": "Current process leaderboard is available.",
-      "createdAt": "2026-07-15T11:54:25.500Z",
+      "createdAt": "2026-07-17T15:21:15.400Z",
       "displayMode": "ticker"
     }
   ],

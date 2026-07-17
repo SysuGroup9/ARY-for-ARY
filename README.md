@@ -1,5 +1,7 @@
 # ARY for ARY
 
+[![ARY GRS004 实现介绍](https://img.shields.io/badge/🎬%20演示视频-BV17WNZ66EmT-0052FF?style=for-the-badge&logo=bilibili)](https://www.bilibili.com/video/BV17WNZ66EmT/)
+
 ARY (Agent Racing Yard) 是去中心化智能体赛事平台，核心理念 "Public Yard, Private Race Source"。
 GRS004 协作功能已全部完成，仓库具备完整可运行的核心业务链路，覆盖：
 
@@ -11,48 +13,7 @@ GRS004 协作功能已全部完成，仓库具备完整可运行的核心业务�
 - 公共大屏展示路由与大屏控制台路由（已迁移至 Team 维度）
 - 面向用户可见失败场景的页内友好报错
 
-最近更新：`2026-07-15` — GRS003 收口完成，UI 全面翻新（Minimalist Modern 设计系统），Race 8 状态机，骑手画廊拍立得墙，首页 Hero 重设计，导航栏全局化，大屏展示独立化，全站链接审计+字体一致性修复
-
-### 9. UI 全面翻新（2026-07-13 ~ 2026-07-15）
-
-- **设计令牌**：`globals.css` 重写为 Minimalist Modern（蓝 accent #0052FF + Noto Serif SC + Inter + JetBrains Mono）
-- **导航栏全局化**：`layout.tsx` 注入 HeaderWrapper，`/screen/*` 和 `/jumbotron/*` 自动隐藏，所有页面始终可见
-- **首页 Hero**：Georgia 斜体大字 ARY + 双层旋转环动画 + 浮动几何形状
-- **赛事画廊**：Hero Carousel 组件（主卡+侧卡+自动轮播+鼠标悬停暂停）
-- **赛事列表** `/races`：Tabs 切换（全部/主推/进行中/报名中/往届）+ 搜索框 + 自适应卡片网格
-- **骑手列表** `/riders`：拍立得照片墙（随机旋转 + hover 回正放大）
-- **骑手档案** `/riders/[slug]`：Masonry 三列杂志排版（头像+标签+参赛记录+评审+作品）
-- **合作页面** `/cooperation`：三列 icon 卡片 + dark section CTA
-- **合作表单**：三步骤向导（企业信息→赛事信息→赛程设置）
-- **横向滚动**：AutoScroll 组件（CSS transform 动画，hover 暂停，首页赛果+作品使用）
-- **背景粒子**：右键点击弹出随机骑手卡片（HeaderWrapper 含路径感知）
-- **屏幕展示页** `/screen/*` `/jumbotron/*`：粒子背景+导航栏自动隐藏，纯展示无干扰
-
-### 10. Bug 修复与环境收口（2026-07-13 ~ 2026-07-15）
-
-- `prisma db push` 同步数据库结构；删除断裂的 `backfill-registration-refs.ts`
-- Race 状态机 5→8：新增显式 `Race.status` 字段 + `race-phase.ts` 重写，保留旧状态兼容
-- Runner 路径降级：提交不再自动入 Runner 队列，CA→JudgingRecord 成为主路径
-- Console 权限验证：确认 Organizer/Rider/Judge 按 ID 过滤
-- GitHub OAuth 链路修复：缺 env 时友好降级，代理支持 + SSL 信任链
-- 中文 slug→ASCII slug 修复 URL redirect 500 错误
-- 全站链接审计（40+ 处，修复 1 处） + 字体一致性审计（修复 5 处）
-- Screen Console 卡片改为单列排列，校准卡改为独立按钮
-- 屏幕展示字体统一为 `var(--font-body)`，合作表单 label 字号对齐
-
-### 11. 交接文档
-
-| 你想了解什么？ | 去哪里 |
-|-------------|--------|
-| 产品定位 + 数据链 + 验收清单 | [`docs/EXECUTIVE-SUMMARY.md`](docs/EXECUTIVE-SUMMARY.md) |
-| UI 交接文档（CSS/组件/设计令牌） | [`docs/UI-HANDOFF.md`](docs/UI-HANDOFF.md) |
-| GRS001 产品需求 + 路线图 | [`docs/grs001/`](docs/grs001/) |
-| GRS002 Jumbotron 作品说明 + Demo 指南 | [`docs/grs002/`](docs/grs002/) |
-| GRS003 原有文档（历史痕迹） | [`docs/grs003/`](docs/grs003/) |
-| GRS004 领域分析 + PRD + IA（权威参考） | [`docs/grs004/`](docs/grs004/) |
-| 实时状态跟踪 + 实现计划 | [`docs/superpowers/status.md`](docs/superpowers/status.md) |
-| GRS002 Agent Riding Record | [`riding_record/`](riding_record/) |
-| GRS004 团队 Riding Records | [`riding_record_grs004/`](riding_record_grs004/) |
+最近更新：`2026-07-18` — GRS004 收口完成，UI 全面翻新（Minimalist Modern 设计系统），Race 8 状态机，骑手画廊拍立得墙，首页 Hero 重设计，导航栏全局化，大屏展示独立化，全站链接审计+字体一致性修复，添加演示视频
 
 ---
 
@@ -143,6 +104,47 @@ GRS004 将参赛主体从单人升级为 **Team（队伍）模型**，支持 1 L
 - 队伍级别的共享知识资产存储
 - 与协作消息联动，可在讨论中引用知识条目
 - 支持赛事期间队伍知识的积累与沉淀
+
+### 9. UI 全面翻新（2026-07-13 ~ 2026-07-15）
+
+- **设计令牌**：`globals.css` 重写为 Minimalist Modern（蓝 accent #0052FF + Noto Serif SC + Inter + JetBrains Mono）
+- **导航栏全局化**：`layout.tsx` 注入 HeaderWrapper，`/screen/*` 和 `/jumbotron/*` 自动隐藏，所有页面始终可见
+- **首页 Hero**：Georgia 斜体大字 ARY + 双层旋转环动画 + 浮动几何形状
+- **赛事画廊**：Hero Carousel 组件（主卡+侧卡+自动轮播+鼠标悬停暂停）
+- **赛事列表** `/races`：Tabs 切换（全部/主推/进行中/报名中/往届）+ 搜索框 + 自适应卡片网格
+- **骑手列表** `/riders`：拍立得照片墙（随机旋转 + hover 回正放大）
+- **骑手档案** `/riders/[slug]`：Masonry 三列杂志排版（头像+标签+参赛记录+评审+作品）
+- **合作页面** `/cooperation`：三列 icon 卡片 + dark section CTA
+- **合作表单**：三步骤向导（企业信息→赛事信息→赛程设置）
+- **横向滚动**：AutoScroll 组件（CSS transform 动画，hover 暂停，首页赛果+作品使用）
+- **背景粒子**：右键点击弹出随机骑手卡片（HeaderWrapper 含路径感知）
+- **屏幕展示页** `/screen/*` `/jumbotron/*`：粒子背景+导航栏自动隐藏，纯展示无干扰
+
+### 10. Bug 修复与环境收口（2026-07-13 ~ 2026-07-15）
+
+- `prisma db push` 同步数据库结构；删除断裂的 `backfill-registration-refs.ts`
+- Race 状态机 5→8：新增显式 `Race.status` 字段 + `race-phase.ts` 重写，保留旧状态兼容
+- Runner 路径降级：提交不再自动入 Runner 队列，CA→JudgingRecord 成为主路径
+- Console 权限验证：确认 Organizer/Rider/Judge 按 ID 过滤
+- GitHub OAuth 链路修复：缺 env 时友好降级，代理支持 + SSL 信任链
+- 中文 slug→ASCII slug 修复 URL redirect 500 错误
+- 全站链接审计（40+ 处，修复 1 处） + 字体一致性审计（修复 5 处）
+- Screen Console 卡片改为单列排列，校准卡改为独立按钮
+- 屏幕展示字体统一为 `var(--font-body)`，合作表单 label 字号对齐
+
+### 11. 交接文档
+
+| 你想了解什么？ | 去哪里 |
+|-------------|--------|
+| 产品定位 + 数据链 + 验收清单 | [`docs/EXECUTIVE-SUMMARY.md`](docs/EXECUTIVE-SUMMARY.md) |
+| UI 交接文档（CSS/组件/设计令牌） | [`docs/UI-HANDOFF.md`](docs/UI-HANDOFF.md) |
+| GRS001 产品需求 + 路线图 | [`docs/grs001/`](docs/grs001/) |
+| GRS002 Jumbotron 作品说明 + Demo 指南 | [`docs/grs002/`](docs/grs002/) |
+| GRS003 原有文档（历史痕迹） | [`docs/grs003/`](docs/grs003/) |
+| GRS004 领域分析 + PRD + IA（权威参考） | [`docs/grs004/`](docs/grs004/) |
+| 实时状态跟踪 + 实现计划 | [`docs/superpowers/status.md`](docs/superpowers/status.md) |
+| GRS002 Agent Riding Record | [`riding_record/`](riding_record/) |
+| GRS004 团队 Riding Records | [`riding_record_grs004/`](riding_record_grs004/) |
 
 ---
 
@@ -241,11 +243,30 @@ TASK_TIMEOUT_MS=5000
 
 ### 初始化数据库
 
+**方式一：全新初始化**
 ```powershell
-npm run db:generate
-npm run db:deploy
+# 删除旧数据库
+Remove-Item dev.db -ErrorAction SilentlyContinue
+
+# 生成 migration 并应用到数据库
+npx prisma migrate dev --name init
+
+# 生成 Prisma Client
+npx prisma generate
+
+# 写入种子数据
 npm run db:seed
 ```
+
+**方式二：保留数据**
+
+```powershell
+npx prisma migrate dev --name 改动描述 --create-only
+# 检查 migration.sql 后
+npx prisma migrate deploy
+npx prisma generate
+```
+注意：如果 db:deploy 后报错 The column xxx does not exist，说明 schema 改了但没生成 migration，用方式一重置。
 
 ### 本地启动
 

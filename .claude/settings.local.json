@@ -10,7 +10,11 @@
       "Bash(npx vitest *)",
       "Bash(node -e \"const s=require\\('./package.json'\\).scripts; Object.entries\\(s\\).forEach\\(\\([k,v]\\)=>console.log\\(k+': '+v\\)\\)\")",
       "Bash(npx tsx *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(sqlite3 dev.db \".schema Team\")",
+      "Bash(node -e \"const db=require\\('better-sqlite3'\\)\\('dev.db'\\); console.log\\(db.prepare\\(\\\\\"SELECT sql FROM sqlite_master WHERE name='Team'\\\\\"\\).get\\(\\).sql\\);\")",
+      "Bash(npx prisma *)",
+      "Bash(npm install *)"
     ]
   }
 }
