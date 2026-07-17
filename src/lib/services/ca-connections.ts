@@ -76,7 +76,11 @@ export async function createCAConnectionForRaceProject(input: {
       },
     });
 
-    if (!raceProject || raceProject.registration.userId !== input.userId) {
+    if (
+      !raceProject ||
+      !raceProject.registration ||
+      raceProject.registration.userId !== input.userId
+    ) {
       throw new Error("RaceProject not found for current rider");
     }
 
@@ -126,7 +130,7 @@ export async function createCAConnectionForRaceProject(input: {
         caType: connection.caType,
         connectorId: connection.connectorId,
       },
-      raceId: raceProject.registration.raceId,
+      raceId: raceProject.registration?.raceId,
       raceProjectId: raceProject.id,
       registrationId: raceProject.registrationId,
       result: "accepted",
@@ -157,7 +161,11 @@ export async function rotateCAConnectionSecretForRider(input: {
       },
     });
 
-    if (!connection || connection.raceProject.registration.userId !== input.userId) {
+    if (
+      !connection ||
+      !connection.raceProject?.registration ||
+      connection.raceProject.registration.userId !== input.userId
+    ) {
       throw new Error("CAConnection not found for current rider");
     }
 
@@ -188,9 +196,9 @@ export async function rotateCAConnectionSecretForRider(input: {
         connectorId: rotated.connectorId,
         secretVersion: rotated.secretVersion,
       },
-      raceId: connection.raceProject.registration.raceId,
+      raceId: connection.raceProject?.registration?.raceId,
       raceProjectId: connection.raceProjectId,
-      registrationId: connection.raceProject.registrationId,
+      registrationId: connection.raceProject?.registrationId,
       result: "accepted",
       targetId: rotated.id,
       targetType: "CAConnection",
@@ -237,11 +245,12 @@ async function getManagedCAConnectionForAction(tx: Prisma.TransactionClient, inp
   const canUseSystem =
     Boolean(input.allowSystem) && hasRole(userRoles, "ADMIN");
 
+  // 当 registration 为 null（GRS004 Team-only RaceProject）时，
+  // admin（canUseSystem）仍可操作，非 admin 则拒绝
+  const organizerMatched = connection?.raceProject?.registration?.race?.organizerId === input.organizerId;
   if (
     !connection ||
-    !connection.raceProject?.registration?.race ||
-    (connection.raceProject.registration.race.organizerId !== input.organizerId &&
-      !canUseSystem)
+    (!organizerMatched && !canUseSystem)
   ) {
     throw new Error("CAConnection not found for current operator");
   }
@@ -276,9 +285,9 @@ export async function disableCAConnectionForOrganizer(input: {
         connectorId: disabled.connectorId,
         reason: disabled.disabledReason,
       },
-      raceId: connection.raceProject.registration.raceId,
+      raceId: connection.raceProject?.registration?.raceId,
       raceProjectId: connection.raceProjectId,
-      registrationId: connection.raceProject.registrationId,
+      registrationId: connection.raceProject?.registrationId,
       result: "accepted",
       targetId: disabled.id,
       targetType: "CAConnection",
@@ -314,9 +323,9 @@ export async function enableCAConnectionForOrganizer(input: {
       details: {
         connectorId: enabled.connectorId,
       },
-      raceId: connection.raceProject.registration.raceId,
+      raceId: connection.raceProject?.registration?.raceId,
       raceProjectId: connection.raceProjectId,
-      registrationId: connection.raceProject.registrationId,
+      registrationId: connection.raceProject?.registrationId,
       result: "accepted",
       targetId: enabled.id,
       targetType: "CAConnection",

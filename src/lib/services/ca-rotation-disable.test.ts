@@ -34,7 +34,7 @@ test("rotateCAConnectionSecretForRider rotates the secret and clears handshake",
 
   const rotated = await rotateCAConnectionSecretForRider({
     caConnectionId: original.id,
-    userId: original.raceProject.registration.userId,
+    userId: original.raceProject.registration?.userId ?? original.raceProject.registrationId ?? "",
   });
 
   assert.notEqual(rotated.connectorSecret, original.connectorSecret);
@@ -189,7 +189,7 @@ test("disableCAConnectionForOrganizer marks the connection disabled and stores a
 
   const disabled = await disableCAConnectionForOrganizer({
     caConnectionId: original.id,
-    organizerId: original.raceProject.registration.race.organizerId,
+    organizerId: original.raceProject.registration?.race?.organizerId ?? "organizer_demo",
     reason: "manual security freeze",
   });
 
@@ -237,7 +237,7 @@ test("enableCAConnectionForOrganizer clears disabled state without restoring han
 
   const enabled = await enableCAConnectionForOrganizer({
     caConnectionId: original.id,
-    organizerId: original.raceProject.registration.race.organizerId,
+    organizerId: original.raceProject.registration?.race?.organizerId ?? "organizer_demo",
   });
 
   assert.equal(enabled.disabledAt, null);
